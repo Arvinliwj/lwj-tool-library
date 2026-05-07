@@ -1253,110 +1253,628 @@
             // 工具3：工参邻近匹配工具 (来自工具库-手改版v2)
             // ────────────────────────────────────────────
             toolHTMLs[2] = `<!DOCTYPE html>
-        <html lang="zh-CN">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-            <title>工参匹配工具</title>
-            <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
-            <style>
-                * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
-                body { background: #f0f4f8; margin: 0; padding: 14px; }
-                .container { max-width: 1100px; margin: 0 auto; }
-                h1 { font-size: 1.5rem; font-weight: 600; color: #1e2a3a; margin: 0 0 0.25rem; }
-                .sub { color: #2c3e4e; margin-bottom: 1rem; border-left: 3px solid #3b82f6; padding-left: 0.8rem; font-size: 0.8rem; }
-                .grid-2col { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 20px; }
-                .card { background: white; border-radius: 20px; box-shadow: 0 6px 16px rgba(0,0,0,0.04); padding: 1rem 1.2rem 1.4rem; flex: 1; min-width: 260px; border: 1px solid #e2edf2; }
-                .card h3 { margin-top: 0; margin-bottom: 0.8rem; font-weight: 600; color: #0f3b5c; font-size: 0.95rem; }
-                .file-label { background: #eef2ff; border: 1px dashed #3b82f6; border-radius: 30px; padding: 8px 14px; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 0.8rem; display: inline-block; width: 100%; font-weight: 500; font-size: 0.8rem; }
-                .file-label:hover { background: #e0e7ff; border-color: #2563eb; }
-                input[type="file"] { display: none; }
-                .file-status { font-size: 0.75rem; color: #2c6e9e; background: #eef2ff; padding: 6px 10px; border-radius: 12px; margin: 8px 0; word-break: break-word; }
-                .config-panel { background: #f9fafb; border-radius: 16px; padding: 0.8rem; margin: 0.8rem 0 0.4rem; }
-                .select-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 8px; }
-                .select-group { flex: 1; min-width: 100px; }
-                .select-group label { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #4b5563; display: block; margin-bottom: 3px; }
-                select { width: 100%; padding: 6px 8px; border-radius: 12px; border: 1px solid #cbd5e1; background: white; font-size: 0.78rem; }
-                button { background: #1e6f3f; color: white; border: none; padding: 10px 24px; border-radius: 36px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-                button:hover { background: #0f5a34; transform: translateY(-1px); }
-                .progress-bar { background: #e2e8f0; border-radius: 16px; height: 6px; width: 100%; margin: 10px 0; overflow: hidden; }
-                .progress-fill { background: #3b82f6; width: 0%; height: 100%; transition: width 0.2s; }
-                .action-bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-                .example-link { color: #3b82f6; cursor: pointer; text-decoration: underline; font-size: 0.75rem; }
-                .status-msg { background: #e6f7e6; border-radius: 16px; padding: 5px 12px; font-size: 0.75rem; display: inline-block; }
-                footer { margin-top: 24px; text-align: center; font-size: 0.7rem; color: #5b6e8c; }
-            </style>
-        </head>
-        <body>
-        <div class="container">
-            <h1>🗺️ 工参邻近匹配 · 支持方位角拆分</h1>
-            <div class="sub">方位角列支持'/'分隔自动拆分为多行 | 最近1个点 | 自动下载结果</div>
-            <div class="grid-2col">
-                <div class="card">
-                    <h3>📄 原始文件</h3>
-                    <label class="file-label" for="origFile">📂 上传原始文件 (CSV/Excel)</label>
-                    <input type="file" id="origFile" accept=".csv,.xlsx,.xls">
-                    <div id="origStatus" class="file-status">未上传</div>
-                    <div class="config-panel">
-                        <div class="select-row">
-                            <div class="select-group"><label>经度列</label><select id="origLonCol"></select></div>
-                            <div class="select-group"><label>纬度列</label><select id="origLatCol"></select></div>
-                            <div class="select-group"><label>方位角列(可选)</label><select id="origAzCol"><option value="">无</option></select></div>
-                        </div>
-                    </div>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>工参匹配工具 - 支持最近N点及去重</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+        body { background: #f0f4f8; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { font-size: 1.8rem; font-weight: 600; color: #1e2a3a; margin: 0 0 0.25rem; }
+        .sub { color: #2c3e4e; margin-bottom: 1.5rem; border-left: 4px solid #3b82f6; padding-left: 1rem; font-size: 0.9rem; }
+        .grid-2col { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 28px; }
+        .card { background: white; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); padding: 1.5rem 1.8rem; flex: 1; min-width: 280px; border: 1px solid #e2edf2; transition: box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 12px 28px rgba(0,0,0,0.08); }
+        .card h3 { margin-top: 0; margin-bottom: 1.2rem; font-weight: 600; color: #0f3b5c; font-size: 1.3rem; }
+        .file-label { background: #eef2ff; border: 1px dashed #3b82f6; border-radius: 40px; padding: 10px 16px; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 1rem; display: inline-block; width: 100%; font-weight: 500; }
+        .file-label:hover { background: #e0e7ff; border-color: #2563eb; }
+        input[type="file"] { display: none; }
+        .file-status { font-size: 0.85rem; color: #2c6e9e; background: #eef2ff; padding: 8px 12px; border-radius: 16px; margin: 12px 0; word-break: break-word; }
+        .config-panel { background: #f9fafb; border-radius: 20px; padding: 1.2rem 1.2rem 1.5rem; margin: 1rem 0 0.5rem; }
+        .select-row { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; margin-bottom: 20px; }
+        .select-group { flex: 1; min-width: 130px; }
+        .select-group label { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #4b5563; display: block; margin-bottom: 6px; letter-spacing: 0.5px; }
+        select, .info-text { width: 100%; padding: 8px 12px; border-radius: 14px; border: 1px solid #cbd5e1; background: white; font-size: 0.85rem; }
+        button { background: #1e6f3f; color: white; border: none; padding: 12px 28px; border-radius: 40px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 8px; }
+        button:hover { background: #0f5a34; transform: translateY(-1px); }
+        .progress-bar { background: #e2e8f0; border-radius: 20px; height: 8px; width: 100%; margin: 12px 0; overflow: hidden; }
+        .progress-fill { background: #3b82f6; width: 0%; height: 100%; transition: width 0.2s; }
+        .example-link { color: #3b82f6; cursor: pointer; text-decoration: underline; font-size: 0.8rem; margin-left: auto; }
+        .status-msg { background: #e6f7e6; border-radius: 20px; padding: 6px 14px; font-size: 0.8rem; display: inline-block; }
+        footer { margin-top: 32px; text-align: center; font-size: 0.75rem; color: #5b6e8c; }
+        .param-opt { margin-top: 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: #ffffff; padding: 12px 16px; border-radius: 20px; border: 1px solid #e2edf2; }
+        .param-opt label { font-size: 0.85rem; font-weight: 500; color: #1f3a4b; }
+        input[type="number"] { width: 90px; padding: 8px 10px; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; }
+        .radio-group { display: flex; gap: 24px; align-items: center; margin-top: 8px; margin-bottom: 8px; background: #ffffff; padding: 10px 16px; border-radius: 20px; border: 1px solid #e2edf2; }
+        .radio-group span { font-weight: 500; color: #1f3a4b; font-size: 0.85rem; }
+        .radio-group label { display: inline-flex; align-items: center; gap: 6px; font-weight: normal; font-size: 0.85rem; cursor: pointer; }
+        .action-bar { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin: 28px 0 20px; justify-content: space-between; }
+        .btn-group { display: flex; gap: 16px; }
+        hr { margin: 1rem 0; }
+        .info-text { font-size: 0.75rem; margin-top: 12px; color: #4b6b8f; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🗺️ 工参邻近匹配 · 最近N点 + 去重</h1>
+    <div class="sub">支持方位角拆分(/) | 自定义最近点数 | 按名称/距离去重 | 自动下载结果</div>
+
+    <div class="grid-2col">
+        <div class="card">
+            <h3>📄 原始文件</h3>
+            <label class="file-label" for="origFile">📂 上传原始文件 (CSV/Excel)</label>
+            <input type="file" id="origFile" accept=".csv, .xlsx, .xls">
+            <div id="origStatus" class="file-status">未上传</div>
+            <div class="config-panel">
+                <div class="select-row">
+                    <div class="select-group"><label>经度列</label><select id="origLonCol"></select></div>
+                    <div class="select-group"><label>纬度列</label><select id="origLatCol"></select></div>
+                    <div class="select-group"><label>方位角列(可选)</label><select id="origAzCol"><option value="">无</option></select></div>
                 </div>
-                <div class="card">
-                    <h3>🗄️ 工参文件</h3>
-                    <label class="file-label" for="paramFile">📂 上传工参文件 (CSV/Excel)</label>
-                    <input type="file" id="paramFile" accept=".csv,.xlsx,.xls">
-                    <div id="paramStatus" class="file-status">未上传</div>
-                    <div class="config-panel">
-                        <div class="select-row">
-                            <div class="select-group"><label>经度列</label><select id="paramLonCol"></select></div>
-                            <div class="select-group"><label>纬度列</label><select id="paramLatCol"></select></div>
-                            <div class="select-group"><label>名称列</label><select id="paramNameCol"></select></div>
-                        </div>
-                        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;"><label style="font-size:0.7rem;">搜索半径(km):</label><input type="number" id="searchRadiusKm" value="5" step="1" min="0.5" style="width:80px;padding:4px;border-radius:10px;border:1px solid #cbd5e1;"></div>
-                    </div>
-                </div>
+                <div class="info-text" style="font-size:0.7rem;">💡 方位角列支持用 / 分隔多个值，每个值独立计算</div>
             </div>
-            <div class="action-bar"><button id="runMatchBtn">⚡ 开始匹配</button><span class="example-link" id="downloadSample">📎 下载示例模板</span></div>
-            <div id="progressArea" style="display:none;"><div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div><div id="progressText" style="font-size:0.8rem;margin-bottom:8px;"></div></div>
-            <div id="messageArea" class="status-msg" style="margin-bottom:8px;"></div>
-            <footer>⚡ 高性能网格索引 | 方位角用/分隔自动拆分</footer>
         </div>
-        <script>
-            let rawData=null,rawHeaders=[],paramData=null,paramHeaders=[],gridIndex=new Map(),paramPointsList=[],searchRadiusKm=5,isMatching=false;
-            const GRID_SIZE_DEG=0.05,EARTH_RADIUS_KM=6371.0;
-            const lonPatterns=['^lon$','^lng$','^longitude$','经度','long','x','easting'];
-            const latPatterns=['^lat$','^latitude$','纬度','lat','y','northing'];
-            const azPatterns=['^azimuth$','^az$','方位角','方向角','angle','bearing','direction'];
-            const namePatterns=['^name$','^site$','^站名$','^基站名$','^sitename$','^cellname$','名称','站点','小区'];
-            function findBestMatch(headers,patterns,caseSensitive=false){for(let pattern of patterns){const regex=new RegExp(pattern,caseSensitive?'':'i');for(let h of headers){if(regex.test(h))return h;}}return null;}
-            function autoSelectColumns(headers,type){if(!headers||headers.length===0)return"";let patterns;switch(type){case'lon':patterns=lonPatterns;break;case'lat':patterns=latPatterns;break;case'az':patterns=azPatterns;break;case'name':patterns=namePatterns;break;default:return"";}return findBestMatch(headers,patterns)||"";}
-            function updateSelectOptionsWithAuto(selectEl,headers,type,withNone=false){let oldVal=selectEl.value;selectEl.innerHTML="";if(withNone){let noneOpt=document.createElement("option");noneOpt.value="";noneOpt.textContent="无(不约束)";selectEl.appendChild(noneOpt);}headers.forEach(h=>{let opt=document.createElement("option");opt.value=h;opt.textContent=h;selectEl.appendChild(opt);});let autoMatch=autoSelectColumns(headers,type);if(autoMatch&&headers.includes(autoMatch)){selectEl.value=autoMatch;}else if(oldVal&&headers.includes(oldVal)){selectEl.value=oldVal;}else if(headers.length>0&&!withNone&&!selectEl.value){selectEl.value=headers[0];}}
-            function toRad(deg){return deg*Math.PI/180;}
-            function haversineDistance(lon1,lat1,lon2,lat2){const φ1=toRad(lat1),φ2=toRad(lat2);const Δφ=toRad(lat2-lat1);const Δλ=toRad(lon2-lon1);const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));return EARTH_RADIUS_KM*c*1000;}
-            function calculateBearing(lon1,lat1,lon2,lat2){const φ1=toRad(lat1),φ2=toRad(lat2);const Δλ=toRad(lon2-lon1);const x=Math.sin(Δλ)*Math.cos(φ2);const y=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);let brng=Math.atan2(x,y)*180/Math.PI;return(brng+360)%360;}
-            function angleDifference(a1,a2){let d=Math.abs(a1-a2)%360;return Math.min(d,360-d);}
-            function parseFile(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=e=>{const wb=XLSX.read(e.target.result,{type:"binary",defval:""});const sheet=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(sheet,{defval:""});if(!rows.length)reject(new Error("空数据"));resolve({data:rows,headers:Object.keys(rows[0])});};reader.onerror=()=>reject(new Error("读取失败"));reader.readAsBinaryString(file);});}
-            function getNumberVal(obj,col){if(!col)return NaN;let v=obj[col];if(v===undefined||v===null||v==="")return NaN;let n=parseFloat(v);return isNaN(n)?NaN:n;}
-            function getStringVal(obj,col){if(!col)return"";let v=obj[col];if(v===undefined||v===null)return"";return String(v);}
-            function isValidLon(l){return!isNaN(l)&&l>=-180&&l<=180;}
-            function isValidLat(l){return!isNaN(l)&&l>=-90&&l<=90;}
-            function splitAzimuths(azValue){if(azValue===undefined||azValue===null||azValue==="")return[];const str=String(azValue).trim();if(str==="")return[];const parts=str.split('/').map(p=>p.trim()).filter(p=>p!=="");const numbers=[];for(let part of parts){let num=parseFloat(part);if(!isNaN(num)&&num>=0&&num<=360){numbers.push(num);}}return numbers;}
-            function buildGridIndex(paramPoints){const grid=new Map();for(let pt of paramPoints){const lonIdx=Math.floor(pt.lon/GRID_SIZE_DEG);const latIdx=Math.floor(pt.lat/GRID_SIZE_DEG);const key=lonIdx+','+latIdx;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(pt);}return grid;}
-            function getNearbyPoints(lon,lat,maxExpand=3){const lonIdx=Math.floor(lon/GRID_SIZE_DEG);const latIdx=Math.floor(lat/GRID_SIZE_DEG);const candidates=[];for(let dx=-maxExpand;dx<=maxExpand;dx++){for(let dy=-maxExpand;dy<=maxExpand;dy++){const key=(lonIdx+dx)+','+(latIdx+dy);if(gridIndex.has(key)){candidates.push(...gridIndex.get(key));}}}return candidates;}
-            function filterByDistance(candidates,lon,lat,radiusKm){return candidates.filter(p=>{const distKm=haversineDistance(lon,lat,p.lon,p.lat)/1000;return distKm<=radiusKm;});}
-            function matchSingleAzimuth(origLon,origLat,azimuth,paramPointsList,gridIndex,initialRadiusKm){let useAz=(azimuth!==null&&azimuth!==undefined&&!isNaN(azimuth));let radius=initialRadiusKm;const maxRadius=100;let candidates=[];let allNearby=getNearbyPoints(origLon,origLat,3);while(radius<=maxRadius){candidates=filterByDistance(allNearby,origLon,origLat,radius);if(candidates.length>=1)break;radius*=2;if(radius>maxRadius)break;}if(candidates.length===0){return{match:null,warning:"无工参点"};}let candidatesWithDist=candidates.map(p=>{const dist=haversineDistance(origLon,origLat,p.lon,p.lat);let bearing=null,angleDiff=null;if(useAz){bearing=calculateBearing(origLon,origLat,p.lon,p.lat);angleDiff=angleDifference(azimuth,bearing);}return{...p,distance_m:dist,bearing,angleDiff};});let filtered=candidatesWithDist;if(useAz){filtered=filtered.filter(c=>c.angleDiff<=60);}if(filtered.length===0){return{match:null,warning:"扇区内无点(半径"+radius.toFixed(1)+"km)"};}filtered.sort((a,b)=>a.distance_m-b.distance_m);const best=filtered[0];return{match:best,warning:null};}
-            async function runMatchAndDownload(){if(isMatching)return;const origLonCol=document.getElementById("origLonCol").value;const origLatCol=document.getElementById("origLatCol").value;const origAzCol=document.getElementById("origAzCol").value;const paramLonCol=document.getElementById("paramLonCol").value;const paramLatCol=document.getElementById("paramLatCol").value;const paramNameCol=document.getElementById("paramNameCol").value;searchRadiusKm=parseFloat(document.getElementById("searchRadiusKm").value)||5;if(!rawData||!paramData){alert("请完整上传原始文件和工参文件");return;}if(!origLonCol||!origLatCol||!paramLonCol||!paramLatCol||!paramNameCol){alert("请选择所有必要的列");return;}const validParams=[];for(let row of paramData){let lon=getNumberVal(row,paramLonCol);let lat=getNumberVal(row,paramLatCol);if(isValidLon(lon)&&isValidLat(lat)){validParams.push({lon,lat,name:getStringVal(row,paramNameCol),rawObj:row});}}if(validParams.length===0){alert("工参文件无有效经纬度点");return;}paramPointsList=validParams;gridIndex=buildGridIndex(paramPointsList);const totalRaw=rawData.length;if(totalRaw>5000&&!confirm("原始点数量"+totalRaw+"，预计需要几十秒，是否继续？"))return;isMatching=true;const runBtn=document.getElementById("runMatchBtn");runBtn.disabled=true;runBtn.textContent="⏳ 匹配中...";document.getElementById("progressArea").style.display="block";const progressFill=document.getElementById("progressFill");const progressText=document.getElementById("progressText");const msgDiv=document.getElementById("messageArea");msgDiv.innerHTML="匹配进行中，请稍候...";const outputRows=[];const chunkSize=50;for(let start=0;start<totalRaw;start+=chunkSize){const end=Math.min(start+chunkSize,totalRaw);for(let i=start;i<end;i++){const rawRow=rawData[i];const origLon=getNumberVal(rawRow,origLonCol);const origLat=getNumberVal(rawRow,origLatCol);if(!isValidLon(origLon)||!isValidLat(origLat)){outputRows.push({rawRow,usedAz:null,match:null,warning:"经纬度无效"});continue;}let azimuths=[];if(origAzCol&&origAzCol!==""){const azRaw=rawRow[origAzCol];if(azRaw!==undefined&&azRaw!==null&&azRaw!==""){azimuths=splitAzimuths(azRaw);}}if(azimuths.length===0){const res=matchSingleAzimuth(origLon,origLat,null,paramPointsList,gridIndex,searchRadiusKm);outputRows.push({rawRow,usedAz:null,match:res.match,warning:res.warning});}else{for(let az of azimuths){const res=matchSingleAzimuth(origLon,origLat,az,paramPointsList,gridIndex,searchRadiusKm);outputRows.push({rawRow,usedAz:az,match:res.match,warning:res.warning});}}}const percent=(end/totalRaw)*100;progressFill.style.width=percent+"%";progressText.innerText="匹配进度: "+end+"/"+totalRaw+" ("+Math.round(percent)+"%)，已生成 "+outputRows.length+" 行";await new Promise(r=>setTimeout(r,5));}generateAndDownloadCSV(outputRows);msgDiv.innerHTML="✅ 匹配完成！原始点"+totalRaw+"个，生成结果"+outputRows.length+"行，已自动下载。";document.getElementById("progressArea").style.display="none";isMatching=false;runBtn.disabled=false;runBtn.textContent="⚡ 开始匹配";}
-            function generateAndDownloadCSV(outputRows){const headers=[...rawHeaders,"使用方位角(度)","匹配工参名称","匹配工参经度","匹配工参纬度","距离(米)","工参方位角(°)","方位角差(°)","备注"];const rows=[];for(let item of outputRows){const rawRow=item.rawRow;const rawValues=rawHeaders.map(h=>rawRow[h]!==undefined?rawRow[h]:"");const usedAz=(item.usedAz!==null&&item.usedAz!==undefined)?item.usedAz:"";if(!item.match){rows.push([...rawValues,usedAz,"","","","","","",item.warning||"无匹配点"]);}else{const m=item.match;rows.push([...rawValues,usedAz,m.name,m.lon.toFixed(6),m.lat.toFixed(6),m.distance_m.toFixed(2),m.bearing!==null?m.bearing.toFixed(2):"",m.angleDiff!==null?m.angleDiff.toFixed(2):"",item.warning||""]);}}let csvContent=rows.map(row=>row.map(cell=>'"'+String(cell).replace(/"/g,'""')+'"').join(",")).join("\\n");const blob=new Blob(["\\uFEFF"+headers.join(",")+"\\n"+csvContent],{type:"text/csv;charset=utf-8;"});const link=document.createElement('a');const url=URL.createObjectURL(blob);link.href=url;link.download="matched_result_"+new Date().toISOString().slice(0,19).replace(/:/g,'-')+".csv";document.body.appendChild(link);link.click();document.body.removeChild(link);URL.revokeObjectURL(url);}
-            function downloadSample(){const sampleOrig="原始经度,原始纬度,方位角,站点名称\\n120.123,30.234,45/90/135,测试站A\\n120.456,30.567,,无方位角站B";const sampleParam="工参经度,工参纬度,基站名称\\n120.122,30.233,近点1\\n120.130,30.240,近点2\\n120.200,30.300,远点1";const blobOrig=new Blob(["\\uFEFF"+sampleOrig],{type:"text/csv;charset=utf-8;"});const blobParam=new Blob(["\\uFEFF"+sampleParam],{type:"text/csv;charset=utf-8;"});const a1=document.createElement('a');a1.href=URL.createObjectURL(blobOrig);a1.download="sample_original.csv";const a2=document.createElement('a');a2.href=URL.createObjectURL(blobParam);a2.download="sample_parameter.csv";document.body.appendChild(a1);a1.click();document.body.removeChild(a1);setTimeout(()=>{document.body.appendChild(a2);a2.click();document.body.removeChild(a2);URL.revokeObjectURL(a1.href);URL.revokeObjectURL(a2.href);},200);}
-            function bindFileUpload(fileInputId,isOrig){const input=document.getElementById(fileInputId);input.addEventListener("change",async(e)=>{const file=e.target.files[0];if(!file)return;const statusDiv=document.getElementById(fileInputId==="origFile"?"origStatus":"paramStatus");statusDiv.innerHTML="⏳ 解析中: "+file.name;try{const{data,headers}=await parseFile(file);if(isOrig){rawData=data;rawHeaders=headers;}else{paramData=data;paramHeaders=headers;}statusDiv.innerHTML="✅ 已加载 "+data.length+" 行";if(isOrig){updateSelectOptionsWithAuto(document.getElementById("origLonCol"),headers,'lon',false);updateSelectOptionsWithAuto(document.getElementById("origLatCol"),headers,'lat',false);updateSelectOptionsWithAuto(document.getElementById("origAzCol"),headers,'az',true);}else{updateSelectOptionsWithAuto(document.getElementById("paramLonCol"),headers,'lon',false);updateSelectOptionsWithAuto(document.getElementById("paramLatCol"),headers,'lat',false);updateSelectOptionsWithAuto(document.getElementById("paramNameCol"),headers,'name',false);}}catch(err){statusDiv.innerHTML="❌ 解析失败: "+err.message;}});}
-            document.addEventListener("DOMContentLoaded",()=>{bindFileUpload("origFile",true);bindFileUpload("paramFile",false);document.getElementById("runMatchBtn").addEventListener("click",runMatchAndDownload);document.getElementById("downloadSample").addEventListener("click",downloadSample);});
-        <\/script>
-        </body>
-        </html>`;
+        <div class="card">
+            <h3>🗄️ 工参文件</h3>
+            <label class="file-label" for="paramFile">📂 上传工参文件 (CSV/Excel)</label>
+            <input type="file" id="paramFile" accept=".csv, .xlsx, .xls">
+            <div id="paramStatus" class="file-status">未上传</div>
+            <div class="config-panel">
+                <div class="select-row">
+                    <div class="select-group"><label>经度列</label><select id="paramLonCol"></select></div>
+                    <div class="select-group"><label>纬度列</label><select id="paramLatCol"></select></div>
+                    <div class="select-group"><label>名称列</label><select id="paramNameCol"></select></div>
+                </div>
+                
+                <!-- 优化后的参数区域：搜索半径 + 最近N个站 -->
+                <div class="param-opt">
+                    <label>🔍 搜索初始半径 (km):</label>
+                    <input type="number" id="searchRadiusKm" value="5" step="1" min="0.5">
+                    <span style="font-size:0.7rem; color:#5a6e7a;">自动扩大直到找到足够候选点</span>
+                </div>
+                
+                <div class="param-opt">
+                    <label>📌 最近N个站:</label>
+                    <input type="number" id="topN" value="1" min="1" max="99" step="1">
+                </div>
+                
+                <!-- 去重方式：单独分组，更清晰 -->
+                <div class="radio-group">
+                    <span>去重方式：</span>
+                    <label><input type="radio" name="dedupMode" value="none" checked> 不去重</label>
+                    <label><input type="radio" name="dedupMode" value="name"> 按名称去重</label>
+                    <label><input type="radio" name="dedupMode" value="distance"> 按距离去重（剔除距离=0）</label>
+                </div>
+                
+                <div class="info-text">📡 有效工参点：<span id="paramCount">0</span> 个 (网格索引已构建)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <div class="btn-group">
+            <button id="runMatchBtn">⚡ 开始匹配</button>
+        </div>
+        <div class="example-link" id="downloadSample">📎 下载示例数据模板</div>
+    </div>
+
+    <div id="progressArea" style="display: none;">
+        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+        <div id="progressText" style="font-size:0.85rem; margin-bottom: 12px;"></div>
+    </div>
+    <div id="messageArea" class="status-msg" style="margin-bottom: 12px;"></div>
+
+    <footer>⚡ 高性能网格索引，支持工参10万+级别。结果自动下载CSV，每个匹配点占一行。</footer>
+</div>
+
+<script>
+    // ========================= 全局变量 =========================
+    let rawData = null, rawHeaders = [];
+    let paramData = null, paramHeaders = [];
+
+    let gridIndex = new Map();
+    let paramPointsList = [];
+    const GRID_SIZE_DEG = 0.05;
+    let searchRadiusKm = 5;
+    let topN = 1;
+    let dedupMode = "none"; // "none", "name", "distance"
+    let isMatching = false;
+    const EARTH_RADIUS_KM = 6371.0;
+
+    // ---------- 智能列名匹配 ----------
+    function findBestMatch(headers, patterns, caseSensitive = false) {
+        for (let pattern of patterns) {
+            const regex = new RegExp(pattern, caseSensitive ? '' : 'i');
+            for (let h of headers) {
+                if (regex.test(h)) return h;
+            }
+        }
+        return null;
+    }
+
+    const lonPatterns = ['^lon$', '^lng$', '^longitude$', '经度', 'long', 'x', 'easting'];
+    const latPatterns = ['^lat$', '^latitude$', '纬度', 'lat', 'y', 'northing'];
+    const azPatterns = ['^azimuth$', '^az$', '方位角', '方向角', 'angle', 'bearing', 'direction'];
+    const namePatterns = ['^name$', '^site$', '^站名$', '^基站名$', '^sitename$', '^cellname$', '名称', '站点', '小区'];
+
+    function autoSelectColumns(headers, type) {
+        if (!headers || headers.length === 0) return "";
+        let patterns;
+        switch(type) {
+            case 'lon': patterns = lonPatterns; break;
+            case 'lat': patterns = latPatterns; break;
+            case 'az': patterns = azPatterns; break;
+            case 'name': patterns = namePatterns; break;
+            default: return "";
+        }
+        return findBestMatch(headers, patterns) || "";
+    }
+
+    function updateSelectOptionsWithAuto(selectEl, headers, type, withNone = false) {
+        let oldVal = selectEl.value;
+        selectEl.innerHTML = "";
+        if (withNone) {
+            let noneOpt = document.createElement("option");
+            noneOpt.value = "";
+            noneOpt.textContent = "无 (不约束)";
+            selectEl.appendChild(noneOpt);
+        }
+        headers.forEach(h => {
+            let opt = document.createElement("option");
+            opt.value = h;
+            opt.textContent = h;
+            selectEl.appendChild(opt);
+        });
+        let autoMatch = autoSelectColumns(headers, type);
+        if (autoMatch && headers.includes(autoMatch)) {
+            selectEl.value = autoMatch;
+        } else if (oldVal && headers.includes(oldVal)) {
+            selectEl.value = oldVal;
+        } else if (headers.length > 0 && !withNone && !selectEl.value) {
+            selectEl.value = headers[0];
+        }
+    }
+
+    // 辅助函数 --------------------------------------------------
+    function toRad(deg) { return deg * Math.PI / 180; }
+
+    function haversineDistance(lon1, lat1, lon2, lat2) {
+        const φ1 = toRad(lat1), φ2 = toRad(lat2);
+        const Δφ = toRad(lat2 - lat1);
+        const Δλ = toRad(lon2 - lon1);
+        const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return EARTH_RADIUS_KM * c * 1000;
+    }
+
+    function calculateBearing(lon1, lat1, lon2, lat2) {
+        const φ1 = toRad(lat1), φ2 = toRad(lat2);
+        const Δλ = toRad(lon2 - lon1);
+        const x = Math.sin(Δλ) * Math.cos(φ2);
+        const y = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);
+        let brng = Math.atan2(x, y) * 180 / Math.PI;
+        return (brng + 360) % 360;
+    }
+
+    function angleDifference(a1, a2) {
+        let d = Math.abs(a1 - a2) % 360;
+        return Math.min(d, 360-d);
+    }
+
+    function parseFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const wb = XLSX.read(e.target.result, { type: "binary", defval: "" });
+                const sheet = wb.Sheets[wb.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                if (!rows.length) reject(new Error("空数据"));
+                resolve({ data: rows, headers: Object.keys(rows[0]) });
+            };
+            reader.onerror = () => reject(new Error("读取失败"));
+            reader.readAsBinaryString(file);
+        });
+    }
+
+    function getNumberVal(obj, col) {
+        if (!col) return NaN;
+        let v = obj[col];
+        if (v === undefined || v === null || v === "") return NaN;
+        let n = parseFloat(v);
+        return isNaN(n) ? NaN : n;
+    }
+
+    function getStringVal(obj, col) {
+        if (!col) return "";
+        let v = obj[col];
+        if (v === undefined || v === null) return "";
+        return String(v);
+    }
+
+    function isValidLon(l) { return !isNaN(l) && l >= -180 && l <= 180; }
+    function isValidLat(l) { return !isNaN(l) && l >= -90 && l <= 90; }
+
+    function splitAzimuths(azValue) {
+        if (azValue === undefined || azValue === null || azValue === "") return [];
+        const str = String(azValue).trim();
+        if (str === "") return [];
+        const parts = str.split('/').map(p => p.trim()).filter(p => p !== "");
+        const numbers = [];
+        for (let part of parts) {
+            let num = parseFloat(part);
+            if (!isNaN(num) && num >= 0 && num <= 360) {
+                numbers.push(num);
+            }
+        }
+        return numbers;
+    }
+
+    function buildGridIndex(paramPoints) {
+        const grid = new Map();
+        for (let pt of paramPoints) {
+            const lonIdx = Math.floor(pt.lon / GRID_SIZE_DEG);
+            const latIdx = Math.floor(pt.lat / GRID_SIZE_DEG);
+            const key = \`\${lonIdx},\${latIdx}\`;
+            if (!grid.has(key)) grid.set(key, []);
+            grid.get(key).push(pt);
+        }
+        return grid;
+    }
+
+    function getNearbyPoints(lon, lat, maxExpand = 3) {
+        const lonIdx = Math.floor(lon / GRID_SIZE_DEG);
+        const latIdx = Math.floor(lat / GRID_SIZE_DEG);
+        const candidates = [];
+        for (let dx = -maxExpand; dx <= maxExpand; dx++) {
+            for (let dy = -maxExpand; dy <= maxExpand; dy++) {
+                const key = \`\${lonIdx+dx},\${latIdx+dy}\`;
+                if (gridIndex.has(key)) {
+                    candidates.push(...gridIndex.get(key));
+                }
+            }
+        }
+        return candidates;
+    }
+
+    function filterByDistance(candidates, lon, lat, radiusKm) {
+        return candidates.filter(p => {
+            const distKm = haversineDistance(lon, lat, p.lon, p.lat) / 1000;
+            return distKm <= radiusKm;
+        });
+    }
+
+    function getAllCandidatesInRadius(origLon, origLat, azimuth, initialRadiusKm) {
+        let radius = initialRadiusKm;
+        const maxRadius = 100;
+        let candidates = [];
+        let allNearby = getNearbyPoints(origLon, origLat, 3);
+        while (radius <= maxRadius) {
+            candidates = filterByDistance(allNearby, origLon, origLat, radius);
+            if (candidates.length >= 1) break;
+            radius *= 2;
+            if (radius > maxRadius) break;
+        }
+        if (candidates.length === 0) return [];
+
+        let result = candidates.map(p => {
+            const dist = haversineDistance(origLon, origLat, p.lon, p.lat);
+            let bearing = null, angleDiff = null;
+            if (azimuth !== null) {
+                bearing = calculateBearing(origLon, origLat, p.lon, p.lat);
+                angleDiff = angleDifference(azimuth, bearing);
+            }
+            return { ...p, distance_m: dist, bearing, angleDiff };
+        });
+        result.sort((a,b) => a.distance_m - b.distance_m);
+        return result;
+    }
+
+    function deduplicateCandidates(candidates, mode) {
+        if (mode === "none") return candidates;
+        if (mode === "name") {
+            const seen = new Map();
+            const unique = [];
+            for (let c of candidates) {
+                if (!seen.has(c.name)) {
+                    seen.set(c.name, true);
+                    unique.push(c);
+                }
+            }
+            return unique;
+        }
+        if (mode === "distance") {
+            return candidates.filter(c => c.distance_m > 0.001);
+        }
+        return candidates;
+    }
+
+    function matchSingleAzimuthTopN(origLon, origLat, azimuth, topN, dedupMode, initialRadiusKm) {
+        let allCandidates = getAllCandidatesInRadius(origLon, origLat, azimuth, initialRadiusKm);
+        if (allCandidates.length === 0) return [];
+
+        let filtered = allCandidates;
+        if (azimuth !== null) {
+            filtered = filtered.filter(c => c.angleDiff <= 60);
+        }
+        if (filtered.length === 0) return [];
+
+        let deduped = deduplicateCandidates(filtered, dedupMode);
+        return deduped.slice(0, topN);
+    }
+
+    async function runMatchAndDownload() {
+        if (isMatching) return;
+        const origLonCol = document.getElementById("origLonCol").value;
+        const origLatCol = document.getElementById("origLatCol").value;
+        const origAzCol = document.getElementById("origAzCol").value;
+        const paramLonCol = document.getElementById("paramLonCol").value;
+        const paramLatCol = document.getElementById("paramLatCol").value;
+        const paramNameCol = document.getElementById("paramNameCol").value;
+        searchRadiusKm = parseFloat(document.getElementById("searchRadiusKm").value) || 5;
+        topN = parseInt(document.getElementById("topN").value) || 1;
+        if (topN < 1) topN = 1;
+        const dedupRadio = document.querySelector('input[name="dedupMode"]:checked');
+        dedupMode = dedupRadio ? dedupRadio.value : "none";
+
+        if (!rawData || !paramData) {
+            alert("请完整上传原始文件和工参文件");
+            return;
+        }
+        if (!origLonCol || !origLatCol) {
+            alert("请选择原始文件的经度列和纬度列");
+            return;
+        }
+        if (!paramLonCol || !paramLatCol) {
+            alert("请选择工参文件的经度列和纬度列");
+            return;
+        }
+        if (!paramNameCol) {
+            alert("请选择工参文件的名称列");
+            return;
+        }
+
+        const validParams = [];
+        for (let row of paramData) {
+            let lon = getNumberVal(row, paramLonCol);
+            let lat = getNumberVal(row, paramLatCol);
+            if (isValidLon(lon) && isValidLat(lat)) {
+                validParams.push({
+                    lon, lat,
+                    name: getStringVal(row, paramNameCol),
+                    rawObj: row
+                });
+            }
+        }
+        if (validParams.length === 0) {
+            alert("工参文件无有效经纬度点");
+            return;
+        }
+        paramPointsList = validParams;
+        gridIndex = buildGridIndex(paramPointsList);
+        document.getElementById("paramCount").innerText = paramPointsList.length;
+
+        const totalRaw = rawData.length;
+        if (totalRaw > 5000 && !confirm(\`原始点数量 \${totalRaw}，预计需要几十秒，是否继续？\`)) return;
+
+        isMatching = true;
+        const runBtn = document.getElementById("runMatchBtn");
+        runBtn.disabled = true;
+        runBtn.textContent = "⏳ 匹配中...";
+        document.getElementById("progressArea").style.display = "block";
+        const progressFill = document.getElementById("progressFill");
+        const progressText = document.getElementById("progressText");
+        const msgDiv = document.getElementById("messageArea");
+        msgDiv.innerHTML = "匹配进行中，请稍候...";
+
+        const outputRows = [];
+        let processedRawCount = 0;
+        const chunkSize = 50;
+
+        for (let start = 0; start < totalRaw; start += chunkSize) {
+            const end = Math.min(start + chunkSize, totalRaw);
+            for (let i = start; i < end; i++) {
+                const rawRow = rawData[i];
+                const origLon = getNumberVal(rawRow, origLonCol);
+                const origLat = getNumberVal(rawRow, origLatCol);
+                if (!isValidLon(origLon) || !isValidLat(origLat)) {
+                    outputRows.push({
+                        rawRow: rawRow,
+                        usedAz: null,
+                        match: null,
+                        rank: null,
+                        warning: "经纬度无效"
+                    });
+                    processedRawCount++;
+                    continue;
+                }
+
+                let azimuths = [];
+                if (origAzCol && origAzCol !== "") {
+                    const azRaw = rawRow[origAzCol];
+                    if (azRaw !== undefined && azRaw !== null && azRaw !== "") {
+                        azimuths = splitAzimuths(azRaw);
+                    }
+                }
+                if (azimuths.length === 0) {
+                    const matches = matchSingleAzimuthTopN(origLon, origLat, null, topN, dedupMode, searchRadiusKm);
+                    if (matches.length === 0) {
+                        outputRows.push({
+                            rawRow: rawRow,
+                            usedAz: null,
+                            match: null,
+                            rank: null,
+                            warning: "无匹配点"
+                        });
+                    } else {
+                        for (let idx = 0; idx < matches.length; idx++) {
+                            outputRows.push({
+                                rawRow: rawRow,
+                                usedAz: null,
+                                match: matches[idx],
+                                rank: idx + 1,
+                                warning: null
+                            });
+                        }
+                    }
+                } else {
+                    for (let az of azimuths) {
+                        const matches = matchSingleAzimuthTopN(origLon, origLat, az, topN, dedupMode, searchRadiusKm);
+                        if (matches.length === 0) {
+                            outputRows.push({
+                                rawRow: rawRow,
+                                usedAz: az,
+                                match: null,
+                                rank: null,
+                                warning: "无匹配点"
+                            });
+                        } else {
+                            for (let idx = 0; idx < matches.length; idx++) {
+                                outputRows.push({
+                                    rawRow: rawRow,
+                                    usedAz: az,
+                                    match: matches[idx],
+                                    rank: idx + 1,
+                                    warning: null
+                                });
+                            }
+                        }
+                    }
+                }
+                processedRawCount++;
+            }
+            const percent = (end / totalRaw) * 100;
+            progressFill.style.width = percent + "%";
+            progressText.innerText = \`匹配进度: \${end} / \${totalRaw} 个原始点，已生成 \${outputRows.length} 行结果\`;
+            await new Promise(r => setTimeout(r, 5));
+        }
+
+        generateAndDownloadCSV(outputRows, origLonCol, origLatCol, origAzCol);
+        msgDiv.innerHTML = \`✅ 匹配完成！原始点 \${totalRaw} 个，输出结果 \${outputRows.length} 行（包含最近\${topN}点及去重），已自动下载。\`;
+        document.getElementById("progressArea").style.display = "none";
+        isMatching = false;
+        runBtn.disabled = false;
+        runBtn.textContent = "⚡ 开始匹配";
+    }
+
+    function generateAndDownloadCSV(outputRows, origLonCol, origLatCol, origAzCol) {
+        const headers = [
+            ...rawHeaders,
+            "使用方位角(度)",
+            "匹配序号",
+            "匹配工参名称",
+            "匹配工参经度",
+            "匹配工参纬度",
+            "距离(米)",
+            "工参方位角(°)",
+            "方位角差(°)",
+            "备注"
+        ];
+        const rows = [];
+        for (let item of outputRows) {
+            const rawRow = item.rawRow;
+            const rawValues = rawHeaders.map(h => rawRow[h] !== undefined ? rawRow[h] : "");
+            const usedAz = (item.usedAz !== null && item.usedAz !== undefined) ? item.usedAz : "";
+            const rank = item.rank !== null ? item.rank : "";
+            if (!item.match) {
+                rows.push([
+                    ...rawValues,
+                    usedAz,
+                    rank,
+                    "", "", "", "", "", "",
+                    item.warning || "无匹配点"
+                ]);
+            } else {
+                const m = item.match;
+                rows.push([
+                    ...rawValues,
+                    usedAz,
+                    rank,
+                    m.name,
+                    m.lon.toFixed(6),
+                    m.lat.toFixed(6),
+                    m.distance_m.toFixed(2),
+                    m.bearing !== null ? m.bearing.toFixed(2) : "",
+                    m.angleDiff !== null ? m.angleDiff.toFixed(2) : "",
+                    item.warning || ""
+                ]);
+            }
+        }
+        let csvContent = rows.map(row => row.map(cell => \`"\${String(cell).replace(/"/g, '""')}"\`).join(",")).join("\\n");
+        const blob = new Blob(["\uFEFF" + headers.join(",") + "\\n" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = \`matched_result_\${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv\`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    function downloadSample() {
+        const sampleOrig = "原始经度,原始纬度,方位角,站点名称\\n120.123,30.234,45/90/135,测试站A\\n120.456,30.567,,无方位角站B\\n120.789,30.890,200,站点C";
+        const sampleParam = "工参经度,工参纬度,基站名称\\n120.122,30.233,近点1\\n120.130,30.240,近点2\\n120.200,30.300,远点1\\n120.100,30.200,西侧点\\n120.150,30.250,北侧点";
+        const blobOrig = new Blob(["\uFEFF" + sampleOrig], { type: "text/csv;charset=utf-8;" });
+        const blobParam = new Blob(["\uFEFF" + sampleParam], { type: "text/csv;charset=utf-8;" });
+        const a1 = document.createElement("a");
+        a1.href = URL.createObjectURL(blobOrig);
+        a1.download = "sample_original.csv";
+        const a2 = document.createElement("a");
+        a2.href = URL.createObjectURL(blobParam);
+        a2.download = "sample_parameter.csv";
+        document.body.appendChild(a1); a1.click(); document.body.removeChild(a1);
+        setTimeout(() => { document.body.appendChild(a2); a2.click(); document.body.removeChild(a2); URL.revokeObjectURL(a1.href); URL.revokeObjectURL(a2.href); }, 200);
+    }
+
+    function bindFileUpload(fileInputId, isOrig) {
+        const input = document.getElementById(fileInputId);
+        input.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const statusDiv = document.getElementById(fileInputId === "origFile" ? "origStatus" : "paramStatus");
+            statusDiv.innerHTML = \`⏳ 解析中: \${file.name}\`;
+            try {
+                const { data, headers } = await parseFile(file);
+                if (isOrig) { rawData = data; rawHeaders = headers; }
+                else { paramData = data; paramHeaders = headers; }
+                statusDiv.innerHTML = \`✅ 已加载 \${data.length} 行，列: \${headers.slice(0,5).join(", ")}\${headers.length>5?"...":""}\`;
+                if (isOrig) {
+                    updateSelectOptionsWithAuto(document.getElementById("origLonCol"), headers, 'lon', false);
+                    updateSelectOptionsWithAuto(document.getElementById("origLatCol"), headers, 'lat', false);
+                    updateSelectOptionsWithAuto(document.getElementById("origAzCol"), headers, 'az', true);
+                } else {
+                    updateSelectOptionsWithAuto(document.getElementById("paramLonCol"), headers, 'lon', false);
+                    updateSelectOptionsWithAuto(document.getElementById("paramLatCol"), headers, 'lat', false);
+                    updateSelectOptionsWithAuto(document.getElementById("paramNameCol"), headers, 'name', false);
+                    if (paramData && document.getElementById("paramLonCol").value && document.getElementById("paramLatCol").value) {
+                        const lonCol = document.getElementById("paramLonCol").value;
+                        const latCol = document.getElementById("paramLatCol").value;
+                        let cnt = 0;
+                        for (let row of paramData) {
+                            let lon = parseFloat(row[lonCol]), lat = parseFloat(row[latCol]);
+                            if (!isNaN(lon) && !isNaN(lat) && lon>=-180 && lon<=180 && lat>=-90 && lat<=90) cnt++;
+                        }
+                        document.getElementById("paramCount").innerText = cnt;
+                    } else document.getElementById("paramCount").innerText = paramData?.length || 0;
+                }
+            } catch(err) {
+                statusDiv.innerHTML = \`❌ 解析失败: \${err.message}\`;
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        bindFileUpload("origFile", true);
+        bindFileUpload("paramFile", false);
+        document.getElementById("runMatchBtn").addEventListener("click", runMatchAndDownload);
+        document.getElementById("downloadSample").addEventListener("click", downloadSample);
+    });
+<\/script>
+</body>
+</html>`;
 
             // ────────────────────────────────────────────
             // 工具4：KML转CSV工具 (来自kml转csv.html)
