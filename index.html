@@ -453,80 +453,801 @@
             // 工具2：新区方案关联匹配工具 (来自工具库-手改版v2)
             // ────────────────────────────────────────────
             toolHTMLs[1] = `<!DOCTYPE html>
-        <html lang="zh-CN">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-            <title>新区方案关联匹配工具</title>
-            <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
-            <style>
-                * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif; }
-                body { background: #eef2f5; margin: 0; padding: 16px 14px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
-                .container { max-width: 1400px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 14px 30px -8px rgba(0,0,0,0.1); overflow: hidden; }
-                .header { background: linear-gradient(135deg,#1a3c2c,#0e2a1f); padding: 20px 28px; color: white; }
-                .header h1 { margin: 0 0 6px; font-weight: 600; font-size: 1.5rem; }
-                .header p { margin: 0; opacity: 0.85; font-size: 0.82rem; }
-                .content { padding: 22px 28px 28px; }
-                .upload-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 22px; }
-                .upload-card { flex: 1; min-width: 200px; background: #f9fafc; border-radius: 20px; padding: 14px 18px; border: 1px solid #e2edf2; }
-                .upload-card label { font-weight: 700; color: #1f4e3c; display: block; margin-bottom: 8px; font-size: 0.9rem; }
-                .file-input { width: 100%; padding: 4px 0; font-size: 0.8rem; }
-                .file-status { font-size: 0.68rem; margin-top: 6px; background: #eef2fa; display: inline-block; padding: 3px 10px; border-radius: 30px; }
-                .action-bar { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
-                .btn { border: none; padding: 11px 26px; border-radius: 40px; font-weight: 600; cursor: pointer; font-size: 0.88rem; transition: 0.2s; }
-                .btn-primary { background: #1f6e43; color: white; }
-                .btn-primary:hover { background: #0f5537; transform: translateY(-1px); }
-                .btn-secondary { background: #3a6b8f; color: white; }
-                .btn-secondary:hover { background: #2a5470; }
-                .log-area { background: #f0f4fa; border-radius: 18px; padding: 14px 20px; font-family: 'SF Mono', monospace; font-size: 0.75rem; color: #1e3b4a; border: 1px solid #cfdfed; margin-top: 16px; white-space: pre-wrap; word-break: break-word; max-height: 350px; overflow-y: auto; }
-                .footer-note { font-size: 0.68rem; text-align: center; border-top: 1px solid #e2edf2; padding: 12px; color: #6f8faa; background: #fbfdfe; }
-                .debug-note { background: #fff3cd; border-left: 4px solid #ffc107; padding: 8px 12px; margin-bottom: 14px; font-size: 0.75rem; border-radius: 10px; }
-        </style>
-        </head>
-        <body>
-        <div class="container">
-            <div class="header"><h1>📡 新区方案关联匹配工具</h1><p>基础匹配+补充匹配 | 完整输出列</p></div>
-            <div class="content">
-                <div class="debug-note">💡 功能：1️⃣基础匹配(2文件) 2️⃣补充匹配(3文件)自动筛除取消方案 3️⃣需求名称从基站名获取</div>
-                <div class="upload-grid">
-                    <div class="upload-card"><label>📂 1. 输出结果表(需含Sheet1)</label><input type="file" id="fileOutput" accept=".xlsx,.xls,.xlsm" class="file-input"><div id="outputStatus" class="file-status">⚡ 未上传</div></div>
-                    <div class="upload-card"><label>🗂️ 2. 新区数据导出(需含新区数据)</label><input type="file" id="fileDistrict" accept=".xlsx,.xls" class="file-input"><div id="districtStatus" class="file-status">📎 未上传</div></div>
-                    <div class="upload-card"><label>⚠️ 3. 问题区域列表详情(可选)</label><input type="file" id="fileProblem" accept=".xlsx,.xls" class="file-input"><div id="problemStatus" class="file-status">🔍 未上传</div></div>
-                </div>
-                <div class="action-bar"><button class="btn btn-primary" id="runBtn">🚀 执行匹配并生成结果表</button><button class="btn btn-secondary" id="resetBtn">🔄 重置全部</button></div>
-                <div id="logMsg" class="log-area">✅ 就绪。请上传文件，点击执行。</div>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>新区方案关联匹配工具</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', 'Noto Sans', sans-serif;
+        }
+        body {
+            background: #eef2f5;
+            margin: 0;
+            padding: 24px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1500px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a3c2c, #0e2a1f);
+            padding: 24px 32px;
+            color: white;
+        }
+        .header h1 {
+            margin: 0 0 8px;
+            font-weight: 600;
+            font-size: 1.9rem;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.85;
+            font-size: 0.9rem;
+        }
+        .content {
+            padding: 28px 32px 36px;
+        }
+        .upload-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 32px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 28px;
+        }
+        .upload-card {
+            flex: 1;
+            min-width: 240px;
+            background: #f9fafc;
+            border-radius: 24px;
+            padding: 16px 20px;
+            border: 1px solid #e2edf2;
+        }
+        .upload-card label {
+            font-weight: 700;
+            color: #1f4e3c;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .file-input {
+            width: 100%;
+            padding: 6px 0;
+        }
+        .file-status {
+            font-size: 0.7rem;
+            margin-top: 8px;
+            background: #eef2fa;
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 40px;
+        }
+        .date-range {
+            background: #eef2fa;
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin: 16px 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .date-range label {
+            font-weight: 600;
+            color: #1f4e3c;
+            margin-right: 4px;
+        }
+        .date-range input {
+            padding: 6px 10px;
+            border-radius: 20px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+        }
+        .action-bar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0 20px;
+        }
+        .btn {
+            border: none;
+            padding: 12px 32px;
+            border-radius: 48px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+        .btn-primary {
+            background: #1f6e43;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover {
+            background: #0f5537;
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #3a6b8f;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #2a5470;
+        }
+        .log-area {
+            background: #f0f4fa;
+            border-radius: 20px;
+            padding: 16px 24px;
+            font-family: 'SF Mono', monospace;
+            font-size: 0.8rem;
+            color: #1e3b4a;
+            border: 1px solid #cfdfed;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+        .footer {
+            font-size: 0.7rem;
+            text-align: center;
+            border-top: 1px solid #e2edf2;
+            padding: 16px;
+            color: #6f8faa;
+            background: #fbfdfe;
+        }
+        .badge-info {
+            background: #e9ecef;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>📡 新区方案关联匹配工具</h1>
+        <p>基础匹配 + 补充匹配 | 交付时间可按具体日期范围筛选</p>
+    </div>
+    <div class="content">
+        <div class="upload-grid">
+            <div class="upload-card">
+                <label>📂 1. 输出结果表</label>
+                <input type="file" id="fileOutput" accept=".xlsx, .xls, .xlsm" class="file-input">
+                <div id="outputStatus" class="file-status">⚡ 未上传</div>
+                <div class="badge-info">提取“新区编号”列用于匹配，并复制“需求名称”列</div>
             </div>
-            <div class="footer-note">⚙️ 匹配逻辑：基础匹配+补充匹配，输出Sheet2含完整列</div>
+            <div class="upload-card">
+                <label>🗂️ 2. 新区数据导出</label>
+                <input type="file" id="fileDistrict" accept=".xlsx, .xls" class="file-input">
+                <div id="districtStatus" class="file-status">📎 未上传</div>
+                <div class="badge-info">提供编号、交付时间、室内室外等基础属性</div>
+            </div>
+            <div class="upload-card">
+                <label>⚠️ 3. 问题区域列表详情</label>
+                <input type="file" id="fileProblem" accept=".xlsx, .xls" class="file-input">
+                <div id="problemStatus" class="file-status">🔍 未上传</div>
+                <div class="badge-info">需包含「问题区域列表」（UNICODE、审核状态、审核结果）和「规划方案列表」（问题编码、基站名、需求库序号、制式）<br>补充匹配自动排除“审核结果=取消方案”</div>
+            </div>
         </div>
-        <script>
-            const FIXED_SHEET2_HEADERS=["需求ID","新区编号","新区类型","区域类型","新区名称","覆盖场景","需求库序号","逻辑系统编号","端到端ID","需求名称","制式","地市","县市","工单节点","新区标签","交付时间","建设项目"];
-            let outputWorkbook=null,districtWorkbook=null,problemWorkbook=null,outputSheet1Array=null,districtSheetArray=null,problemListArray=null,planListArray=null;
-            const fileOutput=document.getElementById('fileOutput'),fileDistrict=document.getElementById('fileDistrict'),fileProblem=document.getElementById('fileProblem');
-            const runBtn=document.getElementById('runBtn'),resetBtn=document.getElementById('resetBtn');
-            const outputStatusSpan=document.getElementById('outputStatus'),districtStatusSpan=document.getElementById('districtStatus'),problemStatusSpan=document.getElementById('problemStatus'),logMsgDiv=document.getElementById('logMsg');
-            function setLog(msg,isError=false){const prefix=isError?'⚠️ ':'✅ ';logMsgDiv.innerHTML+=(logMsgDiv.innerHTML?'\\n':'')+prefix+msg;logMsgDiv.scrollTop=logMsgDiv.scrollHeight;}
-            function clearLog(){logMsgDiv.innerHTML='';}
-            function resetAll(){outputWorkbook=null;districtWorkbook=null;problemWorkbook=null;outputSheet1Array=null;districtSheetArray=null;problemListArray=null;planListArray=null;fileOutput.value='';fileDistrict.value='';fileProblem.value='';outputStatusSpan.innerHTML='⚡ 未上传';districtStatusSpan.innerHTML='📎 未上传';problemStatusSpan.innerHTML='🔍 未上传';clearLog();setLog('已重置。');}
-            function sheetToArray(sheet){if(!sheet)return[];const data=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});return data&&data.length?data:[];}
-            function arrayToSheet(dataArray){if(!dataArray||dataArray.length===0)return XLSX.utils.aoa_to_sheet([[]]);return XLSX.utils.aoa_to_sheet(dataArray);}
-            function findColumnIndex(headers,targetNames){const lowerHeaders=headers.map(h=>String(h).trim().toLowerCase());for(let target of targetNames){const lowerTarget=target.toLowerCase();const idx=lowerHeaders.findIndex(h=>h===lowerTarget);if(idx!==-1)return idx;}return -1;}
-            function excelSerialToDate(serial){if(typeof serial==='number'&&!isNaN(serial)&&serial>0){const date=XLSX.SSF.parse_date_code(serial);if(date&&date.y){return new Date(date.y,date.m-1,date.d);}}return null;}
-            function extractYear(deliveryValue){if(!deliveryValue&&deliveryValue!==0)return null;if(deliveryValue instanceof Date)return deliveryValue.getFullYear();if(typeof deliveryValue==='number'){const date=excelSerialToDate(deliveryValue);if(date)return date.getFullYear();}const str=String(deliveryValue).trim();if(str==="")return null;if(/^\d+$/.test(str)&&str.length>=5){const num=parseInt(str,10);if(!isNaN(num)){const date=excelSerialToDate(num);if(date)return date.getFullYear();}}const match=str.match(/(\d{4})/);if(match)return parseInt(match[1],10);return null;}
-            async function loadOutputWorkbook(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){const data=new Uint8Array(e.target.result);let workbook;try{workbook=XLSX.read(data,{type:'array',cellDates:false,defval:""});}catch(err){reject(new Error("Excel解析失败："+err.message));return;}const sheet1=workbook.Sheets["Sheet1"];if(!sheet1)reject(new Error("缺少工作表Sheet1"));const sheet1Arr=sheetToArray(sheet1);if(sheet1Arr.length<1)reject(new Error("Sheet1无数据"));outputWorkbook=workbook;outputSheet1Array=sheet1Arr;resolve({headers:sheet1Arr[0],rowCount:sheet1Arr.length-1});};reader.onerror=(err)=>reject(err);reader.readAsArrayBuffer(file);});}
-            async function loadDistrictWorkbook(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){const data=new Uint8Array(e.target.result);let wb;try{wb=XLSX.read(data,{type:'array'});}catch(err){reject(new Error("解析失败："+err.message));return;}const districtSheet=wb.Sheets["新区数据"];if(!districtSheet)reject(new Error("缺少工作表新区数据"));const districtArr=sheetToArray(districtSheet);if(districtArr.length<1)reject(new Error("新区数据表为空"));districtWorkbook=wb;districtSheetArray=districtArr;resolve({headers:districtArr[0],rowCount:districtArr.length-1});};reader.onerror=(err)=>reject(err);reader.readAsArrayBuffer(file);});}
-            async function loadProblemWorkbook(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){const data=new Uint8Array(e.target.result);let wb;try{wb=XLSX.read(data,{type:'array'});}catch(err){reject(new Error("解析失败："+err.message));return;}const problemSheet=wb.Sheets["问题区域列表"];const planSheet=wb.Sheets["规划方案列表"];if(!problemSheet)reject(new Error("缺少工作表问题区域列表"));if(!planSheet)reject(new Error("缺少工作表规划方案列表"));const problemArr=sheetToArray(problemSheet);const planArr=sheetToArray(planSheet);if(problemArr.length<1||planArr.length<1)reject(new Error("工作表为空"));problemWorkbook=wb;problemListArray=problemArr;planListArray=planArr;resolve({problemHeaders:problemArr[0],planHeaders:planArr[0]});};reader.onerror=(err)=>reject(err);reader.readAsArrayBuffer(file);});}
-            function generateBasicRows(){if(!outputSheet1Array||!districtSheetArray){throw new Error("输出结果表或新区数据表未加载");}const sheet1Headers=outputSheet1Array[0].map(h=>String(h).trim());const sheet1DataRows=outputSheet1Array.slice(1);const districtHeaders=districtSheetArray[0].map(h=>String(h).trim());const districtIdxMap={};districtHeaders.forEach((h,idx)=>{districtIdxMap[h]=idx;});const numberIdx=findColumnIndex(districtHeaders,["编号","新区编号"]);if(numberIdx===-1)throw new Error("新区数据表中无编号列");const indoorOutdoorIdx=findColumnIndex(districtHeaders,["室内室外","室内外","场景类型"]);if(indoorOutdoorIdx===-1)setLog("警告:新区数据表中未找到室内室外列");const districtMap=new Map();for(let i=1;i<districtSheetArray.length;i++){const row=districtSheetArray[i];const key=numberIdx<row.length?String(row[numberIdx]).trim():"";if(key)districtMap.set(key,row);}const fieldsToFetch=[{target:"区域类型",source:"区域类型"},{target:"新区名称",source:"新区名称"},{target:"覆盖场景",source:"覆盖场景"},{target:"地市",source:"地市"},{target:"县市",source:"县市"},{target:"交付时间",source:"交付时间"},{target:"制式",source:"制式"},{target:"需求库序号",source:"需求库序号"}];const sheet2HeaderIdx={};FIXED_SHEET2_HEADERS.forEach((h,idx)=>{sheet2HeaderIdx[h]=idx;});const copyColumns=FIXED_SHEET2_HEADERS.filter(col=>sheet1Headers.includes(col)&&col!=="需求ID"&&col!=="端到端ID");const sheet1IdxMap={};sheet1Headers.forEach((h,idx)=>{sheet1IdxMap[h]=idx;});const basicRows=[];for(let i=0;i<sheet1DataRows.length;i++){const sourceRow=sheet1DataRows[i];const newRow=new Array(FIXED_SHEET2_HEADERS.length).fill("");for(let col of copyColumns){const srcIdx=sheet1IdxMap[col];const tgtIdx=sheet2HeaderIdx[col];if(srcIdx!==undefined&&tgtIdx!==undefined){let val=srcIdx<sourceRow.length?sourceRow[srcIdx]:"";if(val!==undefined&&val!==null)newRow[tgtIdx]=val;}}const reqIdIdx=sheet2HeaderIdx["需求ID"];const endToEndIdx=sheet2HeaderIdx["端到端ID"];let reqIdValue="";const srcReqIdIdx=findColumnIndex(sheet1Headers,["需求ID","需求编号"]);if(srcReqIdIdx!==-1&&srcReqIdIdx<sourceRow.length){reqIdValue=sourceRow[srcReqIdIdx];if(reqIdValue!==undefined&&reqIdValue!==null)reqIdValue=String(reqIdValue);}if(reqIdIdx!==undefined)newRow[reqIdIdx]=reqIdValue;if(endToEndIdx!==undefined)newRow[endToEndIdx]=reqIdValue;let districtNo="";const noIdx=sheet2HeaderIdx["新区编号"];if(noIdx!==undefined&&newRow[noIdx]){districtNo=String(newRow[noIdx]).trim();}else{const srcNoIdx=findColumnIndex(sheet1Headers,["新区编号","编号"]);if(srcNoIdx!==-1)districtNo=String(sourceRow[srcNoIdx]||"").trim();}if(districtNo&&districtMap.has(districtNo)){const districtRow=districtMap.get(districtNo);const newTypeIdx=sheet2HeaderIdx["新区类型"];if(newTypeIdx!==undefined&&indoorOutdoorIdx!==-1){let val=indoorOutdoorIdx<districtRow.length?districtRow[indoorOutdoorIdx]:"";if(val!==undefined&&val!==null)newRow[newTypeIdx]=val;}for(let field of fieldsToFetch){const tgtIdx=sheet2HeaderIdx[field.target];if(tgtIdx!==undefined&&districtIdxMap[field.source]!==undefined){let val=districtRow[districtIdxMap[field.source]];if(val instanceof Date)val=XLSX.SSF.format("yyyy-mm-dd",val);if(val!==undefined&&val!==null)newRow[tgtIdx]=val;}}}basicRows.push(newRow);}setLog("基础匹配生成 "+basicRows.length+" 行");return basicRows;}
-            function generateSupplementaryRows(){if(!problemListArray||!planListArray||!districtSheetArray){throw new Error("问题区域数据或新区数据表未加载");}const problemHeaders=problemListArray[0].map(h=>String(h).trim());const unicodeIdx=findColumnIndex(problemHeaders,["UNICODE","unicode","编码","新区编码","问题编码"]);if(unicodeIdx===-1)throw new Error("问题区域列表中未找到UNICODE列");const auditResultIdx=findColumnIndex(problemHeaders,["审核结果","审核结论","结果"]);const auditStatusIdx=findColumnIndex(problemHeaders,["审核状态","新区状态","状态"]);if(auditStatusIdx===-1)throw new Error("问题区域列表中未找到审核状态列");const validProblemItems=[];let cancelledCount=0;for(let i=1;i<problemListArray.length;i++){const row=problemListArray[i];const unicode=unicodeIdx<row.length?String(row[unicodeIdx]).trim():"";if(!unicode)continue;let auditResult="";if(auditResultIdx!==-1){auditResult=auditResultIdx<row.length?String(row[auditResultIdx]).trim():"";if(auditResult==="取消方案"){cancelledCount++;continue;}}const auditStatus=auditStatusIdx<row.length?String(row[auditStatusIdx]).trim():"";validProblemItems.push({unicode,auditStatus});}setLog("补充匹配-筛除取消方案后剩余 "+validProblemItems.length+" 条（排除 "+cancelledCount+" 条）");if(validProblemItems.length===0)return[];const outputHeaders=outputSheet1Array[0].map(h=>String(h).trim());const districtNoIdx=findColumnIndex(outputHeaders,["新区编号","编号"]);if(districtNoIdx===-1)throw new Error("输出结果表Sheet1中未找到新区编号列");const outputSet=new Set();for(let i=1;i<outputSheet1Array.length;i++){const val=outputSheet1Array[i][districtNoIdx]!==undefined?String(outputSheet1Array[i][districtNoIdx]).trim():"";if(val)outputSet.add(val);}const missingItems=validProblemItems.filter(item=>!outputSet.has(item.unicode));setLog("补充匹配-缺失UNICODE数量 "+missingItems.length);if(missingItems.length===0)return[];const districtHeaders=districtSheetArray[0].map(h=>String(h).trim());const numberIdx=findColumnIndex(districtHeaders,["编号","新区编号"]);const deliveryIdx=findColumnIndex(districtHeaders,["交付时间","交付日期"]);if(numberIdx===-1||deliveryIdx===-1)throw new Error("新区数据表中缺少编号或交付时间列");const delivery2026Set=new Set();for(let i=1;i<districtSheetArray.length;i++){const row=districtSheetArray[i];const unicode=numberIdx<row.length?String(row[numberIdx]).trim():"";if(!unicode)continue;const year=extractYear(deliveryIdx<row.length?row[deliveryIdx]:"");if(year===2026)delivery2026Set.add(unicode);}setLog("补充匹配-交付2026年编号数 "+delivery2026Set.size);const validUnicodes=[];for(const item of missingItems){if(delivery2026Set.has(item.unicode)&&(item.auditStatus==="省公司审核中"||item.auditStatus==="已完成")){validUnicodes.push(item.unicode);}}setLog("补充匹配-联合筛选后剩余 "+validUnicodes.length);if(validUnicodes.length===0)return[];const planHeaders=planListArray[0].map(h=>String(h).trim());const planKeyIdx=findColumnIndex(planHeaders,["问题编码","问题编号","UNICODE","unicode","编码"]);if(planKeyIdx===-1)throw new Error("规划方案列表中未找到匹配列");const baseStationIdx=findColumnIndex(planHeaders,["基站名","基站名称","需求名称"]);const reqSerialIdx=findColumnIndex(planHeaders,["需求库序号","需求库编号","库序号"]);const techTypeIdx=findColumnIndex(planHeaders,["制式","技术制式","网络制式"]);const validSet=new Set(validUnicodes);const filteredPlans=[];for(let i=1;i<planListArray.length;i++){const row=planListArray[i];const keyVal=planKeyIdx<row.length?String(row[planKeyIdx]).trim():"";if(keyVal&&validSet.has(keyVal)){filteredPlans.push({unicode:keyVal,rawRow:row,reqSerial:(reqSerialIdx!==-1&&reqSerialIdx<row.length)?row[reqSerialIdx]:"",techType:(techTypeIdx!==-1&&techTypeIdx<row.length)?row[techTypeIdx]:"",baseName:(baseStationIdx!==-1&&baseStationIdx<row.length)?row[baseStationIdx]:""});}}setLog("补充匹配-规划方案匹配行数 "+filteredPlans.length);const districtMap=new Map();for(let i=1;i<districtSheetArray.length;i++){const row=districtSheetArray[i];const key=numberIdx<row.length?String(row[numberIdx]).trim():"";if(key)districtMap.set(key,row);}const districtIdxMap2={};districtHeaders.forEach((h,idx)=>{districtIdxMap2[h]=idx;});const indoorOutdoorIdx2=findColumnIndex(districtHeaders,["室内室外","室内外","场景类型"]);const fieldsToFetch2=["区域类型","新区名称","覆盖场景","地市","县市","交付时间"];const sheet2HeaderIdx2={};FIXED_SHEET2_HEADERS.forEach((h,idx)=>{sheet2HeaderIdx2[h]=idx;});const supplementaryRows=[];for(const item of filteredPlans){const districtRow=districtMap.get(item.unicode);if(!districtRow){continue;}const newRow=new Array(FIXED_SHEET2_HEADERS.length).fill("");const noIdx2=sheet2HeaderIdx2["新区编号"];if(noIdx2!==undefined)newRow[noIdx2]=item.unicode;const newTypeIdx2=sheet2HeaderIdx2["新区类型"];if(newTypeIdx2!==undefined&&indoorOutdoorIdx2!==-1){let val=indoorOutdoorIdx2<districtRow.length?districtRow[indoorOutdoorIdx2]:"";if(val!==undefined&&val!==null)newRow[newTypeIdx2]=val;}for(let field of fieldsToFetch2){const tgtIdx=sheet2HeaderIdx2[field];if(tgtIdx!==undefined&&districtIdxMap2[field]!==undefined){let val=districtRow[districtIdxMap2[field]];if(val instanceof Date)val=XLSX.SSF.format("yyyy-mm-dd",val);if(val!==undefined&&val!==null)newRow[tgtIdx]=val;}}const reqSerialTgt=sheet2HeaderIdx2["需求库序号"];if(reqSerialTgt!==undefined&&item.reqSerial)newRow[reqSerialTgt]=item.reqSerial;const techTypeTgt=sheet2HeaderIdx2["制式"];if(techTypeTgt!==undefined&&item.techType)newRow[techTypeTgt]=item.techType;const reqNameIdx=sheet2HeaderIdx2["需求名称"];if(reqNameIdx!==undefined&&item.baseName)newRow[reqNameIdx]=String(item.baseName);const reqIdIdx2=sheet2HeaderIdx2["需求ID"];const endToEndIdx2=sheet2HeaderIdx2["端到端ID"];if(reqIdIdx2!==undefined)newRow[reqIdIdx2]="";if(endToEndIdx2!==undefined)newRow[endToEndIdx2]="";supplementaryRows.push(newRow);}setLog("补充匹配-成功生成补充行数 "+supplementaryRows.length);return supplementaryRows;}
-            async function executeFullWorkflow(){if(!outputWorkbook||!districtWorkbook){setLog("请至少上传输出结果表和新区数据导出两个文件",true);return false;}try{clearLog();setLog("开始执行匹配流程...");const basicRows=generateBasicRows();let allRows=[...basicRows];let hasProblem=(problemWorkbook&&problemListArray&&planListArray);if(hasProblem){setLog("检测到问题区域文件，开始执行补充匹配...");const supplementaryRows=generateSupplementaryRows();if(supplementaryRows.length>0){allRows=allRows.concat(supplementaryRows);setLog("已将 "+supplementaryRows.length+" 行补充数据追加到结果末尾");}else{setLog("补充匹配未生成任何行");}}else{setLog("未上传问题区域文件，仅输出基础匹配结果");}const finalData=[FIXED_SHEET2_HEADERS,...allRows];const newSheet2=arrayToSheet(finalData);if(outputWorkbook.Sheets["Sheet2"])delete outputWorkbook.Sheets["Sheet2"];outputWorkbook.SheetNames=outputWorkbook.SheetNames.filter(n=>n!=="Sheet2");outputWorkbook.SheetNames.push("Sheet2");outputWorkbook.Sheets["Sheet2"]=newSheet2;setLog("✅ 成功！共生成 "+allRows.length+" 行记录，已写入Sheet2。");return true;}catch(err){setLog("执行错误: "+err.message,true);return false;}}
-            function downloadFinal(){if(!outputWorkbook){setLog("没有可下载的工作簿",true);return;}const wbout=XLSX.write(outputWorkbook,{bookType:'xlsx',type:'array'});const blob=new Blob([wbout],{type:"application/octet-stream"});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download="匹配结果_"+new Date().toISOString().slice(0,19).replace(/:/g,'-')+".xlsx";link.click();URL.revokeObjectURL(link.href);setLog("文件已下载！");}
-            fileOutput.addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;outputStatusSpan.innerHTML='📄 解析中...';try{await loadOutputWorkbook(file);outputStatusSpan.innerHTML='✅ 已加载(Sheet1)';setLog("输出结果表加载成功，共 "+(outputSheet1Array.length-1)+" 行。");}catch(err){outputStatusSpan.innerHTML='❌ 失败';setLog("输出结果表错误: "+err.message,true);outputWorkbook=null;}});
-            fileDistrict.addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;districtStatusSpan.innerHTML='📂 读取中...';try{await loadDistrictWorkbook(file);districtStatusSpan.innerHTML='✅ 已加载(新区数据)';setLog("新区数据表加载成功，共 "+(districtSheetArray.length-1)+" 行。");}catch(err){districtStatusSpan.innerHTML='❌ 失败';setLog("新区数据错误: "+err.message,true);districtWorkbook=null;}});
-            fileProblem.addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;problemStatusSpan.innerHTML='🔍 解析中...';try{await loadProblemWorkbook(file);problemStatusSpan.innerHTML='✅ 已加载(双sheet)';setLog("问题区域详情加载成功。");}catch(err){problemStatusSpan.innerHTML='❌ 失败';setLog("问题区域文件错误: "+err.message,true);problemWorkbook=null;}});
-            runBtn.addEventListener('click',async()=>{if(!outputWorkbook||!districtWorkbook){setLog("请至少上传输出结果表和新区数据导出两个文件",true);return;}const success=await executeFullWorkflow();if(success)downloadFinal();});
-            resetBtn.addEventListener('click',()=>{resetAll();});
-        <\/script>
-        </body>
-        </html>`;
+
+        <div class="date-range">
+            <span style="font-weight:600;">📅 补充匹配交付时间筛选范围：</span>
+            <label>开始日期：</label>
+            <input type="date" id="startDate" value="2026-01-01">
+            <label>结束日期：</label>
+            <input type="date" id="endDate" value="2026-12-31">
+            <span style="font-size:0.75rem; color:#555;">（仅对上传了问题区域文件时的补充匹配生效）</span>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary" id="runBtn">🚀 执行匹配 & 生成结果表</button>
+            <button class="btn btn-secondary" id="resetBtn">🔄 重置全部</button>
+        </div>
+        <div id="logMsg" class="log-area">
+            ✅ 就绪。请上传文件，点击执行。
+        </div>
+    </div>
+    <div class="footer">
+        ⚙️ 匹配逻辑详见上方说明，输出文件包含完整的Sheet2。
+    </div>
+</div>
+
+<script>
+    // ========= 固定输出表头 =========
+    const FIXED_SHEET2_HEADERS = [
+        "需求ID", "新区编号", "新区类型", "区域类型", "新区名称", "覆盖场景",
+        "需求库序号", "逻辑系统编号", "端到端ID", "需求名称", "制式", "地市", "县市",
+        "工单节点", "新区标签", "交付时间", "建设项目"
+    ];
+
+    // 全局存储
+    let outputWorkbook = null;
+    let districtWorkbook = null;
+    let problemWorkbook = null;
+    let outputSheet1Array = null;
+    let districtSheetArray = null;
+    let problemListArray = null;
+    let planListArray = null;
+    
+    // DOM
+    const fileOutput = document.getElementById('fileOutput');
+    const fileDistrict = document.getElementById('fileDistrict');
+    const fileProblem = document.getElementById('fileProblem');
+    const runBtn = document.getElementById('runBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const outputStatusSpan = document.getElementById('outputStatus');
+    const districtStatusSpan = document.getElementById('districtStatus');
+    const problemStatusSpan = document.getElementById('problemStatus');
+    const logMsgDiv = document.getElementById('logMsg');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+
+    function setLog(msg, isError = false) {
+        const prefix = isError ? '⚠️ ' : '✅ ';
+        logMsgDiv.innerHTML += (logMsgDiv.innerHTML ? '\\n' : '') + prefix + msg;
+        logMsgDiv.scrollTop = logMsgDiv.scrollHeight;
+        console.log(msg);
+    }
+    function clearLog() {
+        logMsgDiv.innerHTML = '';
+    }
+
+    function resetAll() {
+        outputWorkbook = null;
+        districtWorkbook = null;
+        problemWorkbook = null;
+        outputSheet1Array = null;
+        districtSheetArray = null;
+        problemListArray = null;
+        planListArray = null;
+        fileOutput.value = '';
+        fileDistrict.value = '';
+        fileProblem.value = '';
+        outputStatusSpan.innerHTML = '⚡ 未上传';
+        districtStatusSpan.innerHTML = '📎 未上传';
+        problemStatusSpan.innerHTML = '🔍 未上传';
+        clearLog();
+        setLog('已重置，请重新上传文件。');
+    }
+
+    function sheetToArray(sheet) {
+        if (!sheet) return [];
+        const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        return data && data.length ? data : [];
+    }
+    function arrayToSheet(dataArray) {
+        if (!dataArray || dataArray.length === 0) return XLSX.utils.aoa_to_sheet([[]]);
+        return XLSX.utils.aoa_to_sheet(dataArray);
+    }
+
+    function findColumnIndex(headers, targetNames) {
+        const lowerHeaders = headers.map(h => String(h).trim().toLowerCase());
+        for (let target of targetNames) {
+            const lowerTarget = target.toLowerCase();
+            const idx = lowerHeaders.findIndex(h => h === lowerTarget);
+            if (idx !== -1) return idx;
+        }
+        return -1;
+    }
+
+    // 将各种可能的交付时间值转换为Date对象（用于比较）
+    function convertToDate(value) {
+        if (!value && value !== 0) return null;
+        // 已是Date对象
+        if (value instanceof Date) return value;
+        // Excel序列号数字
+        if (typeof value === 'number') {
+            const date = XLSX.SSF.parse_date_code(value);
+            if (date && date.y) {
+                return new Date(date.y, date.m - 1, date.d);
+            }
+        }
+        // 字符串
+        const str = String(value).trim();
+        if (str === "") return null;
+        // 尝试解析为数字（Excel序列号字符串）
+        if (/^\d+$/.test(str) && str.length >= 5) {
+            const num = parseInt(str, 10);
+            if (!isNaN(num)) {
+                const date = XLSX.SSF.parse_date_code(num);
+                if (date && date.y) {
+                    return new Date(date.y, date.m - 1, date.d);
+                }
+            }
+        }
+        // 尝试解析标准日期字符串
+        const parsed = new Date(str);
+        if (!isNaN(parsed.getTime())) return parsed;
+        return null;
+    }
+
+    // 加载输出结果表
+    async function loadOutputWorkbook(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                let workbook;
+                try {
+                    workbook = XLSX.read(data, { type: 'array', cellDates: false, defval: "" });
+                } catch(err) {
+                    reject(new Error("Excel解析失败：" + err.message));
+                    return;
+                }
+                const sheet1 = workbook.Sheets["Sheet1"];
+                if (!sheet1) reject(new Error("缺少工作表「Sheet1」"));
+                const sheet1Arr = sheetToArray(sheet1);
+                if (sheet1Arr.length < 1) reject(new Error("Sheet1 无数据"));
+                outputWorkbook = workbook;
+                outputSheet1Array = sheet1Arr;
+                resolve({ headers: sheet1Arr[0], rowCount: sheet1Arr.length - 1 });
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    async function loadDistrictWorkbook(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                let wb;
+                try {
+                    wb = XLSX.read(data, { type: 'array' });
+                } catch(err) {
+                    reject(new Error("解析失败：" + err.message));
+                    return;
+                }
+                const districtSheet = wb.Sheets["新区数据"];
+                if (!districtSheet) reject(new Error("缺少工作表「新区数据」"));
+                const districtArr = sheetToArray(districtSheet);
+                if (districtArr.length < 1) reject(new Error("新区数据表为空"));
+                districtWorkbook = wb;
+                districtSheetArray = districtArr;
+                resolve({ headers: districtArr[0], rowCount: districtArr.length - 1 });
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    async function loadProblemWorkbook(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                let wb;
+                try {
+                    wb = XLSX.read(data, { type: 'array' });
+                } catch(err) {
+                    reject(new Error("解析失败：" + err.message));
+                    return;
+                }
+                const problemSheet = wb.Sheets["问题区域列表"];
+                const planSheet = wb.Sheets["规划方案列表"];
+                if (!problemSheet) reject(new Error("缺少工作表「问题区域列表」"));
+                if (!planSheet) reject(new Error("缺少工作表「规划方案列表」"));
+                const problemArr = sheetToArray(problemSheet);
+                const planArr = sheetToArray(planSheet);
+                if (problemArr.length < 1 || planArr.length < 1) reject(new Error("工作表为空"));
+                problemWorkbook = wb;
+                problemListArray = problemArr;
+                planListArray = planArr;
+                resolve({ problemHeaders: problemArr[0], planHeaders: planArr[0] });
+            };
+            reader.onerror = (err) => reject(err);
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    // ========= 基础匹配 =========
+    function generateBasicRows() {
+        if (!outputSheet1Array || !districtSheetArray) {
+            throw new Error("输出结果表或新区数据表未加载");
+        }
+        const sheet1Headers = outputSheet1Array[0].map(h => String(h).trim());
+        const sheet1DataRows = outputSheet1Array.slice(1);
+        
+        const districtHeaders = districtSheetArray[0].map(h => String(h).trim());
+        const districtIdxMap = {};
+        districtHeaders.forEach((h, idx) => { districtIdxMap[h] = idx; });
+        const numberIdx = findColumnIndex(districtHeaders, ["编号", "新区编号"]);
+        if (numberIdx === -1) throw new Error("新区数据表中无「编号」列");
+        
+        const indoorOutdoorIdx = findColumnIndex(districtHeaders, ["室内室外", "室内外", "场景类型"]);
+        if (indoorOutdoorIdx === -1) setLog("警告: 新区数据表中未找到「室内室外」列，新区类型将为空");
+        
+        const districtMap = new Map();
+        for (let i = 1; i < districtSheetArray.length; i++) {
+            const row = districtSheetArray[i];
+            const key = numberIdx < row.length ? String(row[numberIdx]).trim() : "";
+            if (key) districtMap.set(key, row);
+        }
+        
+        const fieldsToFetch = [
+            { target: "区域类型", source: "区域类型" },
+            { target: "新区名称", source: "新区名称" },
+            { target: "覆盖场景", source: "覆盖场景" },
+            { target: "地市", source: "地市" },
+            { target: "县市", source: "县市" },
+            { target: "交付时间", source: "交付时间" },
+            { target: "制式", source: "制式" },
+            { target: "需求库序号", source: "需求库序号" }
+        ];
+        const sheet2HeaderIdx = {};
+        FIXED_SHEET2_HEADERS.forEach((h, idx) => { sheet2HeaderIdx[h] = idx; });
+        
+        const copyColumns = FIXED_SHEET2_HEADERS.filter(col => 
+            sheet1Headers.includes(col) && col !== "需求ID" && col !== "端到端ID"
+        );
+        const sheet1IdxMap = {};
+        sheet1Headers.forEach((h, idx) => { sheet1IdxMap[h] = idx; });
+        
+        const basicRows = [];
+        for (let i = 0; i < sheet1DataRows.length; i++) {
+            const sourceRow = sheet1DataRows[i];
+            const newRow = new Array(FIXED_SHEET2_HEADERS.length).fill("");
+            
+            for (let col of copyColumns) {
+                const srcIdx = sheet1IdxMap[col];
+                const tgtIdx = sheet2HeaderIdx[col];
+                if (srcIdx !== undefined && tgtIdx !== undefined) {
+                    let val = srcIdx < sourceRow.length ? sourceRow[srcIdx] : "";
+                    if (val !== undefined && val !== null) newRow[tgtIdx] = val;
+                }
+            }
+            
+            // 需求ID和端到端ID
+            const reqIdIdx = sheet2HeaderIdx["需求ID"];
+            const endToEndIdx = sheet2HeaderIdx["端到端ID"];
+            let reqIdValue = "";
+            const srcReqIdIdx = findColumnIndex(sheet1Headers, ["需求ID", "需求编号"]);
+            if (srcReqIdIdx !== -1 && srcReqIdIdx < sourceRow.length) {
+                reqIdValue = sourceRow[srcReqIdIdx];
+                if (reqIdValue !== undefined && reqIdValue !== null) reqIdValue = String(reqIdValue);
+            }
+            if (reqIdIdx !== undefined) newRow[reqIdIdx] = reqIdValue;
+            if (endToEndIdx !== undefined) newRow[endToEndIdx] = reqIdValue;
+            
+            let districtNo = "";
+            const noIdx = sheet2HeaderIdx["新区编号"];
+            if (noIdx !== undefined && newRow[noIdx]) {
+                districtNo = String(newRow[noIdx]).trim();
+            } else {
+                const srcNoIdx = findColumnIndex(sheet1Headers, ["新区编号", "编号"]);
+                if (srcNoIdx !== -1) districtNo = String(sourceRow[srcNoIdx] || "").trim();
+            }
+            
+            if (districtNo && districtMap.has(districtNo)) {
+                const districtRow = districtMap.get(districtNo);
+                const newTypeIdx = sheet2HeaderIdx["新区类型"];
+                if (newTypeIdx !== undefined && indoorOutdoorIdx !== -1) {
+                    let val = indoorOutdoorIdx < districtRow.length ? districtRow[indoorOutdoorIdx] : "";
+                    if (val !== undefined && val !== null) newRow[newTypeIdx] = val;
+                }
+                for (let field of fieldsToFetch) {
+                    const tgtIdx = sheet2HeaderIdx[field.target];
+                    if (tgtIdx !== undefined && districtIdxMap[field.source] !== undefined) {
+                        let val = districtRow[districtIdxMap[field.source]];
+                        if (val instanceof Date) val = XLSX.SSF.format("yyyy-mm-dd", val);
+                        if (val !== undefined && val !== null) newRow[tgtIdx] = val;
+                    }
+                }
+            }
+            basicRows.push(newRow);
+        }
+        setLog('基础匹配生成 ' + basicRows.length + ' 行');
+        return basicRows;
+    }
+    
+    // ========= 补充匹配（日期范围筛选） =========
+    function generateSupplementaryRows() {
+        if (!problemListArray || !planListArray || !districtSheetArray) {
+            throw new Error("问题区域数据或新区数据表未加载");
+        }
+        
+        // 获取用户选择的日期范围
+        let startDateStr = startDateInput.value;
+        let endDateStr = endDateInput.value;
+        if (!startDateStr || !endDateStr) {
+            setLog("请完整填写开始日期和结束日期", true);
+            return [];
+        }
+        const startDate = new Date(startDateStr);
+        const endDate = new Date(endDateStr);
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            setLog("日期格式无效", true);
+            return [];
+        }
+        // 设置结束日期为当天结束（23:59:59.999）以便包含整天
+        endDate.setHours(23, 59, 59, 999);
+        setLog('补充匹配-交付日期筛选范围: ' + startDateStr + ' 至 ' + endDateStr);
+        
+        const problemHeaders = problemListArray[0].map(h => String(h).trim());
+        const unicodeIdx = findColumnIndex(problemHeaders, ["UNICODE", "unicode", "编码", "新区编码", "问题编码"]);
+        if (unicodeIdx === -1) throw new Error("问题区域列表中未找到「UNICODE」列");
+        
+        const auditResultIdx = findColumnIndex(problemHeaders, ["审核结果", "审核结论", "结果"]);
+        if (auditResultIdx === -1) setLog("警告: 问题区域列表中未找到「审核结果」列，将不会筛除取消方案记录", false);
+        
+        const auditStatusIdx = findColumnIndex(problemHeaders, ["审核状态", "新区状态", "状态"]);
+        if (auditStatusIdx === -1) throw new Error("问题区域列表中未找到「审核状态」或「新区状态」列");
+        
+        // 筛除取消方案
+        const validProblemItems = [];
+        let cancelledCount = 0;
+        for (let i = 1; i < problemListArray.length; i++) {
+            const row = problemListArray[i];
+            const unicode = unicodeIdx < row.length ? String(row[unicodeIdx]).trim() : "";
+            if (!unicode) continue;
+            let auditResult = "";
+            if (auditResultIdx !== -1) {
+                auditResult = auditResultIdx < row.length ? String(row[auditResultIdx]).trim() : "";
+                if (auditResult === "取消方案") {
+                    cancelledCount++;
+                    continue;
+                }
+            }
+            const auditStatus = auditStatusIdx < row.length ? String(row[auditStatusIdx]).trim() : "";
+            validProblemItems.push({ unicode, auditStatus });
+        }
+        setLog('补充匹配-筛除“取消方案”后剩余 ' + validProblemItems.length + ' 条（共排除 ' + cancelledCount + ' 条）');
+        if (validProblemItems.length === 0) return [];
+        
+        // 缺失UNICODE
+        const outputHeaders = outputSheet1Array[0].map(h => String(h).trim());
+        const districtNoIdx = findColumnIndex(outputHeaders, ["新区编号", "编号"]);
+        if (districtNoIdx === -1) throw new Error("输出结果表Sheet1中未找到「新区编号」列");
+        const outputSet = new Set();
+        for (let i = 1; i < outputSheet1Array.length; i++) {
+            const val = outputSheet1Array[i][districtNoIdx] !== undefined ? String(outputSheet1Array[i][districtNoIdx]).trim() : "";
+            if (val) outputSet.add(val);
+        }
+        const missingItems = validProblemItems.filter(item => !outputSet.has(item.unicode));
+        setLog('补充匹配-缺失UNICODE数量 ' + missingItems.length);
+        if (missingItems.length === 0) return [];
+        
+        // 联合筛选：交付日期在范围内 + 审核状态符合
+        const districtHeaders = districtSheetArray[0].map(h => String(h).trim());
+        const numberIdx = findColumnIndex(districtHeaders, ["编号", "新区编号"]);
+        const deliveryIdx = findColumnIndex(districtHeaders, ["交付时间", "交付日期"]);
+        if (numberIdx === -1 || deliveryIdx === -1) throw new Error("新区数据表中缺少编号或交付时间列");
+        
+        const deliveryDateSet = new Set(); // 存储编号，其交付日期在范围内
+        for (let i = 1; i < districtSheetArray.length; i++) {
+            const row = districtSheetArray[i];
+            const unicode = numberIdx < row.length ? String(row[numberIdx]).trim() : "";
+            if (!unicode) continue;
+            const deliveryRaw = deliveryIdx < row.length ? row[deliveryIdx] : "";
+            const deliveryDate = convertToDate(deliveryRaw);
+            if (deliveryDate && deliveryDate >= startDate && deliveryDate <= endDate) {
+                deliveryDateSet.add(unicode);
+            }
+        }
+        setLog('补充匹配-交付日期在 ' + startDateStr + ' 至 ' + endDateStr + ' 内的编号数量: ' + deliveryDateSet.size);
+        
+        const validUnicodes = [];
+        for (const item of missingItems) {
+            if (deliveryDateSet.has(item.unicode) && 
+                (item.auditStatus === "省公司审核中" || item.auditStatus === "已完成")) {
+                validUnicodes.push(item.unicode);
+            }
+        }
+        setLog('补充匹配-联合筛选后剩余 ' + validUnicodes.length);
+        if (validUnicodes.length === 0) return [];
+        
+        // 规划方案列表匹配
+        const planHeaders = planListArray[0].map(h => String(h).trim());
+        const planKeyIdx = findColumnIndex(planHeaders, ["问题编码", "问题编号", "UNICODE", "unicode", "编码"]);
+        if (planKeyIdx === -1) throw new Error("规划方案列表中未找到匹配列");
+        const baseStationIdx = findColumnIndex(planHeaders, ["基站名", "基站名称", "需求名称"]);
+        const reqSerialIdx = findColumnIndex(planHeaders, ["需求库序号", "需求库编号", "库序号"]);
+        const techTypeIdx = findColumnIndex(planHeaders, ["制式", "技术制式", "网络制式"]);
+        if (reqSerialIdx === -1) setLog("警告: 规划方案列表中未找到「需求库序号」列");
+        if (techTypeIdx === -1) setLog("警告: 规划方案列表中未找到「制式」列");
+        
+        const validSet = new Set(validUnicodes);
+        const filteredPlans = [];
+        for (let i = 1; i < planListArray.length; i++) {
+            const row = planListArray[i];
+            const keyVal = planKeyIdx < row.length ? String(row[planKeyIdx]).trim() : "";
+            if (keyVal && validSet.has(keyVal)) {
+                filteredPlans.push({
+                    unicode: keyVal,
+                    rawRow: row,
+                    reqSerial: (reqSerialIdx !== -1 && reqSerialIdx < row.length) ? row[reqSerialIdx] : "",
+                    techType: (techTypeIdx !== -1 && techTypeIdx < row.length) ? row[techTypeIdx] : "",
+                    baseName: (baseStationIdx !== -1 && baseStationIdx < row.length) ? row[baseStationIdx] : ""
+                });
+            }
+        }
+        setLog('补充匹配-规划方案匹配行数 ' + filteredPlans.length);
+        
+        // 新区数据映射
+        const districtMap = new Map();
+        for (let i = 1; i < districtSheetArray.length; i++) {
+            const row = districtSheetArray[i];
+            const key = numberIdx < row.length ? String(row[numberIdx]).trim() : "";
+            if (key) districtMap.set(key, row);
+        }
+        const districtIdxMap = {};
+        districtHeaders.forEach((h, idx) => { districtIdxMap[h] = idx; });
+        const indoorOutdoorIdx = findColumnIndex(districtHeaders, ["室内室外", "室内外", "场景类型"]);
+        const fieldsToFetch = ["区域类型", "新区名称", "覆盖场景", "地市", "县市", "交付时间"];
+        const sheet2HeaderIdx = {};
+        FIXED_SHEET2_HEADERS.forEach((h, idx) => { sheet2HeaderIdx[h] = idx; });
+        
+        const supplementaryRows = [];
+        for (const item of filteredPlans) {
+            const districtRow = districtMap.get(item.unicode);
+            if (!districtRow) {
+                setLog('  警告: 问题编码 ' + item.unicode + ' 在新区数据中不存在，跳过');
+                continue;
+            }
+            const newRow = new Array(FIXED_SHEET2_HEADERS.length).fill("");
+            const noIdx = sheet2HeaderIdx["新区编号"];
+            if (noIdx !== undefined) newRow[noIdx] = item.unicode;
+            
+            // 新区类型
+            const newTypeIdx = sheet2HeaderIdx["新区类型"];
+            if (newTypeIdx !== undefined && indoorOutdoorIdx !== -1) {
+                let val = indoorOutdoorIdx < districtRow.length ? districtRow[indoorOutdoorIdx] : "";
+                if (val !== undefined && val !== null) newRow[newTypeIdx] = val;
+            }
+            for (let field of fieldsToFetch) {
+                const tgtIdx = sheet2HeaderIdx[field];
+                if (tgtIdx !== undefined && districtIdxMap[field] !== undefined) {
+                    let val = districtRow[districtIdxMap[field]];
+                    if (val instanceof Date) val = XLSX.SSF.format("yyyy-mm-dd", val);
+                    if (val !== undefined && val !== null) newRow[tgtIdx] = val;
+                }
+            }
+            // 需求库序号、制式、需求名称从规划方案列表获取
+            const reqSerialTgt = sheet2HeaderIdx["需求库序号"];
+            if (reqSerialTgt !== undefined && item.reqSerial) newRow[reqSerialTgt] = item.reqSerial;
+            const techTypeTgt = sheet2HeaderIdx["制式"];
+            if (techTypeTgt !== undefined && item.techType) newRow[techTypeTgt] = item.techType;
+            const reqNameIdx = sheet2HeaderIdx["需求名称"];
+            if (reqNameIdx !== undefined && item.baseName) newRow[reqNameIdx] = String(item.baseName);
+            
+            // 需求ID和端到端ID留空
+            const reqIdIdx = sheet2HeaderIdx["需求ID"];
+            const endToEndIdx = sheet2HeaderIdx["端到端ID"];
+            if (reqIdIdx !== undefined) newRow[reqIdIdx] = "";
+            if (endToEndIdx !== undefined) newRow[endToEndIdx] = "";
+            
+            supplementaryRows.push(newRow);
+        }
+        setLog('补充匹配-成功生成补充行数 ' + supplementaryRows.length);
+        return supplementaryRows;
+    }
+    
+    async function executeFullWorkflow() {
+        if (!outputWorkbook || !districtWorkbook) {
+            setLog("请至少上传「输出结果表」和「新区数据导出」两个文件", true);
+            return false;
+        }
+        try {
+            clearLog();
+            setLog("开始执行匹配流程...");
+            
+            const basicRows = generateBasicRows();
+            let allRows = [...basicRows];
+            
+            let hasProblem = (problemWorkbook && problemListArray && planListArray);
+            if (hasProblem) {
+                setLog("检测到问题区域文件，开始执行补充匹配（交付日期范围将使用上方设置）...");
+                const supplementaryRows = generateSupplementaryRows();
+                if (supplementaryRows.length > 0) {
+                    allRows = allRows.concat(supplementaryRows);
+                    setLog('已将 ' + supplementaryRows.length + ' 行补充数据追加到结果末尾');
+                } else {
+                    setLog("补充匹配未生成任何行（可能无符合条件的数据）");
+                }
+            } else {
+                setLog("未上传问题区域文件，仅输出基础匹配结果");
+            }
+            
+            const finalData = [FIXED_SHEET2_HEADERS, ...allRows];
+            const newSheet2 = arrayToSheet(finalData);
+            if (outputWorkbook.Sheets["Sheet2"]) delete outputWorkbook.Sheets["Sheet2"];
+            outputWorkbook.SheetNames = outputWorkbook.SheetNames.filter(n => n !== "Sheet2");
+            outputWorkbook.SheetNames.push("Sheet2");
+            outputWorkbook.Sheets["Sheet2"] = newSheet2;
+            
+            setLog('✅ 成功！共生成 ' + allRows.length + ' 行记录（基础 ' + basicRows.length + ' 行 + 补充 ' + (allRows.length - basicRows.length) + ' 行），已写入Sheet2。');
+            return true;
+        } catch (err) {
+            setLog('执行错误: ' + err.message, true);
+            console.error(err);
+            return false;
+        }
+    }
+    
+    function downloadFinal() {
+        if (!outputWorkbook) { setLog("没有可下载的工作簿", true); return; }
+        const wbout = XLSX.write(outputWorkbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: "application/octet-stream" });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = '匹配结果_' + new Date().toISOString().slice(0,19).replace(/:/g, '-') + '.xlsx';
+        link.click();
+        URL.revokeObjectURL(link.href);
+        setLog("文件已下载！");
+    }
+    
+    // 事件绑定
+    fileOutput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        outputStatusSpan.innerHTML = '📄 解析中...';
+        try {
+            await loadOutputWorkbook(file);
+            outputStatusSpan.innerHTML = '✅ 已加载 (Sheet1)';
+            setLog('输出结果表加载成功，共 ' + (outputSheet1Array.length-1) + ' 行。');
+        } catch (err) {
+            outputStatusSpan.innerHTML = '❌ 失败';
+            setLog('输出结果表错误: ' + err.message, true);
+            outputWorkbook = null;
+        }
+    });
+    fileDistrict.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        districtStatusSpan.innerHTML = '📂 读取中...';
+        try {
+            await loadDistrictWorkbook(file);
+            districtStatusSpan.innerHTML = '✅ 已加载 (新区数据)';
+            setLog('新区数据表加载成功，共 ' + (districtSheetArray.length-1) + ' 行。');
+        } catch (err) {
+            districtStatusSpan.innerHTML = '❌ 失败';
+            setLog('新区数据错误: ' + err.message, true);
+            districtWorkbook = null;
+        }
+    });
+    fileProblem.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        problemStatusSpan.innerHTML = '🔍 解析中...';
+        try {
+            await loadProblemWorkbook(file);
+            problemStatusSpan.innerHTML = '✅ 已加载 (双sheet)';
+            setLog('问题区域详情加载成功，问题区域列表 ' + (problemListArray.length-1) + ' 行，规划方案列表 ' + (planListArray.length-1) + ' 行。');
+        } catch (err) {
+            problemStatusSpan.innerHTML = '❌ 失败';
+            setLog('问题区域文件错误: ' + err.message, true);
+            problemWorkbook = null;
+        }
+    });
+    runBtn.addEventListener('click', async () => {
+        if (!outputWorkbook || !districtWorkbook) {
+            setLog("请至少上传「输出结果表」和「新区数据导出」两个文件", true);
+            return;
+        }
+        const success = await executeFullWorkflow();
+        if (success) downloadFinal();
+    });
+    resetBtn.addEventListener('click', () => { resetAll(); });
+<\/script>
+</body>
+</html>`;
 
             // ────────────────────────────────────────────
             // 工具3：工参邻近匹配工具 (来自工具库-手改版v2)
