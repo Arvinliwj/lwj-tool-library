@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Arvinlwj 工具集合页 - 完整版</title>
+    <style>
+        :root {
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary: #1e3a5f;
+            --primary-light: #2c5a7a;
+            --accent: #1f6e4a;
+            --accent-light: #e8f5e9;
+            --tab-active: #1e3a5f;
+            --tab-hover: #e8edf3;
+            --tab-inactive: #e2e6ea;
+            --text: #1e293b;
+            --text-secondary: #5b6e8c;
+            --border: #e2e8f0;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            --radius: 20px;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: system-ui, 'Segoe UI', 'Roboto', 'Noto Sans', 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container {
+            max-width: 1500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* ========== 头部 ========== */
+        .app-header {
+            background: linear-gradient(135deg, #1a3c2c 0%, #0e2a1f 40%, #1e3a5f 100%);
+            border-radius: 28px 28px 0 0;
+            padding: 28px 36px 24px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            position: relative;
+            z-index: 2;
+        }
+        .app-header .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .app-header .logo-icon {
+            font-size: 2.4rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        .app-header h1 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin: 0;
+            line-height: 1.2;
+        }
+        .app-header .subtitle {
+            font-size: 0.88rem;
+            opacity: 0.82;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+        .app-header .badge-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+        .app-header .mini-badge {
+            background: rgba(255, 255, 255, 0.13);
+            backdrop-filter: blur(6px);
+            padding: 5px 14px;
+            border-radius: 40px;
+            font-size: 0.73rem;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        /* ========== 标签导航 ========== */
+        .tab-nav {
+            background: var(--card-bg);
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            padding: 8px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
+            border-radius: 0 0 0 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 14px 14px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.84rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+            position: relative;
+            letter-spacing: 0.1px;
+        }
+        .tab-btn:hover {
+            background: var(--tab-hover);
+            color: var(--text);
+        }
+        .tab-btn.active {
+            color: var(--tab-active);
+            background: #f6f9fc;
+            box-shadow: inset 0 -3px 0 0 var(--tab-active);
+            font-weight: 700;
+        }
+        .tab-btn .tab-icon {
+            font-size: 1.15rem;
+        }
+        .tab-btn .tab-num {
+            background: var(--tab-inactive);
+            color: #5b6e8c;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            transition: var(--transition);
+        }
+        .tab-btn.active .tab-num {
+            background: var(--tab-active);
+            color: white;
+        }
+
+        /* ========== 内容区 ========== */
+        .tab-content-area {
+            background: var(--card-bg);
+            border-radius: 0 0 28px 28px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            min-height: 620px;
+        }
+        .tab-panel {
+            display: none;
+            width: 100%;
+            height: 720px;
+            border: none;
+        }
+        .tab-panel.active {
+            display: block;
+        }
+        .tab-panel iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            background: #fdfdfd;
+        }
+        .loading-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8b9aaf;
+            font-size: 0.9rem;
+            gap: 10px;
+        }
+        .loading-spinner {
+            width: 22px;
+            height: 22px;
+            border: 2.5px solid #dde4ed;
+            border-top-color: #1e3a5f;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ========== 底部 ========== */
+        .app-footer {
+            text-align: center;
+            padding: 18px 24px;
+            font-size: 0.73rem;
+            color: #8b9aaf;
+            letter-spacing: 0.3px;
+        }
+        .app-footer .divider {
+            display: inline-block;
+            margin: 0 8px;
+            opacity: 0.4;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 800px) {
+            .app-header {
+                padding: 20px 20px 18px;
+                border-radius: 22px 22px 0 0;
+            }
+            .app-header h1 {
+                font-size: 1.3rem;
+            }
+            .tab-btn {
+                padding: 10px 12px;
+                font-size: 0.75rem;
+                border-radius: 10px 10px 0 0;
+            }
+            .tab-panel {
+                height: 600px;
+            }
+            .tab-content-area {
+                border-radius: 0 0 22px 22px;
+            }
+            .tab-nav {
+                padding: 6px 10px;
+                gap: 0;
+            }
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 8px 4px;
+            }
+            .tab-btn {
+                padding: 8px 9px;
+                font-size: 0.7rem;
+                gap: 3px;
+            }
+            .tab-btn .tab-icon {
+                font-size: 0.9rem;
+            }
+            .tab-panel {
+                height: 500px;
+            }
+            .app-header {
+                padding: 16px 14px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- ==================== 头部 ==================== -->
+        <header class="app-header">
+            <div class="logo-row">
+                <span class="logo-icon">🧰</span>
+                <div>
+                    <h1>Arvinlwj 工具集合页</h1>
+                    <p class="subtitle">新区数据筛选 · 方案关联匹配 · 工参邻近匹配 · KML转CSV · 表格拆分</p>
+                </div>
+            </div>
+            <div class="badge-row">
+                <span class="mini-badge">⚡ 完全本地处理</span>
+                <span class="mini-badge">🔒 数据不上传服务器</span>
+                <span class="mini-badge">📦 5合1工具集</span>
+            </div>
+        </header>
+
+        <!-- ==================== 标签导航 ==================== -->
+        <nav class="tab-nav" id="tabNav">
+            <button class="tab-btn active" data-tab="0">
+                <span class="tab-num">1</span>📡 新区清单梳理
+            </button>
+            <button class="tab-btn" data-tab="1">
+                <span class="tab-num">2</span>🔗 方案关联匹配
+            </button>
+            <button class="tab-btn" data-tab="2">
+                <span class="tab-num">3</span>🗺️ 工参邻近匹配
+            </button>
+            <button class="tab-btn" data-tab="3">
+                <span class="tab-num">4</span>🏷️ KML转CSV
+            </button>
+            <button class="tab-btn" data-tab="4">
+                <span class="tab-num">5</span>📂 表格拆分工具
+            </button>
+        </nav>
+
+        <!-- ==================== 内容区 ==================== -->
+        <div class="tab-content-area" id="tabContentArea">
+            <!-- 5个面板，初始都隐藏，由JS动态加载iframe -->
+            <div class="tab-panel active" id="panel0">
+                <div class="loading-placeholder">
+                    <div class="loading-spinner"></div> 加载中...
+                </div>
+            </div>
+            <div class="tab-panel" id="panel1">
+                <div class="loading-placeholder">
+                    <div class="loading-spinner"></div> 加载中...
+                </div>
+            </div>
+            <div class="tab-panel" id="panel2">
+                <div class="loading-placeholder">
+                    <div class="loading-spinner"></div> 加载中...
+                </div>
+            </div>
+            <div class="tab-panel" id="panel3">
+                <div class="loading-placeholder">
+                    <div class="loading-spinner"></div> 加载中...
+                </div>
+            </div>
+            <div class="tab-panel" id="panel4">
+                <div class="loading-placeholder">
+                    <div class="loading-spinner"></div> 加载中...
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 底部 ==================== -->
+        <footer class="app-footer">
+            © 2026 Arvinlwj All Rights Reserved <span class="divider">|</span> 所有处理均在本地浏览器完成，数据安全有保障
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== DOM引用 ====================
+            const tabNav = document.getElementById('tabNav');
+            const tabBtns = tabNav.querySelectorAll('.tab-btn');
+            const tabContentArea = document.getElementById('tabContentArea');
+            const panels = tabContentArea.querySelectorAll('.tab-panel');
+
+            // ==================== 工具HTML代码存储 ====================
+            // 使用数组存储5个工具的完整HTML，延迟创建Blob URL
+            const toolHTMLs = [];
+            const blobURLs = [];
+            const loadedFlags = [false, false, false, false, false];
+            let currentTab = 0;
+
+            // ────────────────────────────────────────────
+            // 工具1：新区清单梳理工具 (来自工具库-手改版v2)
+            // ────────────────────────────────────────────
+            toolHTMLs[0] = `<!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+            <title>新区数据筛选工具</title>
+            <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
+            <style>
+                * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif; }
+                body { background: #f0f4f8; margin: 0; padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
+                .card { max-width: 1300px; width: 100%; background: white; border-radius: 24px; box-shadow: 0 12px 30px -8px rgba(0,0,0,0.1); overflow: hidden; }
+                .header { background: #1e3a5f; padding: 20px 28px; color: white; }
+                .header h1 { margin: 0 0 6px 0; font-weight: 600; font-size: 1.5rem; }
+                .header p { margin: 0; opacity: 0.8; font-size: 0.85rem; }
+                .content { padding: 22px 28px; }
+                .upload-area { border: 2px dashed #bdd3e8; border-radius: 18px; background: #f9fcff; padding: 16px 20px; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 16px; }
+                .upload-area:hover { border-color: #1e3a5f; background: #eef4fa; }
+                .upload-icon { font-size: 28px; margin-bottom: 6px; }
+                .file-info { margin-top: 6px; font-size: 0.75rem; color: #2c5a7a; font-weight: 500; }
+                input.fileInput { display: none; }
+                .filter-panel { background: #f8fafc; border-radius: 20px; padding: 16px 20px; margin-bottom: 22px; border: 1px solid #e2edf7; }
+                .filter-title { font-weight: 600; margin-bottom: 12px; font-size: 1rem; color: #0b3552; }
+                .date-range { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; }
+                .date-field { display: flex; flex-direction: column; gap: 4px; }
+                .date-field label { font-size: 0.75rem; font-weight: 500; color: #1e4a76; }
+                .date-field input { padding: 8px 12px; border-radius: 14px; border: 1px solid #cbdde9; background: white; font-size: 0.85rem; min-width: 160px; }
+                .btn-group { margin-left: auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+                button { background: #1e3a5f; border: none; padding: 9px 18px; border-radius: 36px; color: white; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
+                button.secondary { background: #e9eff5; color: #1e3a5f; border: 1px solid #cbdde9; }
+                button.primary { background: #0f5b2e; }
+                button:hover { transform: translateY(-1px); opacity: 0.9; }
+                .info-message { background: #eef2ff; border-radius: 16px; padding: 12px 18px; margin: 16px 0 10px; font-size: 0.8rem; color: #004070; border-left: 4px solid #2c7da0; }
+                .stats { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+                .stat-badge { background: white; border-radius: 36px; padding: 5px 14px; font-size: 0.73rem; font-weight: 500; border: 1px solid #cbdde9; color: #1e4663; }
+                .footer-note { font-size: 0.68rem; text-align: center; color: #6c8db0; border-top: 1px solid #e9f0f5; padding: 12px 20px; background: #fafdff; }
+                .section-title { font-size: 0.9rem; font-weight: 600; margin: 18px 0 10px 0; color: #1e3a5f; border-left: 3px solid #1e3a5f; padding-left: 10px; }
+        </style>
+        </head>
+        <body>
+        <div class="card">
+            <div class="header"><h1>📡 新区清单数据梳理工具</h1><p>主文件规则筛选 + 问题区域UNICODE匹配 + 2026交付筛选 + 取消方案过滤</p></div>
+            <div class="content">
+                <div class="section-title">📄 1. 上传主文件（新区数据清单）</div>
+                <div class="upload-area" id="uploadAreaMain"><div class="upload-icon">📂📊</div><div style="font-weight:500;">点击或拖拽上传Excel文件</div><div class="file-info" id="mainFileInfo">未选择文件</div><input type="file" id="mainFileInput" class="fileInput" accept=".xlsx,.xls,.csv"></div>
+                <div class="section-title">⚠️ 2. 上传问题区域列表详情</div>
+                <div class="upload-area" id="uploadAreaIssue"><div class="upload-icon">📂⚠️</div><div style="font-weight:500;">点击或拖拽上传"问题区域列表详情"文件</div><div style="font-size:0.65rem;margin-top:3px;">需包含UNICODE和审核结果列</div><div class="file-info" id="issueFileInfo">未选择文件</div><input type="file" id="issueFileInput" class="fileInput" accept=".xlsx,.xls,.csv"></div>
+                <div class="filter-panel">
+                    <div class="filter-title">🗓️ 交付时间筛选</div>
+                    <div class="date-range">
+                        <div class="date-field"><label>起始日期</label><input type="date" id="startDate" value=""></div>
+                        <div class="date-field"><label>结束日期</label><input type="date" id="endDate" value=""></div>
+                        <div class="btn-group"><button id="clearDateBtn" class="secondary">清除筛选</button><button id="processMainBtn" class="secondary">仅处理主文件</button><button id="processJointBtn" class="primary">🚀 联合处理并导出</button></div>
+                    </div>
+                    <div class="stats" id="previewStats" style="display:none;"><span class="stat-badge" id="statOrigin">-</span><span class="stat-badge" id="statAfterFilter">-</span><span class="stat-badge" id="statCompliant">-</span><span class="stat-badge" id="statNewMatch">-</span><span class="stat-badge" id="statFilteredCancel">-</span></div>
+                </div>
+                <div class="info-message">✅ <strong>处理规则：</strong>1.剔除烂尾+时间筛选→原则判定 2.问题区域UNICODE匹配2026年交付 3.与符合原则清单去重 4.过滤"取消方案" 5.导出三表</div>
+            </div>
+            <div class="footer-note">⚙️ 问题区域文件需包含"UNICODE"和"审核结果"列</div>
+        </div>
+        <script>
+            let mainWorkbook=null,mainHeaders=[],mainDataRows=[],issueWorkbook=null,issueHeaders=[],issueDataRows=[],cancelUnicodes=new Set();
+            const MAIN_REQUIRED=["编号","区域类型","最近宏站物理站距离(米)","交付时间","室内室外","新区占地面积(万平方米)","平层覆盖面积(万平方米)","覆盖场景","是否烂尾"];
+            const ISSUE_REQUIRED=["UNICODE","审核结果"];
+            const mainFileInput=document.getElementById('mainFileInput'),mainUploadArea=document.getElementById('uploadAreaMain'),mainFileInfo=document.getElementById('mainFileInfo');
+            const issueFileInput=document.getElementById('issueFileInput'),issueUploadArea=document.getElementById('uploadAreaIssue'),issueFileInfo=document.getElementById('issueFileInfo');
+            const startDateInput=document.getElementById('startDate'),endDateInput=document.getElementById('endDate'),clearDateBtn=document.getElementById('clearDateBtn');
+            const processMainBtn=document.getElementById('processMainBtn'),processJointBtn=document.getElementById('processJointBtn');
+            const previewStatsDiv=document.getElementById('previewStats'),statOriginSpan=document.getElementById('statOrigin'),statAfterFilterSpan=document.getElementById('statAfterFilter');
+            const statCompliantSpan=document.getElementById('statCompliant'),statNewMatchSpan=document.getElementById('statNewMatch'),statFilteredCancelSpan=document.getElementById('statFilteredCancel');
+
+            function toDateStr(value){if(value===null||value===undefined||value==="")return null;if(value instanceof Date&&!isNaN(value.getTime())){return value.getFullYear()+'-'+(value.getMonth()+1).toString().padStart(2,'0')+'-'+value.getDate().toString().padStart(2,'0');}if(typeof value==='number'&&!isNaN(value)&&value>0){const date=new Date(1899,11,30);date.setTime(date.getTime()+value*86400000);if(!isNaN(date.getTime()))return date.toISOString().slice(0,10);}let str=String(value).trim();if(str==="")return null;let match=str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);if(match)return match[1]+'-'+match[2].padStart(2,'0')+'-'+match[3].padStart(2,'0');let d=new Date(str);if(!isNaN(d.getTime()))return d.toISOString().slice(0,10);return null;}
+            function getYearFromDateStr(dateStr){if(!dateStr)return null;let parts=dateStr.split('-');if(parts.length>=1)return parseInt(parts[0]);return null;}
+            function isDateInRange(dateStr,startStr,endStr){if(!dateStr)return false;if(startStr&&dateStr<startStr)return false;if(endStr&&dateStr>endStr)return false;return true;}
+            function evaluateIndoor(rowMap){const coverScene=rowMap["覆盖场景"]||"";const landArea=parseFloat(rowMap["新区占地面积(万平方米)"]);const flatCover=parseFloat(rowMap["平层覆盖面积(万平方米)"]);const containsResident=coverScene.includes("居民")||coverScene.includes("住宅");if(containsResident)return(!isNaN(landArea)&&landArea>=1)?"符合原则":"";else return(!isNaN(flatCover)&&flatCover>=1)?"符合原则":"";}
+            function evaluateOutdoor(rowMap){const landArea=parseFloat(rowMap["新区占地面积(万平方米)"]);if(isNaN(landArea)||landArea<4)return"";const regionType=rowMap["区域类型"]||"";const distance=parseFloat(rowMap["最近宏站物理站距离(米)"]);if(isNaN(distance))return"";let ok=false;if(regionType==="一类区域"||regionType==="二类区域")ok=distance>=200;else if(regionType==="三类区域")ok=distance>=300;else if(regionType==="四类区域")ok=distance>=400;return ok?"符合原则":"";}
+            function computeCompliance(rowMap,indoorOutdoor){if(indoorOutdoor==="室内需求")return evaluateIndoor(rowMap);if(indoorOutdoor==="室外需求")return evaluateOutdoor(rowMap);return"";}
+            function processMainFile(startStr,endStr){if(!mainHeaders.length||!mainDataRows.length){alert("请先上传主文件！");return null;}const colIdx={};mainHeaders.forEach((h,i)=>colIdx[h]=i);const missing=MAIN_REQUIRED.filter(c=>!(c in colIdx));if(missing.length){alert("主文件缺少必要列: "+missing.join(", "));return null;}const notAbandoned=mainDataRows.filter(row=>row[colIdx["是否烂尾"]]!=="是");let filtered=notAbandoned;if(startStr||endStr){filtered=notAbandoned.filter(row=>{const dateStr=toDateStr(row[colIdx["交付时间"]]);return dateStr&&isDateInRange(dateStr,startStr,endStr);});}const serialIdx=colIdx["编号"];const newHeaders=[...mainHeaders];newHeaders.splice(serialIdx+1,0,"原则符合性");const newDataRows=[];const compliantRows=[];const compliantSet=new Set();for(let row of filtered){const rowMap={};mainHeaders.forEach((h,i)=>rowMap[h]=row[i]);const compliance=computeCompliance(rowMap,rowMap["室内室外"]);const newRow=[...row];newRow.splice(serialIdx+1,0,compliance);newDataRows.push(newRow);if(compliance==="符合原则"){const code=row[colIdx["编号"]];compliantRows.push(newRow);if(code!==undefined&&code!==null)compliantSet.add(String(code).trim());}}return{newHeaders,newDataRows,compliantRows,compliantSet,filteredCount:filtered.length,originalCount:mainDataRows.length,colIdx,serialIdx};}
+            function processIssueFile(){if(!issueHeaders.length||!issueDataRows.length){alert("请先上传问题区域列表详情文件！");return null;}if(!mainHeaders.length||!mainDataRows.length){alert("请先上传主文件！");return null;}const issueColIdx={};issueHeaders.forEach((h,i)=>issueColIdx[h]=i);const missing=ISSUE_REQUIRED.filter(c=>!(c in issueColIdx));if(missing.length){alert("问题区域文件缺少必要列: "+missing.join(", "));return null;}const mainColIdx={};mainHeaders.forEach((h,i)=>mainColIdx[h]=i);const codeToDelivery=new Map();for(let row of mainDataRows){const codeRaw=row[mainColIdx["编号"]];if(codeRaw===undefined||codeRaw===null)continue;const code=String(codeRaw).trim();if(code==="")continue;const deliveryRaw=row[mainColIdx["交付时间"]];const deliveryStr=toDateStr(deliveryRaw);if(deliveryStr){codeToDelivery.set(code,deliveryStr);}}const unicodes2026=new Set();cancelUnicodes.clear();for(let row of issueDataRows){const unicodeRaw=row[issueColIdx["UNICODE"]];if(!unicodeRaw)continue;const unicode=String(unicodeRaw).trim();if(unicode==="")continue;const auditResultRaw=row[issueColIdx["审核结果"]];const auditResult=auditResultRaw?String(auditResultRaw).trim():"";if(auditResult==="取消方案"){cancelUnicodes.add(unicode);}const deliveryStr=codeToDelivery.get(unicode);if(deliveryStr){const year=getYearFromDateStr(deliveryStr);if(year===2026){unicodes2026.add(unicode);}}}return unicodes2026;}
+            function jointProcess(){const startStr=startDateInput.value;const endStr=endDateInput.value;const mainResult=processMainFile(startStr,endStr);if(!mainResult)return;const issueUnicodes2026=processIssueFile();if(issueUnicodes2026===null)return;const originalCompliantSet=mainResult.compliantSet;const newCodes=new Set();for(let code of issueUnicodes2026){if(!originalCompliantSet.has(code)){newCodes.add(code);}}const serialIdx=mainResult.serialIdx;let updatedDataRows=mainResult.newDataRows.map(row=>[...row]);const newCompliantRowsRaw=[];for(let code of newCodes){for(let i=0;i<updatedDataRows.length;i++){const row=updatedDataRows[i];const rowCodeRaw=row[serialIdx];if(rowCodeRaw===undefined)continue;const rowCode=String(rowCodeRaw).trim();if(rowCode===code){const complianceIdx=serialIdx+1;if(row[complianceIdx]!=="符合原则"){row[complianceIdx]="符合原则";newCompliantRowsRaw.push([...row]);}break;}}}const originalCompliantFiltered=mainResult.compliantRows.filter(row=>{const codeRaw=row[serialIdx];if(!codeRaw)return true;const code=String(codeRaw).trim();return!cancelUnicodes.has(code);});const newCompliantFiltered=newCompliantRowsRaw.filter(row=>{const codeRaw=row[serialIdx];if(!codeRaw)return true;const code=String(codeRaw).trim();return!cancelUnicodes.has(code);});const totalCancelFiltered=(mainResult.compliantRows.length-originalCompliantFiltered.length)+(newCompliantRowsRaw.length-newCompliantFiltered.length);statOriginSpan.innerText="📄 主文件原始: "+mainResult.originalCount;statAfterFilterSpan.innerText="✅ 剔除烂尾&时间筛选后: "+mainResult.filteredCount;statCompliantSpan.innerText="⭐ 原符合原则(过滤后): "+originalCompliantFiltered.length;statNewMatchSpan.innerText="🆕 新增匹配原则(过滤后): "+newCompliantFiltered.length;statFilteredCancelSpan.innerText="🗑️ 因取消方案剔除: "+totalCancelFiltered;previewStatsDiv.style.display="flex";const ws1=XLSX.utils.aoa_to_sheet([mainResult.newHeaders,...updatedDataRows]);const ws2=XLSX.utils.aoa_to_sheet([mainResult.newHeaders,...originalCompliantFiltered]);const ws3=XLSX.utils.aoa_to_sheet([mainResult.newHeaders,...(newCompliantFiltered.length?newCompliantFiltered:[["无新增匹配数据"]])]);const newWb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(newWb,ws1,"处理后数据(含原则列)");XLSX.utils.book_append_sheet(newWb,ws2,"原符合原则清单");XLSX.utils.book_append_sheet(newWb,ws3,"新增匹配原则清单");XLSX.writeFile(newWb,"新区_联合匹配_"+new Date().toISOString().slice(0,19).replace(/:/g,'-')+".xlsx");alert("联合处理完成！\\n原符合原则(过滤后): "+originalCompliantFiltered.length+" 条\\n新增匹配原则(过滤后): "+newCompliantFiltered.length+" 条\\n剔除取消方案记录: "+totalCancelFiltered+" 条");}
+            function mainOnlyProcess(){const startStr=startDateInput.value;const endStr=endDateInput.value;const mainResult=processMainFile(startStr,endStr);if(!mainResult)return;statOriginSpan.innerText="📄 主文件原始: "+mainResult.originalCount;statAfterFilterSpan.innerText="✅ 剔除烂尾&时间筛选后: "+mainResult.filteredCount;statCompliantSpan.innerText="⭐ 符合原则数量: "+mainResult.compliantRows.length;statNewMatchSpan.innerText="🆕 未联合，无新增";statFilteredCancelSpan.innerText="";previewStatsDiv.style.display="flex";const ws1=XLSX.utils.aoa_to_sheet([mainResult.newHeaders,...mainResult.newDataRows]);const ws2=XLSX.utils.aoa_to_sheet([mainResult.newHeaders,...mainResult.compliantRows]);const newWb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(newWb,ws1,"处理后数据(含原则列)");XLSX.utils.book_append_sheet(newWb,ws2,"符合原则清单");XLSX.writeFile(newWb,"新区_主文件处理_"+new Date().toISOString().slice(0,19).replace(/:/g,'-')+".xlsx");alert("主文件处理完成！符合原则记录数: "+mainResult.compliantRows.length);}
+            function handleFile(file,type){if(!file)return;const infoElem=(type==='main')?mainFileInfo:issueFileInfo;infoElem.innerText="📁 "+file.name+" (加载中...)";const reader=new FileReader();reader.onload=function(e){const data=new Uint8Array(e.target.result);const workbook=XLSX.read(data,{type:'array',cellDates:true,defval:""});let sheet;if(type==='issue'){const targetSheetName=workbook.SheetNames.find(name=>name.includes("问题区域列表")||name==="问题区域列表");if(targetSheetName){sheet=workbook.Sheets[targetSheetName];}else{sheet=workbook.Sheets[workbook.SheetNames[0]];}}else{sheet=workbook.Sheets[workbook.SheetNames[0]];}const rows=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});if(!rows||rows.length<2){alert("文件无有效数据行");return;}const headers=rows[0].map(cell=>cell===undefined?"":String(cell).trim());const dataRows=rows.slice(1).filter(row=>row.some(cell=>cell!==undefined&&cell!==null&&String(cell).trim()!==""));if(type==='main'){mainWorkbook=workbook;mainHeaders=[...headers];mainDataRows=dataRows.map(row=>{const nr=[...row];while(nr.length<headers.length)nr.push("");return nr;});mainFileInfo.innerText="✅ 主文件: "+file.name+" ("+mainDataRows.length+" 条)";const missing=MAIN_REQUIRED.filter(c=>!headers.includes(c));if(missing.length)mainFileInfo.innerText+=" ⚠️ 缺少列: "+missing.slice(0,3).join(", ");}else{issueWorkbook=workbook;issueHeaders=[...headers];issueDataRows=dataRows.map(row=>{const nr=[...row];while(nr.length<headers.length)nr.push("");return nr;});issueFileInfo.innerText="✅ 问题区域: "+file.name+" ("+issueDataRows.length+" 条)";const missing=ISSUE_REQUIRED.filter(c=>!headers.includes(c));if(missing.length)issueFileInfo.innerText+=" ⚠️ 缺少列: "+missing.join(", ");else issueFileInfo.innerText+=" | 交付时间自动匹配，取消方案将过滤";}};reader.onerror=()=>alert("文件读取失败");reader.readAsArrayBuffer(file);}
+            function setupUpload(areaId,inputId,type){const area=document.getElementById(areaId);const input=document.getElementById(inputId);area.addEventListener('click',(e)=>{e.stopPropagation();input.click();});input.addEventListener('change',(e)=>{if(input.files&&input.files.length>0){handleFile(input.files[0],type);}input.value='';});area.addEventListener('dragover',(e)=>{e.preventDefault();area.style.borderColor='#1e3a5f';area.style.background='#eaf2fa';});area.addEventListener('dragleave',()=>{area.style.borderColor='#bdd3e8';area.style.background='#f9fcff';});area.addEventListener('drop',(e)=>{e.preventDefault();area.style.borderColor='#bdd3e8';area.style.background='#f9fcff';const files=e.dataTransfer.files;if(files.length>0){handleFile(files[0],type);}});}
+            setupUpload('uploadAreaMain','mainFileInput','main');setupUpload('uploadAreaIssue','issueFileInput','issue');
+            clearDateBtn.addEventListener('click',()=>{startDateInput.value='';endDateInput.value='';});
+            processMainBtn.addEventListener('click',()=>{if(!mainHeaders.length)alert("请先上传主文件");else mainOnlyProcess();});
+            processJointBtn.addEventListener('click',()=>{if(!mainHeaders.length)alert("请先上传主文件");else if(!issueHeaders.length)alert("请先上传问题区域列表详情文件");else jointProcess();});
+            mainFileInfo.innerText="未选择主文件";issueFileInfo.innerText="未选择问题区域文件";
+        <\/script>
+        </body>
+        </html>`;
+
+            // ────────────────────────────────────────────
+            // 工具2：新区方案关联匹配工具 (来自工具库-手改版v2)
+            // ────────────────────────────────────────────
+            toolHTMLs[1] = `<!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+            <title>新区方案关联匹配工具</title>
+            <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
+            <style>
+                * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif; }
+                body { background: #eef2f5; margin: 0; padding: 16px 14px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+                .container { max-width: 1400px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 14px 30px -8px rgba(0,0,0,0.1); overflow: hidden; }
+                .header { background: linear-gradient(135deg,#1a3c2c,#0e2a1f); padding: 20px 28px; color: white; }
+                .header h1 { margin: 0 0 6px; font-weight: 600; font-size: 1.5rem; }
+                .header p { margin: 0; opacity: 0.85; font-size: 0.82rem; }
+                .content { padding: 22px 28px 28px; }
+                .upload-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; border-bottom: 1px solid #e2e8f0; padding-bottom: 22px; }
+                .upload-card { flex: 1; min-width: 200px; background: #f9fafc; border-radius: 20px; padding: 14px 18px; border: 1px solid #e2edf2; }
+                .upload-card label { font-weight: 700; color: #1f4e3c; display: block; margin-bottom: 8px; font-size: 0.9rem; }
+                .file-input { width: 100%; padding: 4px 0; font-size: 0.8rem; }
+                .file-status { font-size: 0.68rem; margin-top: 6px; background: #eef2fa; display: inline-block; padding: 3px 10px; border-radius: 30px; }
+                .action-bar { display: flex; gap: 16px; flex-wrap: wrap; margin: 16px 0; }
+                .btn { border: none; padding: 11px 26px; border-radius: 40px; font-weight: 600; cursor: pointer; font-size: 0.88rem; transition: 0.2s; }
+                .btn-primary { background: #1f6e43; color: white; }
+                .btn-primary:hover { background: #0f5537; transform: translateY(-1px); }
+                .btn-secondary { background: #3a6b8f; color: white; }
+                .btn-secondary:hover { background: #2a5470; }
+                .log-area { background: #f0f4fa; border-radius: 18px; padding: 14px 20px; font-family: 'SF Mono', monospace; font-size: 0.75rem; color: #1e3b4a; border: 1px solid #cfdfed; margin-top: 16px; white-space: pre-wrap; word-break: break-word; max-height: 350px; overflow-y: auto; }
+                .footer-note { font-size: 0.68rem; text-align: center; border-top: 1px solid #e2edf2; padding: 12px; color: #6f8faa; background: #fbfdfe; }
+                .debug-note { background: #fff3cd; border-left: 4px solid #ffc107; padding: 8px 12px; margin-bottom: 14px; font-size: 0.75rem; border-radius: 10px; }
+        </style>
+        </head>
+        <body>
+        <div class="container">
+            <div class="header"><h1>📡 新区方案关联匹配工具</h1><p>基础匹配+补充匹配 | 完整输出列</p></div>
+            <div class="content">
+                <div class="debug-note">💡 功能：1️⃣基础匹配(2文件) 2️⃣补充匹配(3文件)自动筛除取消方案 3️⃣需求名称从基站名获取</div>
+                <div class="upload-grid">
+                    <div class="upload-card"><label>📂 1. 输出结果表(需含Sheet1)</label><input type="file" id="fileOutput" accept=".xlsx,.xls,.xlsm" class="file-input"><div id="outputStatus" class="file-status">⚡ 未上传</div></div>
+                    <div class="upload-card"><label>🗂️ 2. 新区数据导出(需含新区数据)</label><input type="file" id="fileDistrict" accept=".xlsx,.xls" class="file-input"><div id="districtStatus" class="file-status">📎 未上传</div></div>
+                    <div class="upload-card"><label>⚠️ 3. 问题区域列表详情(可选)</label><input type="file" id="fileProblem" accept=".xlsx,.xls" class="file-input"><div id="problemStatus" class="file-status">🔍 未上传</div></div>
+                </div>
+                <div class="action-bar"><button class="btn btn-primary" id="runBtn">🚀 执行匹配并生成结果表</button><button class="btn btn-secondary" id="resetBtn">🔄 重置全部</button></div>
+                <div id="logMsg" class="log-area">✅ 就绪。请上传文件，点击执行。</div>
+            </div>
+            <div class="footer-note">⚙️ 匹配逻辑：基础匹配+补充匹配，输出Sheet2含完整列</div>
+        </div>
+        <script>
+            const FIXED_SHEET2_HEADERS=["需求ID","新区编号","新区类型","区域类型","新区名称","覆盖场景","需求库序号","逻辑系统编号","端到端ID","需求名称","制式","地市","县市","工单节点","新区标签","交付时间","建设项目"];
+            let outputWorkbook=null,districtWorkbook=null,problemWorkbook=null,outputSheet1Array=null,districtSheetArray=null,problemListArray=null,planListArray=null;
+            const fileOutput=document.getElementById('fileOutput'),fileDistrict=document.getElementById('fileDistrict'),fileProblem=document.getElementById('fileProblem');
+            const runBtn=document.getElementById('runBtn'),resetBtn=document.getElementById('resetBtn');
+            const outputStatusSpan=document.getElementById('outputStatus'),districtStatusSpan=document.getElementById('districtStatus'),problemStatusSpan=document.getElementById('problemStatus'),logMsgDiv=document.getElementById('logMsg');
+            function setLog(msg,isError=false){const prefix=isError?'⚠️ ':'✅ ';logMsgDiv.innerHTML+=(logMsgDiv.innerHTML?'\\n':'')+prefix+msg;logMsgDiv.scrollTop=logMsgDiv.scrollHeight;}
+            function clearLog(){logMsgDiv.innerHTML='';}
+            function resetAll(){outputWorkbook=null;districtWorkbook=null;problemWorkbook=null;outputSheet1Array=null;districtSheetArray=null;problemListArray=null;planListArray=null;fileOutput.value='';fileDistrict.value='';fileProblem.value='';outputStatusSpan.innerHTML='⚡ 未上传';districtStatusSpan.innerHTML='📎 未上传';problemStatusSpan.innerHTML='🔍 未上传';clearLog();setLog('已重置。');}
+            function sheetToArray(sheet){if(!sheet)return[];const data=XLSX.utils.sheet_to_json(sheet,{header:1,defval:""});return data&&data.length?data:[];}
+            function arrayToSheet(dataArray){if(!dataArray||dataArray.length===0)return XLSX.utils.aoa_to_sheet([[]]);return XLSX.utils.aoa_to_sheet(dataArray);}
+            function findColumnIndex(headers,targetNames){const lowerHeaders=headers.map(h=>String(h).trim().toLowerCase());for(let target of targetNames){const lowerTarget=target.toLowerCase();const idx=lowerHeaders.findIndex(h=>h===lowerTarget);if(idx!==-1)return idx;}return -1;}
+            function excelSerialToDate(serial){if(typeof serial==='number'&&!isNaN(serial)&&serial>0){const date=XLSX.SSF.parse_date_code(serial);if(date&&date.y){return new Date(date.y,date.m-1,date.d);}}return null;}
+            function extractYear(deliveryValue){if(!deliveryValue&&deliveryValue!==0)return null;if(deliveryValue instanceof Date)return deliveryValue.getFullYear();if(typeof deliveryValue==='number'){const date=excelSerialToDate(deliveryValue);if(date)return date.getFullYear();}const str=String(deliveryValue).trim();if(str==="")return null;if(/^\d+$/.test(str)&&str.length>=5){const num=parseInt(str,10);if(!isNaN(num)){const date=excelSerialToDate(num);if(date)return date.getFullYear();}}const match=str.match(/(\d{4})/);if(match)return parseInt(match[1],10);return null;}
+            async function loadOutputWorkbook(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){const data=new Uint8Array(e.target.result);let workbook;try{workbook=XLSX.read(data,{type:'array',cellDates:false,defval:""});}catch(err){reject(new Error("Excel解析失败："+err.message));return;}const sheet1=workbook.Sheets["Sheet1"];if(!sheet1)reject(new Error("缺少工作表Sheet1"));const sheet1Arr=sheetToArray(sheet1);if(sheet1Arr.length<1)reject(new Error("Sheet1无数据"));outputWorkbook=workbook;outputSheet1Array=sheet1Arr;resolve({headers:sheet1Arr[0],rowCount:sheet1Arr.length-1});};reader.onerror=(err)=>reject(err);reader.readAsArrayBuffer(file);});}
+            async function loadDistrictWorkbook(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){const data=new Uint8Array(e.target.result);let wb;try{wb=XLSX.read(data,{type:'array'});}catch(err){reject(new Error("解析失败："+err.message));return;}const districtSheet=wb.Sheets["新区数据"];if(!districtSheet)reject(new Error("缺少工作表新区数据"));const districtArr=sheetToArray(districtSheet);if(districtArr.length<1)reject(new Error("新区数据表为空"));districtWorkbook=wb;districtSheetArray=districtArr;resolve({headers:districtArr[0],rowCount:districtArr.length-1});};reader.onerror=(err)=>reject(err);reader.readAsArrayBuffer(file);});}
+            async function loadProblemWorkbook(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=function(e){const data=new Uint8Array(e.target.result);let wb;try{wb=XLSX.read(data,{type:'array'});}catch(err){reject(new Error("解析失败："+err.message));return;}const problemSheet=wb.Sheets["问题区域列表"];const planSheet=wb.Sheets["规划方案列表"];if(!problemSheet)reject(new Error("缺少工作表问题区域列表"));if(!planSheet)reject(new Error("缺少工作表规划方案列表"));const problemArr=sheetToArray(problemSheet);const planArr=sheetToArray(planSheet);if(problemArr.length<1||planArr.length<1)reject(new Error("工作表为空"));problemWorkbook=wb;problemListArray=problemArr;planListArray=planArr;resolve({problemHeaders:problemArr[0],planHeaders:planArr[0]});};reader.onerror=(err)=>reject(err);reader.readAsArrayBuffer(file);});}
+            function generateBasicRows(){if(!outputSheet1Array||!districtSheetArray){throw new Error("输出结果表或新区数据表未加载");}const sheet1Headers=outputSheet1Array[0].map(h=>String(h).trim());const sheet1DataRows=outputSheet1Array.slice(1);const districtHeaders=districtSheetArray[0].map(h=>String(h).trim());const districtIdxMap={};districtHeaders.forEach((h,idx)=>{districtIdxMap[h]=idx;});const numberIdx=findColumnIndex(districtHeaders,["编号","新区编号"]);if(numberIdx===-1)throw new Error("新区数据表中无编号列");const indoorOutdoorIdx=findColumnIndex(districtHeaders,["室内室外","室内外","场景类型"]);if(indoorOutdoorIdx===-1)setLog("警告:新区数据表中未找到室内室外列");const districtMap=new Map();for(let i=1;i<districtSheetArray.length;i++){const row=districtSheetArray[i];const key=numberIdx<row.length?String(row[numberIdx]).trim():"";if(key)districtMap.set(key,row);}const fieldsToFetch=[{target:"区域类型",source:"区域类型"},{target:"新区名称",source:"新区名称"},{target:"覆盖场景",source:"覆盖场景"},{target:"地市",source:"地市"},{target:"县市",source:"县市"},{target:"交付时间",source:"交付时间"},{target:"制式",source:"制式"},{target:"需求库序号",source:"需求库序号"}];const sheet2HeaderIdx={};FIXED_SHEET2_HEADERS.forEach((h,idx)=>{sheet2HeaderIdx[h]=idx;});const copyColumns=FIXED_SHEET2_HEADERS.filter(col=>sheet1Headers.includes(col)&&col!=="需求ID"&&col!=="端到端ID");const sheet1IdxMap={};sheet1Headers.forEach((h,idx)=>{sheet1IdxMap[h]=idx;});const basicRows=[];for(let i=0;i<sheet1DataRows.length;i++){const sourceRow=sheet1DataRows[i];const newRow=new Array(FIXED_SHEET2_HEADERS.length).fill("");for(let col of copyColumns){const srcIdx=sheet1IdxMap[col];const tgtIdx=sheet2HeaderIdx[col];if(srcIdx!==undefined&&tgtIdx!==undefined){let val=srcIdx<sourceRow.length?sourceRow[srcIdx]:"";if(val!==undefined&&val!==null)newRow[tgtIdx]=val;}}const reqIdIdx=sheet2HeaderIdx["需求ID"];const endToEndIdx=sheet2HeaderIdx["端到端ID"];let reqIdValue="";const srcReqIdIdx=findColumnIndex(sheet1Headers,["需求ID","需求编号"]);if(srcReqIdIdx!==-1&&srcReqIdIdx<sourceRow.length){reqIdValue=sourceRow[srcReqIdIdx];if(reqIdValue!==undefined&&reqIdValue!==null)reqIdValue=String(reqIdValue);}if(reqIdIdx!==undefined)newRow[reqIdIdx]=reqIdValue;if(endToEndIdx!==undefined)newRow[endToEndIdx]=reqIdValue;let districtNo="";const noIdx=sheet2HeaderIdx["新区编号"];if(noIdx!==undefined&&newRow[noIdx]){districtNo=String(newRow[noIdx]).trim();}else{const srcNoIdx=findColumnIndex(sheet1Headers,["新区编号","编号"]);if(srcNoIdx!==-1)districtNo=String(sourceRow[srcNoIdx]||"").trim();}if(districtNo&&districtMap.has(districtNo)){const districtRow=districtMap.get(districtNo);const newTypeIdx=sheet2HeaderIdx["新区类型"];if(newTypeIdx!==undefined&&indoorOutdoorIdx!==-1){let val=indoorOutdoorIdx<districtRow.length?districtRow[indoorOutdoorIdx]:"";if(val!==undefined&&val!==null)newRow[newTypeIdx]=val;}for(let field of fieldsToFetch){const tgtIdx=sheet2HeaderIdx[field.target];if(tgtIdx!==undefined&&districtIdxMap[field.source]!==undefined){let val=districtRow[districtIdxMap[field.source]];if(val instanceof Date)val=XLSX.SSF.format("yyyy-mm-dd",val);if(val!==undefined&&val!==null)newRow[tgtIdx]=val;}}}basicRows.push(newRow);}setLog("基础匹配生成 "+basicRows.length+" 行");return basicRows;}
+            function generateSupplementaryRows(){if(!problemListArray||!planListArray||!districtSheetArray){throw new Error("问题区域数据或新区数据表未加载");}const problemHeaders=problemListArray[0].map(h=>String(h).trim());const unicodeIdx=findColumnIndex(problemHeaders,["UNICODE","unicode","编码","新区编码","问题编码"]);if(unicodeIdx===-1)throw new Error("问题区域列表中未找到UNICODE列");const auditResultIdx=findColumnIndex(problemHeaders,["审核结果","审核结论","结果"]);const auditStatusIdx=findColumnIndex(problemHeaders,["审核状态","新区状态","状态"]);if(auditStatusIdx===-1)throw new Error("问题区域列表中未找到审核状态列");const validProblemItems=[];let cancelledCount=0;for(let i=1;i<problemListArray.length;i++){const row=problemListArray[i];const unicode=unicodeIdx<row.length?String(row[unicodeIdx]).trim():"";if(!unicode)continue;let auditResult="";if(auditResultIdx!==-1){auditResult=auditResultIdx<row.length?String(row[auditResultIdx]).trim():"";if(auditResult==="取消方案"){cancelledCount++;continue;}}const auditStatus=auditStatusIdx<row.length?String(row[auditStatusIdx]).trim():"";validProblemItems.push({unicode,auditStatus});}setLog("补充匹配-筛除取消方案后剩余 "+validProblemItems.length+" 条（排除 "+cancelledCount+" 条）");if(validProblemItems.length===0)return[];const outputHeaders=outputSheet1Array[0].map(h=>String(h).trim());const districtNoIdx=findColumnIndex(outputHeaders,["新区编号","编号"]);if(districtNoIdx===-1)throw new Error("输出结果表Sheet1中未找到新区编号列");const outputSet=new Set();for(let i=1;i<outputSheet1Array.length;i++){const val=outputSheet1Array[i][districtNoIdx]!==undefined?String(outputSheet1Array[i][districtNoIdx]).trim():"";if(val)outputSet.add(val);}const missingItems=validProblemItems.filter(item=>!outputSet.has(item.unicode));setLog("补充匹配-缺失UNICODE数量 "+missingItems.length);if(missingItems.length===0)return[];const districtHeaders=districtSheetArray[0].map(h=>String(h).trim());const numberIdx=findColumnIndex(districtHeaders,["编号","新区编号"]);const deliveryIdx=findColumnIndex(districtHeaders,["交付时间","交付日期"]);if(numberIdx===-1||deliveryIdx===-1)throw new Error("新区数据表中缺少编号或交付时间列");const delivery2026Set=new Set();for(let i=1;i<districtSheetArray.length;i++){const row=districtSheetArray[i];const unicode=numberIdx<row.length?String(row[numberIdx]).trim():"";if(!unicode)continue;const year=extractYear(deliveryIdx<row.length?row[deliveryIdx]:"");if(year===2026)delivery2026Set.add(unicode);}setLog("补充匹配-交付2026年编号数 "+delivery2026Set.size);const validUnicodes=[];for(const item of missingItems){if(delivery2026Set.has(item.unicode)&&(item.auditStatus==="省公司审核中"||item.auditStatus==="已完成")){validUnicodes.push(item.unicode);}}setLog("补充匹配-联合筛选后剩余 "+validUnicodes.length);if(validUnicodes.length===0)return[];const planHeaders=planListArray[0].map(h=>String(h).trim());const planKeyIdx=findColumnIndex(planHeaders,["问题编码","问题编号","UNICODE","unicode","编码"]);if(planKeyIdx===-1)throw new Error("规划方案列表中未找到匹配列");const baseStationIdx=findColumnIndex(planHeaders,["基站名","基站名称","需求名称"]);const reqSerialIdx=findColumnIndex(planHeaders,["需求库序号","需求库编号","库序号"]);const techTypeIdx=findColumnIndex(planHeaders,["制式","技术制式","网络制式"]);const validSet=new Set(validUnicodes);const filteredPlans=[];for(let i=1;i<planListArray.length;i++){const row=planListArray[i];const keyVal=planKeyIdx<row.length?String(row[planKeyIdx]).trim():"";if(keyVal&&validSet.has(keyVal)){filteredPlans.push({unicode:keyVal,rawRow:row,reqSerial:(reqSerialIdx!==-1&&reqSerialIdx<row.length)?row[reqSerialIdx]:"",techType:(techTypeIdx!==-1&&techTypeIdx<row.length)?row[techTypeIdx]:"",baseName:(baseStationIdx!==-1&&baseStationIdx<row.length)?row[baseStationIdx]:""});}}setLog("补充匹配-规划方案匹配行数 "+filteredPlans.length);const districtMap=new Map();for(let i=1;i<districtSheetArray.length;i++){const row=districtSheetArray[i];const key=numberIdx<row.length?String(row[numberIdx]).trim():"";if(key)districtMap.set(key,row);}const districtIdxMap2={};districtHeaders.forEach((h,idx)=>{districtIdxMap2[h]=idx;});const indoorOutdoorIdx2=findColumnIndex(districtHeaders,["室内室外","室内外","场景类型"]);const fieldsToFetch2=["区域类型","新区名称","覆盖场景","地市","县市","交付时间"];const sheet2HeaderIdx2={};FIXED_SHEET2_HEADERS.forEach((h,idx)=>{sheet2HeaderIdx2[h]=idx;});const supplementaryRows=[];for(const item of filteredPlans){const districtRow=districtMap.get(item.unicode);if(!districtRow){continue;}const newRow=new Array(FIXED_SHEET2_HEADERS.length).fill("");const noIdx2=sheet2HeaderIdx2["新区编号"];if(noIdx2!==undefined)newRow[noIdx2]=item.unicode;const newTypeIdx2=sheet2HeaderIdx2["新区类型"];if(newTypeIdx2!==undefined&&indoorOutdoorIdx2!==-1){let val=indoorOutdoorIdx2<districtRow.length?districtRow[indoorOutdoorIdx2]:"";if(val!==undefined&&val!==null)newRow[newTypeIdx2]=val;}for(let field of fieldsToFetch2){const tgtIdx=sheet2HeaderIdx2[field];if(tgtIdx!==undefined&&districtIdxMap2[field]!==undefined){let val=districtRow[districtIdxMap2[field]];if(val instanceof Date)val=XLSX.SSF.format("yyyy-mm-dd",val);if(val!==undefined&&val!==null)newRow[tgtIdx]=val;}}const reqSerialTgt=sheet2HeaderIdx2["需求库序号"];if(reqSerialTgt!==undefined&&item.reqSerial)newRow[reqSerialTgt]=item.reqSerial;const techTypeTgt=sheet2HeaderIdx2["制式"];if(techTypeTgt!==undefined&&item.techType)newRow[techTypeTgt]=item.techType;const reqNameIdx=sheet2HeaderIdx2["需求名称"];if(reqNameIdx!==undefined&&item.baseName)newRow[reqNameIdx]=String(item.baseName);const reqIdIdx2=sheet2HeaderIdx2["需求ID"];const endToEndIdx2=sheet2HeaderIdx2["端到端ID"];if(reqIdIdx2!==undefined)newRow[reqIdIdx2]="";if(endToEndIdx2!==undefined)newRow[endToEndIdx2]="";supplementaryRows.push(newRow);}setLog("补充匹配-成功生成补充行数 "+supplementaryRows.length);return supplementaryRows;}
+            async function executeFullWorkflow(){if(!outputWorkbook||!districtWorkbook){setLog("请至少上传输出结果表和新区数据导出两个文件",true);return false;}try{clearLog();setLog("开始执行匹配流程...");const basicRows=generateBasicRows();let allRows=[...basicRows];let hasProblem=(problemWorkbook&&problemListArray&&planListArray);if(hasProblem){setLog("检测到问题区域文件，开始执行补充匹配...");const supplementaryRows=generateSupplementaryRows();if(supplementaryRows.length>0){allRows=allRows.concat(supplementaryRows);setLog("已将 "+supplementaryRows.length+" 行补充数据追加到结果末尾");}else{setLog("补充匹配未生成任何行");}}else{setLog("未上传问题区域文件，仅输出基础匹配结果");}const finalData=[FIXED_SHEET2_HEADERS,...allRows];const newSheet2=arrayToSheet(finalData);if(outputWorkbook.Sheets["Sheet2"])delete outputWorkbook.Sheets["Sheet2"];outputWorkbook.SheetNames=outputWorkbook.SheetNames.filter(n=>n!=="Sheet2");outputWorkbook.SheetNames.push("Sheet2");outputWorkbook.Sheets["Sheet2"]=newSheet2;setLog("✅ 成功！共生成 "+allRows.length+" 行记录，已写入Sheet2。");return true;}catch(err){setLog("执行错误: "+err.message,true);return false;}}
+            function downloadFinal(){if(!outputWorkbook){setLog("没有可下载的工作簿",true);return;}const wbout=XLSX.write(outputWorkbook,{bookType:'xlsx',type:'array'});const blob=new Blob([wbout],{type:"application/octet-stream"});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download="匹配结果_"+new Date().toISOString().slice(0,19).replace(/:/g,'-')+".xlsx";link.click();URL.revokeObjectURL(link.href);setLog("文件已下载！");}
+            fileOutput.addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;outputStatusSpan.innerHTML='📄 解析中...';try{await loadOutputWorkbook(file);outputStatusSpan.innerHTML='✅ 已加载(Sheet1)';setLog("输出结果表加载成功，共 "+(outputSheet1Array.length-1)+" 行。");}catch(err){outputStatusSpan.innerHTML='❌ 失败';setLog("输出结果表错误: "+err.message,true);outputWorkbook=null;}});
+            fileDistrict.addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;districtStatusSpan.innerHTML='📂 读取中...';try{await loadDistrictWorkbook(file);districtStatusSpan.innerHTML='✅ 已加载(新区数据)';setLog("新区数据表加载成功，共 "+(districtSheetArray.length-1)+" 行。");}catch(err){districtStatusSpan.innerHTML='❌ 失败';setLog("新区数据错误: "+err.message,true);districtWorkbook=null;}});
+            fileProblem.addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;problemStatusSpan.innerHTML='🔍 解析中...';try{await loadProblemWorkbook(file);problemStatusSpan.innerHTML='✅ 已加载(双sheet)';setLog("问题区域详情加载成功。");}catch(err){problemStatusSpan.innerHTML='❌ 失败';setLog("问题区域文件错误: "+err.message,true);problemWorkbook=null;}});
+            runBtn.addEventListener('click',async()=>{if(!outputWorkbook||!districtWorkbook){setLog("请至少上传输出结果表和新区数据导出两个文件",true);return;}const success=await executeFullWorkflow();if(success)downloadFinal();});
+            resetBtn.addEventListener('click',()=>{resetAll();});
+        <\/script>
+        </body>
+        </html>`;
+
+            // ────────────────────────────────────────────
+            // 工具3：工参邻近匹配工具 (来自工具库-手改版v2)
+            // ────────────────────────────────────────────
+            toolHTMLs[2] = `<!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+            <title>工参匹配工具</title>
+            <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
+            <style>
+                * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
+                body { background: #f0f4f8; margin: 0; padding: 14px; }
+                .container { max-width: 1100px; margin: 0 auto; }
+                h1 { font-size: 1.5rem; font-weight: 600; color: #1e2a3a; margin: 0 0 0.25rem; }
+                .sub { color: #2c3e4e; margin-bottom: 1rem; border-left: 3px solid #3b82f6; padding-left: 0.8rem; font-size: 0.8rem; }
+                .grid-2col { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 20px; }
+                .card { background: white; border-radius: 20px; box-shadow: 0 6px 16px rgba(0,0,0,0.04); padding: 1rem 1.2rem 1.4rem; flex: 1; min-width: 260px; border: 1px solid #e2edf2; }
+                .card h3 { margin-top: 0; margin-bottom: 0.8rem; font-weight: 600; color: #0f3b5c; font-size: 0.95rem; }
+                .file-label { background: #eef2ff; border: 1px dashed #3b82f6; border-radius: 30px; padding: 8px 14px; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 0.8rem; display: inline-block; width: 100%; font-weight: 500; font-size: 0.8rem; }
+                .file-label:hover { background: #e0e7ff; border-color: #2563eb; }
+                input[type="file"] { display: none; }
+                .file-status { font-size: 0.75rem; color: #2c6e9e; background: #eef2ff; padding: 6px 10px; border-radius: 12px; margin: 8px 0; word-break: break-word; }
+                .config-panel { background: #f9fafb; border-radius: 16px; padding: 0.8rem; margin: 0.8rem 0 0.4rem; }
+                .select-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 8px; }
+                .select-group { flex: 1; min-width: 100px; }
+                .select-group label { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; color: #4b5563; display: block; margin-bottom: 3px; }
+                select { width: 100%; padding: 6px 8px; border-radius: 12px; border: 1px solid #cbd5e1; background: white; font-size: 0.78rem; }
+                button { background: #1e6f3f; color: white; border: none; padding: 10px 24px; border-radius: 36px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+                button:hover { background: #0f5a34; transform: translateY(-1px); }
+                .progress-bar { background: #e2e8f0; border-radius: 16px; height: 6px; width: 100%; margin: 10px 0; overflow: hidden; }
+                .progress-fill { background: #3b82f6; width: 0%; height: 100%; transition: width 0.2s; }
+                .action-bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+                .example-link { color: #3b82f6; cursor: pointer; text-decoration: underline; font-size: 0.75rem; }
+                .status-msg { background: #e6f7e6; border-radius: 16px; padding: 5px 12px; font-size: 0.75rem; display: inline-block; }
+                footer { margin-top: 24px; text-align: center; font-size: 0.7rem; color: #5b6e8c; }
+            </style>
+        </head>
+        <body>
+        <div class="container">
+            <h1>🗺️ 工参邻近匹配 · 支持方位角拆分</h1>
+            <div class="sub">方位角列支持'/'分隔自动拆分为多行 | 最近1个点 | 自动下载结果</div>
+            <div class="grid-2col">
+                <div class="card">
+                    <h3>📄 原始文件</h3>
+                    <label class="file-label" for="origFile">📂 上传原始文件 (CSV/Excel)</label>
+                    <input type="file" id="origFile" accept=".csv,.xlsx,.xls">
+                    <div id="origStatus" class="file-status">未上传</div>
+                    <div class="config-panel">
+                        <div class="select-row">
+                            <div class="select-group"><label>经度列</label><select id="origLonCol"></select></div>
+                            <div class="select-group"><label>纬度列</label><select id="origLatCol"></select></div>
+                            <div class="select-group"><label>方位角列(可选)</label><select id="origAzCol"><option value="">无</option></select></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>🗄️ 工参文件</h3>
+                    <label class="file-label" for="paramFile">📂 上传工参文件 (CSV/Excel)</label>
+                    <input type="file" id="paramFile" accept=".csv,.xlsx,.xls">
+                    <div id="paramStatus" class="file-status">未上传</div>
+                    <div class="config-panel">
+                        <div class="select-row">
+                            <div class="select-group"><label>经度列</label><select id="paramLonCol"></select></div>
+                            <div class="select-group"><label>纬度列</label><select id="paramLatCol"></select></div>
+                            <div class="select-group"><label>名称列</label><select id="paramNameCol"></select></div>
+                        </div>
+                        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;"><label style="font-size:0.7rem;">搜索半径(km):</label><input type="number" id="searchRadiusKm" value="5" step="1" min="0.5" style="width:80px;padding:4px;border-radius:10px;border:1px solid #cbd5e1;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="action-bar"><button id="runMatchBtn">⚡ 开始匹配</button><span class="example-link" id="downloadSample">📎 下载示例模板</span></div>
+            <div id="progressArea" style="display:none;"><div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div><div id="progressText" style="font-size:0.8rem;margin-bottom:8px;"></div></div>
+            <div id="messageArea" class="status-msg" style="margin-bottom:8px;"></div>
+            <footer>⚡ 高性能网格索引 | 方位角用/分隔自动拆分</footer>
+        </div>
+        <script>
+            let rawData=null,rawHeaders=[],paramData=null,paramHeaders=[],gridIndex=new Map(),paramPointsList=[],searchRadiusKm=5,isMatching=false;
+            const GRID_SIZE_DEG=0.05,EARTH_RADIUS_KM=6371.0;
+            const lonPatterns=['^lon$','^lng$','^longitude$','经度','long','x','easting'];
+            const latPatterns=['^lat$','^latitude$','纬度','lat','y','northing'];
+            const azPatterns=['^azimuth$','^az$','方位角','方向角','angle','bearing','direction'];
+            const namePatterns=['^name$','^site$','^站名$','^基站名$','^sitename$','^cellname$','名称','站点','小区'];
+            function findBestMatch(headers,patterns,caseSensitive=false){for(let pattern of patterns){const regex=new RegExp(pattern,caseSensitive?'':'i');for(let h of headers){if(regex.test(h))return h;}}return null;}
+            function autoSelectColumns(headers,type){if(!headers||headers.length===0)return"";let patterns;switch(type){case'lon':patterns=lonPatterns;break;case'lat':patterns=latPatterns;break;case'az':patterns=azPatterns;break;case'name':patterns=namePatterns;break;default:return"";}return findBestMatch(headers,patterns)||"";}
+            function updateSelectOptionsWithAuto(selectEl,headers,type,withNone=false){let oldVal=selectEl.value;selectEl.innerHTML="";if(withNone){let noneOpt=document.createElement("option");noneOpt.value="";noneOpt.textContent="无(不约束)";selectEl.appendChild(noneOpt);}headers.forEach(h=>{let opt=document.createElement("option");opt.value=h;opt.textContent=h;selectEl.appendChild(opt);});let autoMatch=autoSelectColumns(headers,type);if(autoMatch&&headers.includes(autoMatch)){selectEl.value=autoMatch;}else if(oldVal&&headers.includes(oldVal)){selectEl.value=oldVal;}else if(headers.length>0&&!withNone&&!selectEl.value){selectEl.value=headers[0];}}
+            function toRad(deg){return deg*Math.PI/180;}
+            function haversineDistance(lon1,lat1,lon2,lat2){const φ1=toRad(lat1),φ2=toRad(lat2);const Δφ=toRad(lat2-lat1);const Δλ=toRad(lon2-lon1);const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));return EARTH_RADIUS_KM*c*1000;}
+            function calculateBearing(lon1,lat1,lon2,lat2){const φ1=toRad(lat1),φ2=toRad(lat2);const Δλ=toRad(lon2-lon1);const x=Math.sin(Δλ)*Math.cos(φ2);const y=Math.cos(φ1)*Math.sin(φ2)-Math.sin(φ1)*Math.cos(φ2)*Math.cos(Δλ);let brng=Math.atan2(x,y)*180/Math.PI;return(brng+360)%360;}
+            function angleDifference(a1,a2){let d=Math.abs(a1-a2)%360;return Math.min(d,360-d);}
+            function parseFile(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=e=>{const wb=XLSX.read(e.target.result,{type:"binary",defval:""});const sheet=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(sheet,{defval:""});if(!rows.length)reject(new Error("空数据"));resolve({data:rows,headers:Object.keys(rows[0])});};reader.onerror=()=>reject(new Error("读取失败"));reader.readAsBinaryString(file);});}
+            function getNumberVal(obj,col){if(!col)return NaN;let v=obj[col];if(v===undefined||v===null||v==="")return NaN;let n=parseFloat(v);return isNaN(n)?NaN:n;}
+            function getStringVal(obj,col){if(!col)return"";let v=obj[col];if(v===undefined||v===null)return"";return String(v);}
+            function isValidLon(l){return!isNaN(l)&&l>=-180&&l<=180;}
+            function isValidLat(l){return!isNaN(l)&&l>=-90&&l<=90;}
+            function splitAzimuths(azValue){if(azValue===undefined||azValue===null||azValue==="")return[];const str=String(azValue).trim();if(str==="")return[];const parts=str.split('/').map(p=>p.trim()).filter(p=>p!=="");const numbers=[];for(let part of parts){let num=parseFloat(part);if(!isNaN(num)&&num>=0&&num<=360){numbers.push(num);}}return numbers;}
+            function buildGridIndex(paramPoints){const grid=new Map();for(let pt of paramPoints){const lonIdx=Math.floor(pt.lon/GRID_SIZE_DEG);const latIdx=Math.floor(pt.lat/GRID_SIZE_DEG);const key=lonIdx+','+latIdx;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(pt);}return grid;}
+            function getNearbyPoints(lon,lat,maxExpand=3){const lonIdx=Math.floor(lon/GRID_SIZE_DEG);const latIdx=Math.floor(lat/GRID_SIZE_DEG);const candidates=[];for(let dx=-maxExpand;dx<=maxExpand;dx++){for(let dy=-maxExpand;dy<=maxExpand;dy++){const key=(lonIdx+dx)+','+(latIdx+dy);if(gridIndex.has(key)){candidates.push(...gridIndex.get(key));}}}return candidates;}
+            function filterByDistance(candidates,lon,lat,radiusKm){return candidates.filter(p=>{const distKm=haversineDistance(lon,lat,p.lon,p.lat)/1000;return distKm<=radiusKm;});}
+            function matchSingleAzimuth(origLon,origLat,azimuth,paramPointsList,gridIndex,initialRadiusKm){let useAz=(azimuth!==null&&azimuth!==undefined&&!isNaN(azimuth));let radius=initialRadiusKm;const maxRadius=100;let candidates=[];let allNearby=getNearbyPoints(origLon,origLat,3);while(radius<=maxRadius){candidates=filterByDistance(allNearby,origLon,origLat,radius);if(candidates.length>=1)break;radius*=2;if(radius>maxRadius)break;}if(candidates.length===0){return{match:null,warning:"无工参点"};}let candidatesWithDist=candidates.map(p=>{const dist=haversineDistance(origLon,origLat,p.lon,p.lat);let bearing=null,angleDiff=null;if(useAz){bearing=calculateBearing(origLon,origLat,p.lon,p.lat);angleDiff=angleDifference(azimuth,bearing);}return{...p,distance_m:dist,bearing,angleDiff};});let filtered=candidatesWithDist;if(useAz){filtered=filtered.filter(c=>c.angleDiff<=60);}if(filtered.length===0){return{match:null,warning:"扇区内无点(半径"+radius.toFixed(1)+"km)"};}filtered.sort((a,b)=>a.distance_m-b.distance_m);const best=filtered[0];return{match:best,warning:null};}
+            async function runMatchAndDownload(){if(isMatching)return;const origLonCol=document.getElementById("origLonCol").value;const origLatCol=document.getElementById("origLatCol").value;const origAzCol=document.getElementById("origAzCol").value;const paramLonCol=document.getElementById("paramLonCol").value;const paramLatCol=document.getElementById("paramLatCol").value;const paramNameCol=document.getElementById("paramNameCol").value;searchRadiusKm=parseFloat(document.getElementById("searchRadiusKm").value)||5;if(!rawData||!paramData){alert("请完整上传原始文件和工参文件");return;}if(!origLonCol||!origLatCol||!paramLonCol||!paramLatCol||!paramNameCol){alert("请选择所有必要的列");return;}const validParams=[];for(let row of paramData){let lon=getNumberVal(row,paramLonCol);let lat=getNumberVal(row,paramLatCol);if(isValidLon(lon)&&isValidLat(lat)){validParams.push({lon,lat,name:getStringVal(row,paramNameCol),rawObj:row});}}if(validParams.length===0){alert("工参文件无有效经纬度点");return;}paramPointsList=validParams;gridIndex=buildGridIndex(paramPointsList);const totalRaw=rawData.length;if(totalRaw>5000&&!confirm("原始点数量"+totalRaw+"，预计需要几十秒，是否继续？"))return;isMatching=true;const runBtn=document.getElementById("runMatchBtn");runBtn.disabled=true;runBtn.textContent="⏳ 匹配中...";document.getElementById("progressArea").style.display="block";const progressFill=document.getElementById("progressFill");const progressText=document.getElementById("progressText");const msgDiv=document.getElementById("messageArea");msgDiv.innerHTML="匹配进行中，请稍候...";const outputRows=[];const chunkSize=50;for(let start=0;start<totalRaw;start+=chunkSize){const end=Math.min(start+chunkSize,totalRaw);for(let i=start;i<end;i++){const rawRow=rawData[i];const origLon=getNumberVal(rawRow,origLonCol);const origLat=getNumberVal(rawRow,origLatCol);if(!isValidLon(origLon)||!isValidLat(origLat)){outputRows.push({rawRow,usedAz:null,match:null,warning:"经纬度无效"});continue;}let azimuths=[];if(origAzCol&&origAzCol!==""){const azRaw=rawRow[origAzCol];if(azRaw!==undefined&&azRaw!==null&&azRaw!==""){azimuths=splitAzimuths(azRaw);}}if(azimuths.length===0){const res=matchSingleAzimuth(origLon,origLat,null,paramPointsList,gridIndex,searchRadiusKm);outputRows.push({rawRow,usedAz:null,match:res.match,warning:res.warning});}else{for(let az of azimuths){const res=matchSingleAzimuth(origLon,origLat,az,paramPointsList,gridIndex,searchRadiusKm);outputRows.push({rawRow,usedAz:az,match:res.match,warning:res.warning});}}}const percent=(end/totalRaw)*100;progressFill.style.width=percent+"%";progressText.innerText="匹配进度: "+end+"/"+totalRaw+" ("+Math.round(percent)+"%)，已生成 "+outputRows.length+" 行";await new Promise(r=>setTimeout(r,5));}generateAndDownloadCSV(outputRows);msgDiv.innerHTML="✅ 匹配完成！原始点"+totalRaw+"个，生成结果"+outputRows.length+"行，已自动下载。";document.getElementById("progressArea").style.display="none";isMatching=false;runBtn.disabled=false;runBtn.textContent="⚡ 开始匹配";}
+            function generateAndDownloadCSV(outputRows){const headers=[...rawHeaders,"使用方位角(度)","匹配工参名称","匹配工参经度","匹配工参纬度","距离(米)","工参方位角(°)","方位角差(°)","备注"];const rows=[];for(let item of outputRows){const rawRow=item.rawRow;const rawValues=rawHeaders.map(h=>rawRow[h]!==undefined?rawRow[h]:"");const usedAz=(item.usedAz!==null&&item.usedAz!==undefined)?item.usedAz:"";if(!item.match){rows.push([...rawValues,usedAz,"","","","","","",item.warning||"无匹配点"]);}else{const m=item.match;rows.push([...rawValues,usedAz,m.name,m.lon.toFixed(6),m.lat.toFixed(6),m.distance_m.toFixed(2),m.bearing!==null?m.bearing.toFixed(2):"",m.angleDiff!==null?m.angleDiff.toFixed(2):"",item.warning||""]);}}let csvContent=rows.map(row=>row.map(cell=>'"'+String(cell).replace(/"/g,'""')+'"').join(",")).join("\\n");const blob=new Blob(["\\uFEFF"+headers.join(",")+"\\n"+csvContent],{type:"text/csv;charset=utf-8;"});const link=document.createElement('a');const url=URL.createObjectURL(blob);link.href=url;link.download="matched_result_"+new Date().toISOString().slice(0,19).replace(/:/g,'-')+".csv";document.body.appendChild(link);link.click();document.body.removeChild(link);URL.revokeObjectURL(url);}
+            function downloadSample(){const sampleOrig="原始经度,原始纬度,方位角,站点名称\\n120.123,30.234,45/90/135,测试站A\\n120.456,30.567,,无方位角站B";const sampleParam="工参经度,工参纬度,基站名称\\n120.122,30.233,近点1\\n120.130,30.240,近点2\\n120.200,30.300,远点1";const blobOrig=new Blob(["\\uFEFF"+sampleOrig],{type:"text/csv;charset=utf-8;"});const blobParam=new Blob(["\\uFEFF"+sampleParam],{type:"text/csv;charset=utf-8;"});const a1=document.createElement('a');a1.href=URL.createObjectURL(blobOrig);a1.download="sample_original.csv";const a2=document.createElement('a');a2.href=URL.createObjectURL(blobParam);a2.download="sample_parameter.csv";document.body.appendChild(a1);a1.click();document.body.removeChild(a1);setTimeout(()=>{document.body.appendChild(a2);a2.click();document.body.removeChild(a2);URL.revokeObjectURL(a1.href);URL.revokeObjectURL(a2.href);},200);}
+            function bindFileUpload(fileInputId,isOrig){const input=document.getElementById(fileInputId);input.addEventListener("change",async(e)=>{const file=e.target.files[0];if(!file)return;const statusDiv=document.getElementById(fileInputId==="origFile"?"origStatus":"paramStatus");statusDiv.innerHTML="⏳ 解析中: "+file.name;try{const{data,headers}=await parseFile(file);if(isOrig){rawData=data;rawHeaders=headers;}else{paramData=data;paramHeaders=headers;}statusDiv.innerHTML="✅ 已加载 "+data.length+" 行";if(isOrig){updateSelectOptionsWithAuto(document.getElementById("origLonCol"),headers,'lon',false);updateSelectOptionsWithAuto(document.getElementById("origLatCol"),headers,'lat',false);updateSelectOptionsWithAuto(document.getElementById("origAzCol"),headers,'az',true);}else{updateSelectOptionsWithAuto(document.getElementById("paramLonCol"),headers,'lon',false);updateSelectOptionsWithAuto(document.getElementById("paramLatCol"),headers,'lat',false);updateSelectOptionsWithAuto(document.getElementById("paramNameCol"),headers,'name',false);}}catch(err){statusDiv.innerHTML="❌ 解析失败: "+err.message;}});}
+            document.addEventListener("DOMContentLoaded",()=>{bindFileUpload("origFile",true);bindFileUpload("paramFile",false);document.getElementById("runMatchBtn").addEventListener("click",runMatchAndDownload);document.getElementById("downloadSample").addEventListener("click",downloadSample);});
+        <\/script>
+        </body>
+        </html>`;
+
+            // ────────────────────────────────────────────
+            // 工具4：KML转CSV工具 (来自kml转csv.html)
+            // ────────────────────────────────────────────
+            toolHTMLs[3] = `<!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+            <title>KML转CSV - 提取原有新区编号 + WKT几何</title>
+            <style>
+                * { box-sizing: border-box; }
+                body { font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; background: #eef2f5; margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 16px; }
+                .card { max-width: 1400px; width: 100%; background: white; border-radius: 28px; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15); overflow: hidden; }
+                .header { background: linear-gradient(135deg, #1e3a3a 0%, #235b4a 100%); color: white; padding: 22px 28px; }
+                .header h1 { margin: 0 0 4px; font-weight: 700; font-size: 1.5rem; }
+                .header p { margin: 0; opacity: 0.85; font-size: 0.8rem; }
+                .content { padding: 24px; }
+                .upload-area { border: 2px dashed #bdd3c8; border-radius: 24px; background: #fefefe; padding: 28px 18px; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 22px; }
+                .upload-area:hover { border-color: #2c7a5a; background: #f4fbf7; }
+                .upload-icon { font-size: 42px; margin-bottom: 8px; }
+                .upload-text { font-size: 1rem; font-weight: 600; color: #1e3a2f; }
+                .upload-hint { font-size: 0.75rem; color: #5a7c6b; margin-top: 6px; }
+                .file-input { display: none; }
+                .action-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+                .stats { background: #e9f3ef; padding: 6px 18px; border-radius: 36px; font-size: 0.8rem; font-weight: 500; color: #1d5a46; }
+                .btn { background: white; border: 1px solid #cbdcd2; padding: 7px 20px; border-radius: 36px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+                .btn-primary { background: #1f6e4a; border-color: #1f6e4a; color: white; }
+                .btn-primary:hover { background: #0f5538; transform: translateY(-1px); }
+                .btn-outline:hover { background: #e6f0ec; }
+                .preview-container { margin-top: 16px; border-top: 1px solid #e2eae5; padding-top: 16px; }
+                .preview-title { font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+                .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #e0ece5; background: white; max-height: 380px; overflow-y: auto; }
+                table { width: 100%; border-collapse: collapse; font-size: 0.7rem; font-family: 'SF Mono', 'JetBrains Mono', monospace; }
+                th { background: #f0f7f2; padding: 10px 8px; text-align: left; font-weight: 700; color: #1f4d3a; position: sticky; top: 0; border-bottom: 1px solid #cde0d6; }
+                td { padding: 6px 8px; border-bottom: 1px solid #eff6f2; color: #1f3e30; word-break: break-word; max-width: 300px; }
+                tr:hover td { background-color: #f8fefb; }
+                .spinner { width: 16px; height: 16px; border: 2px solid #c0d9cf; border-top: 2px solid #1f6e4a; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                .error-message { background: #fee9e7; border-left: 4px solid #d9534f; padding: 10px 16px; border-radius: 14px; color: #a8231a; margin-bottom: 16px; font-size: 0.8rem; }
+                .success-message { background: #e0f2e9; border-left: 4px solid #1f6e4a; padding: 10px 16px; border-radius: 14px; color: #155f42; font-size: 0.8rem; }
+                .badge { background: #e0ede7; border-radius: 36px; padding: 3px 12px; font-size: 0.65rem; font-weight: 600; }
+                footer { background: #f8fcf9; padding: 10px 20px; text-align: center; font-size: 0.65rem; color: #618b78; border-top: 1px solid #e2ece6; }
+        </style>
+        </head>
+        <body>
+        <div class="card">
+            <div class="header"><h1>🗺️ KML → CSV (保留原有"新区编号")</h1><p>提取每个地标/要素中已有的"新区编号"字段，输出WKT几何边框</p></div>
+            <div class="content">
+                <div id="dropZone" class="upload-area"><div class="upload-icon">📁🏷️</div><div class="upload-text">点击或拖拽KML文件</div><div class="upload-hint">自动识别 Data name="新区编号" 或 SimpleData name="新区编号"</div><input type="file" id="fileInput" accept=".kml,.KML" class="file-input"></div>
+                <div id="messageArea"></div>
+                <div id="progressIndicator" style="display:none;margin-bottom:16px;"><span style="display:inline-flex;align-items:center;gap:8px;background:#edf4f0;padding:6px 16px;border-radius:40px;font-size:0.8rem;"><span class="spinner"></span><span id="progressText">解析中...</span></span></div>
+                <div class="action-bar" id="actionBar" style="display:none;"><div class="stats" id="statsInfo">📊 未加载数据</div><div style="display:flex;gap:8px;"><button id="downloadBtn" class="btn btn-primary">📥 下载CSV</button><button id="clearBtn" class="btn btn-outline">🗑️ 清空</button></div></div>
+                <div class="preview-container" id="previewArea" style="display:none;"><div class="preview-title"><span>📋 要素预览(前10个)</span><span class="badge" id="totalFeaturesBadge">0个要素</span></div><div class="table-wrapper"><table id="previewTable"><thead><tr><th>新区编号</th><th>名称</th><th>几何类型</th><th>WKT几何(前80字符)</th></tr></thead><tbody id="previewBody"><tr><td colspan="4" style="text-align:center;padding:30px;">⬆️ 上传KML文件</td></tr></tbody></table></div></div>
+            </div>
+            <footer>⚡ 完全本地处理 · 编号优先取自 Data name="新区编号" 或 SimpleData name="新区编号"</footer>
+        </div>
+        <script>
+            !function(){const dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('fileInput'),messageArea=document.getElementById('messageArea'),actionBar=document.getElementById('actionBar'),previewArea=document.getElementById('previewArea'),statsInfo=document.getElementById('statsInfo'),downloadBtn=document.getElementById('downloadBtn'),clearBtn=document.getElementById('clearBtn'),previewBody=document.getElementById('previewBody'),totalFeaturesBadge=document.getElementById('totalFeaturesBadge'),progressIndicator=document.getElementById('progressIndicator'),progressText=document.getElementById('progressText');let currentFeatures=[],currentFileName="",parsingActive=false;function escapeHtml(str){if(!str)return'';return str.replace(/[&<>]/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';return m;});}function showMessage(msg,isError=false){const className=isError?'error-message':'success-message';messageArea.innerHTML='<div class="'+className+'">'+escapeHtml(msg)+'</div>';setTimeout(()=>{if(messageArea.innerHTML.includes(escapeHtml(msg)))messageArea.innerHTML='';},5000);}function escapeCSVField(field){if(field===undefined||field===null)return'';let str=String(field);if(str.includes(',')||str.includes('"')||str.includes('\\n')||str.includes('\\r')){str=str.replace(/"/g,'""');return'"'+str+'"';}return str;}function parseCoordinates(coordStr){if(!coordStr||typeof coordStr!=='string')return[];const tokens=coordStr.trim().split(/\\s+/);const coords=[];for(let token of tokens){if(!token)continue;const parts=token.split(',').map(p=>p.trim());if(parts.length>=2){let lon=parseFloat(parts[0]);let lat=parseFloat(parts[1]);if(isNaN(lon)||isNaN(lat))continue;let alt=(parts.length>=3&&parts[2]!=='')?parseFloat(parts[2]):null;coords.push({lon,lat,alt:(alt!==null&&!isNaN(alt))?alt:null});}}return coords;}function coordsToWKTString(coords,includeAlt=false){if(!coords.length)return'';return coords.map(c=>{if(includeAlt&&c.alt!==null&&!isNaN(c.alt)){return c.lon+' '+c.lat+' '+c.alt;}return c.lon+' '+c.lat;}).join(',');}function buildWKT(geomType,coordsArray){if(!coordsArray.length)return null;if(geomType==='Point'){const pt=coordsArray[0];return'POINT('+pt.lon+' '+pt.lat+')';}else if(geomType==='LineString'){const coordStr=coordsToWKTString(coordsArray);return'LINESTRING('+coordStr+')';}else if(geomType==='Polygon'){let ring=[...coordsArray];if(ring.length<3)return null;const first=ring[0];const last=ring[ring.length-1];if(first.lon!==last.lon||first.lat!==last.lat){ring.push({...first});}const coordStr=coordsToWKTString(ring);return'POLYGON(('+coordStr+'))';}else{if(coordsArray.length>=3){const first=coordsArray[0];const last=coordsArray[coordsArray.length-1];if(first.lon===last.lon&&first.lat===last.lat){const ring=coordsArray.slice(0,-1);const coordStr=coordsToWKTString(ring);return'POLYGON(('+coordStr+'))';}}const coordStr=coordsToWKTString(coordsArray);return'LINESTRING('+coordStr+')';}}function extractDistrictNumber(placemark,fallbackName,index){const extendedData=placemark.getElementsByTagName('ExtendedData')[0];if(extendedData){const dataNodes=extendedData.getElementsByTagName('Data');for(let i=0;i<dataNodes.length;i++){const data=dataNodes[i];const nameAttr=data.getAttribute('name');if(nameAttr==='新区编号'||nameAttr==='编号'){const valueNode=data.getElementsByTagName('value')[0];if(valueNode&&valueNode.textContent){return valueNode.textContent.trim();}}}const simpleDataNodes=extendedData.getElementsByTagName('SimpleData');for(let i=0;i<simpleDataNodes.length;i++){const sd=simpleDataNodes[i];const nameAttr=sd.getAttribute('name');if(nameAttr==='新区编号'||nameAttr==='编号'){if(sd.textContent)return sd.textContent.trim();}}}const allData=placemark.getElementsByTagName('Data');for(let i=0;i<allData.length;i++){const d=allData[i];const nameAttr=d.getAttribute('name');if(nameAttr==='新区编号'||nameAttr==='编号'){const valNode=d.getElementsByTagName('value')[0];if(valNode&&valNode.textContent)return valNode.textContent.trim();}}const idAttr=placemark.getAttribute('id');if(idAttr&&idAttr.trim()!=='')return idAttr.trim();if(fallbackName&&fallbackName!=='')return fallbackName;return'未知编号_'+(index+1);}function extractGeometryFromPlacemark(pm){function extractFromNode(node){const nodeName=node.nodeName.includes(':')?node.nodeName.split(':').pop():node.nodeName;if(nodeName==='Point'){const coordsNode=node.getElementsByTagName('coordinates')[0];if(coordsNode){const coords=parseCoordinates(coordsNode.textContent);if(coords.length)return{type:'Point',coords};}}else if(nodeName==='LineString'){const coordsNode=node.getElementsByTagName('coordinates')[0];if(coordsNode){const coords=parseCoordinates(coordsNode.textContent);if(coords.length)return{type:'LineString',coords};}}else if(nodeName==='Polygon'){const outerBoundary=node.getElementsByTagName('outerBoundaryIs')[0];if(outerBoundary){const linearRing=outerBoundary.getElementsByTagName('LinearRing')[0];if(linearRing){const coordsNode=linearRing.getElementsByTagName('coordinates')[0];if(coordsNode){const coords=parseCoordinates(coordsNode.textContent);if(coords.length)return{type:'Polygon',coords};}}}const coordsNode=node.getElementsByTagName('coordinates')[0];if(coordsNode){const coords=parseCoordinates(coordsNode.textContent);if(coords.length>=3)return{type:'Polygon',coords};}}else if(nodeName==='MultiGeometry'){const children=node.children;for(let i=0;i<children.length;i++){const geom=extractFromNode(children[i]);if(geom)return geom;}}return null;}const pointNode=pm.getElementsByTagName('Point')[0];if(pointNode)return extractFromNode(pointNode);const lineNode=pm.getElementsByTagName('LineString')[0];if(lineNode)return extractFromNode(lineNode);const polyNode=pm.getElementsByTagName('Polygon')[0];if(polyNode)return extractFromNode(polyNode);const multiNode=pm.getElementsByTagName('MultiGeometry')[0];if(multiNode)return extractFromNode(multiNode);const anyCoords=pm.getElementsByTagName('coordinates')[0];if(anyCoords){const coords=parseCoordinates(anyCoords.textContent);if(coords.length===1)return{type:'Point',coords};if(coords.length>1){const first=coords[0],last=coords[coords.length-1];if(coords.length>=3&&first.lon===last.lon&&first.lat===last.lat){return{type:'Polygon',coords};}return{type:'LineString',coords};}}return null;}function parseKMLToFeatures(kmlText){const parser=new DOMParser();let xmlDoc;try{xmlDoc=parser.parseFromString(kmlText,"text/xml");const parseError=xmlDoc.querySelector('parsererror');if(parseError)throw new Error('XML格式错误');}catch(err){throw new Error('解析失败: '+err.message);}const placemarks=xmlDoc.getElementsByTagName('Placemark');if(!placemarks.length)throw new Error('未找到任何Placemark要素');const features=[];for(let i=0;i<placemarks.length;i++){const pm=placemarks[i];let name='';const nameNode=pm.getElementsByTagName('name')[0];if(nameNode&&nameNode.textContent)name=nameNode.textContent.trim();if(name==='')name='未命名_'+(i+1);const districtNumber=extractDistrictNumber(pm,name,i);const geom=extractGeometryFromPlacemark(pm);if(!geom||!geom.coords||geom.coords.length===0){continue;}const wkt=buildWKT(geom.type,geom.coords);if(!wkt)continue;features.push({numberId:districtNumber,name:name,geomType:geom.type,wkt:wkt});}if(features.length===0)throw new Error('未提取到任何有效几何要素');return features;}function featuresToCSV(features){const headers=['新区编号','名称','几何类型','WKT几何'];const rows=[headers];for(let f of features){rows.push([f.numberId,f.name,f.geomType,f.wkt].map(v=>escapeCSVField(v)));}return'\\uFEFF'+rows.map(row=>row.join(',')).join('\\n');}function updatePreview(features,filename){currentFeatures=features;currentFileName=filename;const total=features.length;statsInfo.innerHTML='🏷️ 共 '+total+' 个要素 | 文件: '+escapeHtml(filename.length>30?filename.slice(0,28)+'…':filename);totalFeaturesBadge.innerText=total+' 个要素';downloadBtn.disabled=false;actionBar.style.display='flex';previewArea.style.display='block';const previewLimit=Math.min(10,total);let html='';for(let i=0;i<previewLimit;i++){const f=features[i];let shortWkt=f.wkt.length>80?f.wkt.substring(0,75)+'…':f.wkt;html+='<tr><td style="font-weight:500;">'+escapeHtml(f.numberId)+'</td><td>'+escapeHtml(f.name)+'</td><td>'+escapeHtml(f.geomType)+'</td><td style="font-family:monospace;font-size:0.65rem;">'+escapeHtml(shortWkt)+'</td></tr>';}if(total>10){html+='<tr><td colspan="4" style="text-align:center;background:#f9fdfa;">⋯ 共 '+total+' 个要素，完整列表请下载CSV ⋯</td></tr>';}previewBody.innerHTML=html;showMessage('✅ 解析完成: 提取 '+total+' 个地理要素，已保留原始新区编号字段',false);}function resetUI(){currentFeatures=[];currentFileName="";actionBar.style.display='none';previewArea.style.display='none';downloadBtn.disabled=true;previewBody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:30px;">⬆️ 上传KML文件</td></tr>';totalFeaturesBadge.innerText='0个要素';statsInfo.innerHTML='📊 未加载数据';messageArea.innerHTML='';progressIndicator.style.display='none';}function downloadCSV(){if(!currentFeatures.length){showMessage('没有要素数据可导出',true);return;}const csvContent=featuresToCSV(currentFeatures);const blob=new Blob([csvContent],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');let baseName=currentFileName.replace(/\\.(kml|KML)$/,'')||'kml_features';a.download=baseName+'_新区编号_几何表.csv';a.href=url;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showMessage('📎 导出成功',false);}async function processKMLFile(file){if(parsingActive){showMessage('解析任务进行中',true);return;}if(!file.name.toLowerCase().endsWith('.kml')){showMessage('请上传.kml文件',true);return;}const MAX_SIZE=200*1024*1024;if(file.size>MAX_SIZE){showMessage('文件过大',true);return;}parsingActive=true;progressIndicator.style.display='flex';progressText.innerText='读取中...';try{const kmlText=await file.text();progressText.innerText='解析中...';await new Promise(r=>setTimeout(r,20));const features=parseKMLToFeatures(kmlText);if(!features.length)throw new Error('未提取到有效几何要素');updatePreview(features,file.name);progressIndicator.style.display='none';}catch(err){console.error(err);let errMsg=err.message||'解析失败';showMessage('❌ '+errMsg,true);resetUI();progressIndicator.style.display='none';}finally{parsingActive=false;}}dropZone.addEventListener('click',()=>fileInput.click());fileInput.addEventListener('change',e=>{const files=e.target.files;if(files&&files.length)processKMLFile(files[0]);fileInput.value='';});dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('drag-over');});dropZone.addEventListener('dragleave',e=>{e.preventDefault();dropZone.classList.remove('drag-over');});dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('drag-over');const files=e.dataTransfer.files;if(files&&files.length){const file=files[0];if(file.name.toLowerCase().endsWith('.kml'))processKMLFile(file);else showMessage('请拖拽.kml文件',true);}});downloadBtn.addEventListener('click',downloadCSV);clearBtn.addEventListener('click',()=>resetUI());resetUI();}();
+        <\/script>
+        </body>
+        </html>`;
+
+            // ────────────────────────────────────────────
+            // 工具5：表格拆分工具 (来自表格拆分工具.html)
+            // ────────────────────────────────────────────
+            toolHTMLs[4] = `<!DOCTYPE html>
+        <html lang="zh-CN">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+            <title>表格拆分工具</title>
+            <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"><\/script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"><\/script>
+            <style>
+                * { box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+                body { background: #f0f2f5; margin: 0; padding: 16px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+                .tool-container { max-width: 1200px; width: 100%; background: white; border-radius: 24px; box-shadow: 0 14px 28px -8px rgba(0,0,0,0.08); overflow: hidden; }
+                .header { background: linear-gradient(135deg, #1a5f7a, #0e3e52); padding: 18px 24px; color: white; }
+                .header h1 { margin: 0 0 4px 0; font-weight: 600; font-size: 1.4rem; }
+                .header p { margin: 0; opacity: 0.85; font-size: 0.8rem; }
+                .content { padding: 20px 24px 24px; }
+                .upload-area { border: 2px dashed #cbd5e1; border-radius: 16px; background: #fafcff; padding: 22px 16px; text-align: center; cursor: pointer; transition: 0.2s; margin-bottom: 20px; }
+                .upload-area:hover { border-color: #1a5f7a; background: #f8fafd; }
+                .upload-icon { font-size: 36px; margin-bottom: 8px; }
+                .file-info { background: #f1f5f9; border-radius: 14px; padding: 8px 16px; margin-top: 10px; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.78rem; }
+                .badge { background: #e2e8f0; padding: 3px 8px; border-radius: 30px; font-size: 0.7rem; color: #1e293b; }
+                .split-options { background: #f8fafc; border-radius: 20px; padding: 16px 20px; margin-bottom: 20px; border: 1px solid #e2edf2; }
+                .mode-title { font-weight: 600; margin-bottom: 12px; font-size: 1rem; color: #0f3b48; }
+                .radio-group { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid #e2edf2; padding-bottom: 14px; }
+                .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 500; font-size: 0.85rem; }
+                .param-panel { background: white; border-radius: 16px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+                .param-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
+                .param-row label { font-weight: 500; min-width: 90px; font-size: 0.8rem; }
+                select, input { padding: 6px 12px; border-radius: 30px; border: 1px solid #cbd5e1; background: white; font-size: 0.8rem; outline: none; }
+                button { background: #1a5f7a; border: none; padding: 9px 22px; border-radius: 36px; color: white; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.82rem; }
+                button.secondary { background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; }
+                button:hover { opacity: 0.88; transform: translateY(-1px); }
+                .action-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin: 16px 0; gap: 10px; }
+                .file-list { background: #fff; border: 1px solid #e9edf2; border-radius: 16px; max-height: 260px; overflow-y: auto; padding: 4px 0; }
+                .file-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #f0f2f5; font-size: 0.78rem; }
+                .file-name { font-family: monospace; font-weight: 500; word-break: break-all; font-size: 0.75rem; }
+                .file-meta { color: #5b6e8c; font-size: 0.68rem; }
+                .footer-note { background: #f1f9fe; border-radius: 14px; padding: 10px 16px; margin-top: 16px; font-size: 0.7rem; color: #2c5a6e; }
+        </style>
+        </head>
+        <body>
+        <div class="tool-container">
+            <div class="header"><h1>📂 智能表格拆分器</h1><p>按列名、行数或文件大小拆分Excel/CSV</p></div>
+            <div class="content">
+                <div id="uploadArea" class="upload-area"><div class="upload-icon">📎📊</div><div>点击或拖拽上传表格文件</div><div style="font-size:0.7rem;margin-top:4px;">支持.xlsx,.xls,.csv</div><input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;"><div id="fileMeta" class="file-info" style="display:none;"></div></div>
+                <div class="split-options"><div class="mode-title">⚙️ 拆分方式</div><div class="radio-group" id="modeGroup"><label class="radio-item"><input type="radio" name="splitMode" value="column" checked>🔖 按列名拆分</label><label class="radio-item"><input type="radio" name="splitMode" value="rows">📄 按行数拆分</label><label class="radio-item"><input type="radio" name="splitMode" value="size">💾 按文件大小拆分</label></div><div id="paramContainer" class="param-panel"></div></div>
+                <div class="action-bar"><button id="splitBtn">✂️ 开始拆分</button><div style="display:flex;gap:8px;"><button id="saveFolderBtn" class="secondary">📁 选择文件夹保存</button><button id="downloadZipBtn" class="secondary">📦 打包下载ZIP</button></div></div>
+                <div><strong>📋 拆分结果</strong><span id="fileCountBadge" style="background:#eef2ff;padding:2px 8px;border-radius:16px;margin-left:6px;font-size:0.75rem;">0个文件</span></div>
+                <div id="fileListContainer" class="file-list"><div style="text-align:center;padding:28px;color:#7e8b9e;">暂无拆分文件</div></div>
+                <div class="footer-note">💡 按列名拆分生成多个文件；按大小拆分基于CSV字节数精准控制。支持选择文件夹或打包ZIP。</div>
+            </div>
+        </div>
+        <script>
+            let rawHeaders=[],rawDataRows=[],originalFileName="",currentFiles=[];
+            const uploadArea=document.getElementById('uploadArea'),fileInput=document.getElementById('fileInput'),fileMetaDiv=document.getElementById('fileMeta');
+            const splitBtn=document.getElementById('splitBtn'),saveFolderBtn=document.getElementById('saveFolderBtn'),downloadZipBtn=document.getElementById('downloadZipBtn');
+            const fileListContainer=document.getElementById('fileListContainer'),fileCountBadge=document.getElementById('fileCountBadge');
+            function showToast(msg,isError=false){let toast=document.createElement('div');toast.innerText=msg;toast.style.cssText='position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:'+(isError?'#dc2626':'#1f8a4c')+';color:white;padding:8px 18px;border-radius:30px;font-size:0.78rem;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15);';document.body.appendChild(toast);setTimeout(()=>toast.remove(),2800);}
+            function clearResults(){currentFiles=[];renderFileList();}
+            function renderFileList(){if(!currentFiles.length){fileListContainer.innerHTML='<div style="text-align:center;padding:28px;color:#7e8b9e;">📭 暂无拆分文件</div>';fileCountBadge.innerText='0个文件';return;}let html='';currentFiles.forEach((file,idx)=>{let sizeKB=(file.sizeBytes/1024).toFixed(1);html+='<div class="file-item"><div><div class="file-name">📄 '+escapeHtml(file.name)+'</div><div class="file-meta">约'+sizeKB+'KB · '+file.rowCount+'行</div></div><button data-idx="'+idx+'" style="background:#eef2ff;color:#1a5f7a;padding:3px 10px;border-radius:20px;font-size:0.65rem;border:1px solid #cbd5e1;cursor:pointer;">⬇️ 保存</button></div>';});fileListContainer.innerHTML=html;fileCountBadge.innerText=currentFiles.length+'个文件';document.querySelectorAll('[data-idx]').forEach(btn=>{btn.addEventListener('click',e=>{const idx=btn.getAttribute('data-idx');if(idx!==null&&currentFiles[idx]){downloadSingleFile(currentFiles[idx]);}});});}
+            function escapeHtml(str){return str.replace(/[&<>]/g,function(m){if(m==='&')return'&amp;';if(m==='<')return'&lt;';if(m==='>')return'&gt;';return m;});}
+            function downloadSingleFile(fileObj){const blob=new Blob(["\\uFEFF"+fileObj.content],{type:"text/csv;charset=utf-8;"});saveAs(blob,fileObj.name);showToast('已保存: '+fileObj.name);}
+            function renderParamPanel(){const mode=document.querySelector('input[name="splitMode"]:checked').value;let html='';if(mode==='column'){html='<div class="param-row"><label>选择拆分列:</label><select id="columnSelect" style="min-width:150px;">'+(rawHeaders.length?rawHeaders.map(h=>'<option value="'+escapeHtml(h)+'">'+escapeHtml(h)+'</option>').join(''):'<option>请先上传表格</option>')+'</select></div>';}else if(mode==='rows'){html='<div class="param-row"><label>每个文件行数:</label><input type="number" id="rowsPerFile" value="1000" min="1" style="width:120px;"><span style="font-size:0.7rem;">(不含表头)</span></div>';}else if(mode==='size'){html='<div class="param-row"><label>单个文件上限:</label><input type="number" id="sizeValue" value="1" step="0.5" min="0.1" style="width:100px;"><select id="sizeUnit" style="width:70px;"><option value="KB">KB</option><option value="MB" selected>MB</option></select></div>';}document.getElementById('paramContainer').innerHTML=html;}
+            function parseFile(file){const extension=file.name.split('.').pop().toLowerCase();const reader=new FileReader();reader.onload=function(e){let data;try{if(extension==='csv'){const str=e.target.result;const workbook=XLSX.read(str,{type:'string',raw:true});const firstSheet=workbook.Sheets[workbook.SheetNames[0]];data=XLSX.utils.sheet_to_json(firstSheet,{header:1,defval:""});}else{const binary=e.target.result;const workbook=XLSX.read(binary,{type:'binary'});const firstSheet=workbook.Sheets[workbook.SheetNames[0]];data=XLSX.utils.sheet_to_json(firstSheet,{header:1,defval:""});}if(!data||data.length<2)throw new Error("表格至少包含表头和一行数据");rawHeaders=data[0].map(cell=>(cell===undefined||cell===null)?'列'+Math.random():String(cell).trim());rawHeaders=rawHeaders.map((h,idx)=>(h===""?"Column_"+(idx+1):h));rawDataRows=data.slice(1).filter(row=>row.some(cell=>cell!==undefined&&cell!==null&&cell!==""));if(rawDataRows.length===0)throw new Error("没有有效数据行");originalFileName=file.name.replace(/\\.[^/.]+$/,"");fileMetaDiv.style.display="inline-flex";fileMetaDiv.innerHTML='<span>✅ '+file.name+'</span><span class="badge">📊 '+rawHeaders.length+'列</span><span class="badge">📋 '+rawDataRows.length+'行</span>';renderParamPanel();clearResults();showToast('成功加载 '+rawDataRows.length+' 行数据');}catch(err){showToast("解析失败: "+err.message,true);rawHeaders=[];rawDataRows=[];fileMetaDiv.style.display="none";}};if(extension==='csv')reader.readAsText(file,"utf-8");else reader.readAsBinaryString(file);}
+            function triggerUpload(files){if(files&&files.length){parseFile(files[0]);}}
+            uploadArea.addEventListener('click',()=>fileInput.click());fileInput.addEventListener('change',e=>triggerUpload(e.target.files));uploadArea.addEventListener('dragover',e=>{e.preventDefault();uploadArea.classList.add('drag-over');});uploadArea.addEventListener('dragleave',()=>uploadArea.classList.remove('drag-over'));uploadArea.addEventListener('drop',e=>{e.preventDefault();uploadArea.classList.remove('drag-over');if(e.dataTransfer.files.length)triggerUpload(e.dataTransfer.files);});
+            function escapeCSVField(field){if(field===undefined||field===null)return'';let str=String(field);if(str.includes(',')||str.includes('"')||str.includes('\\n')||str.includes('\\r')){str=str.replace(/"/g,'""');return'"'+str+'"';}return str;}
+            function rowToCSV(row){return row.map(cell=>escapeCSVField(cell)).join(',');}
+            function buildCSVFromRows(headers,dataRows){const headerLine=rowToCSV(headers);const lines=dataRows.map(row=>rowToCSV(row));return[headerLine,...lines].join('\\n');}
+            function getRowByteLength(row){const line=rowToCSV(row);return new TextEncoder().encode(line).length;}
+            function splitByColumn(columnName){const colIndex=rawHeaders.findIndex(h=>h===columnName);if(colIndex===-1)throw new Error("未找到列: "+columnName);const groups=new Map();for(const row of rawDataRows){let val=(row[colIndex]!==undefined&&row[colIndex]!==null)?String(row[colIndex]):"(空值)";if(!groups.has(val))groups.set(val,[]);groups.get(val).push([...row]);}const files=[];for(let[val,rows]of groups.entries()){let safeName=val.replace(/[\\\\\\/:*?"<>|]/g,'_').substring(0,50);if(safeName==="")safeName="empty";const fileName=originalFileName+'_'+columnName+'_'+safeName+'.csv';const csvContent=buildCSVFromRows(rawHeaders,rows);const sizeBytes=new TextEncoder().encode(csvContent).length;files.push({name:fileName,content:csvContent,sizeBytes,rowCount:rows.length});}return files;}
+            function splitByRowCount(rowsPerFile){const files=[];const totalRows=rawDataRows.length;let start=0,part=1;while(start<totalRows){const end=Math.min(start+rowsPerFile,totalRows);const chunkRows=rawDataRows.slice(start,end);const fileName=originalFileName+'_part'+String(part).padStart(3,'0')+'.csv';const csvContent=buildCSVFromRows(rawHeaders,chunkRows);const sizeBytes=new TextEncoder().encode(csvContent).length;files.push({name:fileName,content:csvContent,sizeBytes,rowCount:chunkRows.length});start=end;part++;}return files;}
+            function splitByFileSize(maxBytes){if(maxBytes<=0)throw new Error("文件大小必须大于0");const headerLine=rowToCSV(rawHeaders);const headerBytes=new TextEncoder().encode(headerLine+'\\n').length;const files=[];let currentRows=[],currentSize=headerBytes;for(let i=0;i<rawDataRows.length;i++){const row=rawDataRows[i];const rowBytes=getRowByteLength(row)+1;if(currentSize+rowBytes>maxBytes&&currentRows.length>0){const csvContent=buildCSVFromRows(rawHeaders,currentRows);const realSize=new TextEncoder().encode(csvContent).length;files.push({name:originalFileName+'_sizePart_'+String(files.length+1).padStart(3,'0')+'.csv',content:csvContent,sizeBytes:realSize,rowCount:currentRows.length});currentRows=[row];currentSize=headerBytes+rowBytes;}else{currentRows.push(row);currentSize+=rowBytes;if(currentSize>maxBytes&&currentRows.length===1){const csvContent=buildCSVFromRows(rawHeaders,currentRows);const realSize=new TextEncoder().encode(csvContent).length;files.push({name:originalFileName+'_oversize_'+String(files.length+1).padStart(3,'0')+'.csv',content:csvContent,sizeBytes:realSize,rowCount:1});currentRows=[];currentSize=headerBytes;}}}if(currentRows.length>0){const csvContent=buildCSVFromRows(rawHeaders,currentRows);const realSize=new TextEncoder().encode(csvContent).length;files.push({name:originalFileName+'_sizePart_'+String(files.length+1).padStart(3,'0')+'.csv',content:csvContent,sizeBytes:realSize,rowCount:currentRows.length});}return files;}
+            async function performSplit(){if(!rawHeaders.length||!rawDataRows.length){showToast("请先上传有效表格文件",true);return;}const mode=document.querySelector('input[name="splitMode"]:checked').value;let files=[];try{if(mode==='column'){const colSelect=document.getElementById('columnSelect');if(!colSelect||!rawHeaders.length)throw new Error("请先加载表格");files=splitByColumn(colSelect.value);}else if(mode==='rows'){const rowsPer=parseInt(document.getElementById('rowsPerFile').value);if(isNaN(rowsPer)||rowsPer<1)throw new Error("行数必须大于0");files=splitByRowCount(rowsPer);}else if(mode==='size'){let sizeVal=parseFloat(document.getElementById('sizeValue').value);const unit=document.getElementById('sizeUnit').value;if(isNaN(sizeVal)||sizeVal<=0)throw new Error("大小数值无效");let maxBytes=unit==='MB'?sizeVal*1024*1024:sizeVal*1024;maxBytes=Math.floor(maxBytes);files=splitByFileSize(maxBytes);}if(files.length===0)throw new Error("拆分结果为空");currentFiles=files;renderFileList();showToast("拆分完成，共生成 "+files.length+" 个文件");}catch(err){showToast("拆分失败: "+err.message,true);}}
+            async function saveToFolder(){if(!currentFiles.length){showToast("暂无拆分文件",true);return;}if(!window.showDirectoryPicker){showToast("浏览器不支持选择文件夹，请使用打包下载ZIP",true);return;}try{const dirHandle=await window.showDirectoryPicker();for(const fileObj of currentFiles){const fileHandle=await dirHandle.getFileHandle(fileObj.name,{create:true});const writable=await fileHandle.createWritable();await writable.write("\\uFEFF"+fileObj.content);await writable.close();}showToast("成功保存 "+currentFiles.length+" 个文件到所选文件夹");}catch(err){if(err.name!=='AbortError')showToast("保存失败: "+err.message,true);}}
+            async function downloadAsZip(){if(!currentFiles.length){showToast("尚无拆分文件",true);return;}const zip=new JSZip();for(const file of currentFiles){zip.file(file.name,"\\uFEFF"+file.content);}const blob=await zip.generateAsync({type:"blob"});saveAs(blob,(originalFileName||"split")+"_打包下载.zip");showToast("ZIP打包完成，开始下载");}
+            splitBtn.addEventListener('click',performSplit);saveFolderBtn.addEventListener('click',saveToFolder);downloadZipBtn.addEventListener('click',downloadAsZip);document.querySelectorAll('input[name="splitMode"]').forEach(r=>r.addEventListener('change',renderParamPanel));renderParamPanel();
+        <\/script>
+        </body>
+        </html>`;
+
+            // ==================== 创建Blob URL ====================
+            function createBlobURL(htmlString, index) {
+                if (blobURLs[index]) {
+                    URL.revokeObjectURL(blobURLs[index]);
+                }
+                const blob = new Blob([htmlString], { type: 'text/html;charset=utf-8' });
+                blobURLs[index] = URL.createObjectURL(blob);
+                return blobURLs[index];
+            }
+
+            // ==================== 加载iframe ====================
+            function loadPanel(panelIndex) {
+                if (loadedFlags[panelIndex]) return; // 已加载
+                const panel = document.getElementById('panel' + panelIndex);
+                const placeholder = panel.querySelector('.loading-placeholder');
+                if (!placeholder) return;
+
+                // 创建iframe
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width:100%;height:100%;border:none;display:block;background:#fdfdfd;';
+                iframe.title = '工具' + (panelIndex + 1);
+                iframe.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-downloads allow-modals';
+
+                // 设置src为Blob URL
+                const url = createBlobURL(toolHTMLs[panelIndex], panelIndex);
+                iframe.src = url;
+
+                // 替换loading占位符
+                panel.innerHTML = '';
+                panel.appendChild(iframe);
+                loadedFlags[panelIndex] = true;
+            }
+
+            // ==================== 标签切换 ====================
+            function switchTab(tabIndex) {
+                if (tabIndex === currentTab) return;
+
+                // 更新标签按钮状态
+                tabBtns.forEach((btn, i) => {
+                    btn.classList.toggle('active', i === tabIndex);
+                });
+
+                // 更新面板显示
+                panels.forEach((panel, i) => {
+                    panel.classList.toggle('active', i === tabIndex);
+                });
+
+                // 延迟加载iframe（如果尚未加载）
+                loadPanel(tabIndex);
+
+                currentTab = tabIndex;
+            }
+
+            // ==================== 绑定标签点击事件 ====================
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabIndex = parseInt(this.getAttribute('data-tab'));
+                    if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < 5) {
+                        switchTab(tabIndex);
+                    }
+                });
+            });
+
+            // ==================== 初始加载 ====================
+            // 默认加载第一个工具
+            loadPanel(0);
+            loadedFlags[0] = true;
+            // 将第一个面板的loading替换为iframe
+            const panel0 = document.getElementById('panel0');
+            const placeholder0 = panel0.querySelector('.loading-placeholder');
+            if (placeholder0) {
+                const iframe0 = document.createElement('iframe');
+                iframe0.style.cssText = 'width:100%;height:100%;border:none;display:block;background:#fdfdfd;';
+                iframe0.title = '工具1';
+                iframe0.sandbox = 'allow-scripts allow-same-origin allow-forms allow-popups allow-downloads allow-modals';
+                iframe0.src = createBlobURL(toolHTMLs[0], 0);
+                panel0.innerHTML = '';
+                panel0.appendChild(iframe0);
+            }
+
+            // ==================== 键盘导航 ====================
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+数字切换标签
+                if (e.ctrlKey && e.key >= '1' && e.key <= '5') {
+                    e.preventDefault();
+                    const idx = parseInt(e.key) - 1;
+                    switchTab(idx);
+                }
+            });
+
+            // ==================== 清理 ====================
+            window.addEventListener('beforeunload', function() {
+                blobURLs.forEach(url => {
+                    if (url) URL.revokeObjectURL(url);
+                });
+            });
+
+            console.log('✅ Arvinlwj 工具集合页已就绪 | 5个工具 | 标签切换 | Blob URL隔离');
+            console.log('   [1] 新区清单梳理  [2] 方案关联匹配  [3] 工参邻近匹配  [4] KML转CSV  [5] 表格拆分');
+            console.log('   💡 提示：使用 Ctrl+1~5 可快速切换工具标签');
+        })();
+    </script>
+</body>
+</html>
