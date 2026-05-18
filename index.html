@@ -1250,14 +1250,14 @@
 </html>`;
 
             // ────────────────────────────────────────────
-            // 工具3：工参邻近匹配工具 (来自工具库-手改版v2)
+            // 工具3：工参邻近匹配工具（已更新：支持流量输出、过滤空列）
             // ────────────────────────────────────────────
             toolHTMLs[2] = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>工参匹配工具 - 支持最近N点及去重</title>
+    <title>工参匹配工具 </title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
     <style>
         * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
@@ -1299,8 +1299,8 @@
 </head>
 <body>
 <div class="container">
-    <h1>🗺️ 工参邻近匹配 · 最近N点 + 去重</h1>
-    <div class="sub">支持方位角拆分(/) | 自定义最近点数 | 按名称/距离去重 | 自动下载结果</div>
+    <h1>🗺️ 工参邻近匹配 · 支持流量输出</h1>
+    <div class="sub">方位角拆分(/) | 最近N点 | 名称/距离去重 | 自动过滤空列 | 自动输出工参流量</div>
 
     <div class="grid-2col">
         <div class="card">
@@ -1327,9 +1327,9 @@
                     <div class="select-group"><label>经度列</label><select id="paramLonCol"></select></div>
                     <div class="select-group"><label>纬度列</label><select id="paramLatCol"></select></div>
                     <div class="select-group"><label>名称列</label><select id="paramNameCol"></select></div>
+                    <div class="select-group"><label>流量列(可选)</label><select id="paramTrafficCol"><option value="">无</option></select></div>
                 </div>
                 
-                <!-- 优化后的参数区域：搜索半径 + 最近N个站 -->
                 <div class="param-opt">
                     <label>🔍 搜索初始半径 (km):</label>
                     <input type="number" id="searchRadiusKm" value="5" step="1" min="0.5">
@@ -1341,7 +1341,6 @@
                     <input type="number" id="topN" value="1" min="1" max="99" step="1">
                 </div>
                 
-                <!-- 去重方式：单独分组，更清晰 -->
                 <div class="radio-group">
                     <span>去重方式：</span>
                     <label><input type="radio" name="dedupMode" value="none" checked> 不去重</label>
@@ -1367,7 +1366,7 @@
     </div>
     <div id="messageArea" class="status-msg" style="margin-bottom: 12px;"></div>
 
-    <footer>⚡ 高性能网格索引，支持工参10万+级别。结果自动下载CSV，每个匹配点占一行。</footer>
+    <footer>⚡ 高性能网格索引，支持工参10万+级别。自动识别流量列（关键词：流量/业务量/traffic等），并在结果中输出。</footer>
 </div>
 
 <script>
@@ -1380,11 +1379,44 @@
     const GRID_SIZE_DEG = 0.05;
     let searchRadiusKm = 5;
     let topN = 1;
-    let dedupMode = "none"; // "none", "name", "distance"
+    let dedupMode = "none";
     let isMatching = false;
     const EARTH_RADIUS_KM = 6371.0;
 
-    // ---------- 智能列名匹配 ----------
+    // ---------- 过滤全空列 ----------
+    function filterEmptyColumns(data, headers) {
+        if (!data || data.length === 0) return { filteredData: data, filteredHeaders: headers };
+        const hasValue = new Array(headers.length).fill(false);
+        for (let row of data) {
+            for (let idx = 0; idx < headers.length; idx++) {
+                if (hasValue[idx]) continue;
+                const col = headers[idx];
+                const val = row[col];
+                if (val !== undefined && val !== null && val !== "") {
+                    hasValue[idx] = true;
+                }
+            }
+            if (hasValue.every(v => v === true)) break;
+        }
+        const keepIndices = [];
+        for (let i = 0; i < headers.length; i++) {
+            if (hasValue[i]) keepIndices.push(i);
+        }
+        if (keepIndices.length === headers.length) {
+            return { filteredData: data, filteredHeaders: headers };
+        }
+        const filteredHeaders = keepIndices.map(i => headers[i]);
+        const filteredData = data.map(row => {
+            const newRow = {};
+            for (let i of keepIndices) {
+                newRow[headers[i]] = row[headers[i]];
+            }
+            return newRow;
+        });
+        return { filteredData, filteredHeaders };
+    }
+
+    // ---------- 智能列名匹配（增加流量关键词）----------
     function findBestMatch(headers, patterns, caseSensitive = false) {
         for (let pattern of patterns) {
             const regex = new RegExp(pattern, caseSensitive ? '' : 'i');
@@ -1399,6 +1431,7 @@
     const latPatterns = ['^lat$', '^latitude$', '纬度', 'lat', 'y', 'northing'];
     const azPatterns = ['^azimuth$', '^az$', '方位角', '方向角', 'angle', 'bearing', 'direction'];
     const namePatterns = ['^name$', '^site$', '^站名$', '^基站名$', '^sitename$', '^cellname$', '名称', '站点', '小区'];
+    const trafficPatterns = ['流量', '业务量', '话务量', 'traffic', 'throughput', '负荷', 'load', '数据量'];
 
     function autoSelectColumns(headers, type) {
         if (!headers || headers.length === 0) return "";
@@ -1408,6 +1441,7 @@
             case 'lat': patterns = latPatterns; break;
             case 'az': patterns = azPatterns; break;
             case 'name': patterns = namePatterns; break;
+            case 'traffic': patterns = trafficPatterns; break;
             default: return "";
         }
         return findBestMatch(headers, patterns) || "";
@@ -1464,15 +1498,17 @@
         return Math.min(d, 360-d);
     }
 
-    function parseFile(file) {
+    async function parseFile(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = e => {
                 const wb = XLSX.read(e.target.result, { type: "binary", defval: "" });
                 const sheet = wb.Sheets[wb.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                let rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
                 if (!rows.length) reject(new Error("空数据"));
-                resolve({ data: rows, headers: Object.keys(rows[0]) });
+                let headers = Object.keys(rows[0]);
+                const { filteredData, filteredHeaders } = filterEmptyColumns(rows, headers);
+                resolve({ data: filteredData, headers: filteredHeaders });
             };
             reader.onerror = () => reject(new Error("读取失败"));
             reader.readAsBinaryString(file);
@@ -1613,6 +1649,7 @@
         const paramLonCol = document.getElementById("paramLonCol").value;
         const paramLatCol = document.getElementById("paramLatCol").value;
         const paramNameCol = document.getElementById("paramNameCol").value;
+        const paramTrafficCol = document.getElementById("paramTrafficCol").value;
         searchRadiusKm = parseFloat(document.getElementById("searchRadiusKm").value) || 5;
         topN = parseInt(document.getElementById("topN").value) || 1;
         if (topN < 1) topN = 1;
@@ -1636,14 +1673,20 @@
             return;
         }
 
+        // 预处理工参点（携带流量值）
         const validParams = [];
         for (let row of paramData) {
             let lon = getNumberVal(row, paramLonCol);
             let lat = getNumberVal(row, paramLatCol);
             if (isValidLon(lon) && isValidLat(lat)) {
+                let traffic = "";
+                if (paramTrafficCol && paramTrafficCol !== "") {
+                    traffic = getStringVal(row, paramTrafficCol);
+                }
                 validParams.push({
                     lon, lat,
                     name: getStringVal(row, paramNameCol),
+                    traffic: traffic,
                     rawObj: row
                 });
             }
@@ -1767,6 +1810,7 @@
             "匹配工参名称",
             "匹配工参经度",
             "匹配工参纬度",
+            "匹配工参流量",
             "距离(米)",
             "工参方位角(°)",
             "方位角差(°)",
@@ -1783,7 +1827,7 @@
                     ...rawValues,
                     usedAz,
                     rank,
-                    "", "", "", "", "", "",
+                    "", "", "", "", "", "", "",
                     item.warning || "无匹配点"
                 ]);
             } else {
@@ -1795,6 +1839,7 @@
                     m.name,
                     m.lon.toFixed(6),
                     m.lat.toFixed(6),
+                    m.traffic || "",
                     m.distance_m.toFixed(2),
                     m.bearing !== null ? m.bearing.toFixed(2) : "",
                     m.angleDiff !== null ? m.angleDiff.toFixed(2) : "",
@@ -1815,8 +1860,9 @@
     }
 
     function downloadSample() {
+        // 示例工参增加流量列
         const sampleOrig = "原始经度,原始纬度,方位角,站点名称\\n120.123,30.234,45/90/135,测试站A\\n120.456,30.567,,无方位角站B\\n120.789,30.890,200,站点C";
-        const sampleParam = "工参经度,工参纬度,基站名称\\n120.122,30.233,近点1\\n120.130,30.240,近点2\\n120.200,30.300,远点1\\n120.100,30.200,西侧点\\n120.150,30.250,北侧点";
+        const sampleParam = "工参经度,工参纬度,基站名称,流量(MB)\\n120.122,30.233,近点1,1250.5\\n120.130,30.240,近点2,890.2\\n120.200,30.300,远点1,350.0\\n120.100,30.200,西侧点,0\\n120.150,30.250,北侧点,2100.8";
         const blobOrig = new Blob(["\uFEFF" + sampleOrig], { type: "text/csv;charset=utf-8;" });
         const blobParam = new Blob(["\uFEFF" + sampleParam], { type: "text/csv;charset=utf-8;" });
         const a1 = document.createElement("a");
@@ -1840,7 +1886,7 @@
                 const { data, headers } = await parseFile(file);
                 if (isOrig) { rawData = data; rawHeaders = headers; }
                 else { paramData = data; paramHeaders = headers; }
-                statusDiv.innerHTML = \`✅ 已加载 \${data.length} 行，列: \${headers.slice(0,5).join(", ")}\${headers.length>5?"...":""}\`;
+                statusDiv.innerHTML = \`✅ 已加载 \${data.length} 行，有效列: \${headers.length} 个 (已过滤空列)\`;
                 if (isOrig) {
                     updateSelectOptionsWithAuto(document.getElementById("origLonCol"), headers, 'lon', false);
                     updateSelectOptionsWithAuto(document.getElementById("origLatCol"), headers, 'lat', false);
@@ -1849,6 +1895,8 @@
                     updateSelectOptionsWithAuto(document.getElementById("paramLonCol"), headers, 'lon', false);
                     updateSelectOptionsWithAuto(document.getElementById("paramLatCol"), headers, 'lat', false);
                     updateSelectOptionsWithAuto(document.getElementById("paramNameCol"), headers, 'name', false);
+                    updateSelectOptionsWithAuto(document.getElementById("paramTrafficCol"), headers, 'traffic', true);
+                    // 统计有效工参点
                     if (paramData && document.getElementById("paramLonCol").value && document.getElementById("paramLatCol").value) {
                         const lonCol = document.getElementById("paramLonCol").value;
                         const latCol = document.getElementById("paramLatCol").value;
