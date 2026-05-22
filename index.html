@@ -2082,7 +2082,744 @@
             // ────────────────────────────────────────────
             // 工具6：智能选址工具
             // ────────────────────────────────────────────
-          toolHTMLs[5] = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>智能选址工具 · 外心调整 · 面积8万</title>\n    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"><\/script>\n    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"><\/script>\n    <style>\n        :root {\n            --primary: #1a73e8;\n            --primary-hover: #1557b0;\n            --bg: #f8f9fa;\n            --card-bg: #ffffff;\n            --border: #e0e0e0;\n            --text: #202124;\n            --text-secondary: #5f6368;\n            --success: #0d904f;\n            --warning: #e6a817;\n            --error: #d93025;\n            --radius: 12px;\n        }\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body {\n            font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', \'PingFang SC\', \'Microsoft YaHei\', sans-serif;\n            background: linear-gradient(135deg, #e8edf5 0%, #f0f4f8 30%, #eef1f5 60%, #f5f6f8 100%);\n            min-height: 100vh; color: var(--text);\n        }\n        .header {\n            background: var(--card-bg); border-bottom: 1px solid var(--border);\n            padding: 18px 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);\n            display: flex; align-items: center; gap: 14px;\n        }\n        .header .logo-icon {\n            width: 40px; height: 40px; border-radius: 10px;\n            background: linear-gradient(135deg, #1a73e8, #4a9af5);\n            display: flex; align-items: center; justify-content: center;\n            color: #fff; font-size: 20px;\n        }\n        .header h1 { font-size: 1.25rem; }\n        .header .subtitle { font-size: 0.85rem; color: var(--text-secondary); }\n        .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 40px; }\n        .card {\n            background: var(--card-bg); border-radius: var(--radius);\n            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.08);\n            padding: 24px 28px; margin-bottom: 20px;\n        }\n        .upload-row { display: flex; gap: 20px; flex-wrap: wrap; }\n        .upload-box {\n            flex: 1; min-width: 280px; border: 2px dashed var(--border);\n            border-radius: var(--radius); padding: 24px 20px; text-align: center;\n            cursor: pointer; position: relative; background: #fafbfc;\n        }\n        .upload-box:hover { border-color: var(--primary); background: #f5f8fd; }\n        .upload-box.has-file { border-color: var(--success); border-style: solid; background: #f6fdf8; }\n        .upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }\n        .btn {\n            display: inline-flex; align-items: center; gap: 6px; padding: 11px 24px;\n            border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer;\n            border: none; transition: 0.2s;\n        }\n        .btn-primary { background: var(--primary); color: #fff; }\n        .btn-primary:disabled { background: #a8c7f5; cursor: not-allowed; }\n        .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }\n        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }\n        .progress-area { display: none; margin-top: 16px; }\n        .progress-area.active { display: block; }\n        .progress-bar-outer { background: #e8eaed; border-radius: 20px; height: 10px; overflow: hidden; margin: 8px 0; }\n        .progress-bar-inner { height: 100%; background: linear-gradient(90deg, #1a73e8, #4a9af5); border-radius: 20px; transition: width 0.3s; width: 0%; }\n        .log-area {\n            background: #1e1e1e; color: #d4d4d4; border-radius: 8px; padding: 14px 18px;\n            max-height: 320px; overflow-y: auto; font-family: monospace; font-size: 0.8rem;\n            white-space: pre-wrap; display: none; margin-top: 12px;\n        }\n        .log-area.active { display: block; }\n        .result-table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border); display: none; }\n        .result-table-wrap.active { display: block; }\n        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }\n        th, td { padding: 10px 12px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }\n        th { background: #f5f6f8; font-weight: 600; position: sticky; top: 0; }\n        .stats-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }\n        .stat-chip { padding: 8px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; background: #f0f4f8; }\n    </style>\n</head>\n<body>\n<div class="header">\n    <div class="logo-icon">📍</div>\n    <div>\n        <h1>智能选址工具</h1>\n        <div class="subtitle">外心调整 · 多站址触发条件调整</div>\n    </div>\n</div>\n<div class="container">\n    <div class="card">\n        <div class="upload-row">\n            <div class="upload-box" id="uploadBox1">\n                <div style="font-size:1.1rem;">📋 问题区域边框清单</div>\n                <div style="font-size:0.8rem;color:#666;">需含编号、区域、覆盖场景、WKT边框</div>\n                <div class="file-name" id="fileName1"></div>\n                <input type="file" id="fileInput1" accept=".xlsx,.xls">\n            </div>\n            <div class="upload-box" id="uploadBox2">\n                <div style="font-size:1.1rem;">📡 宏站物理站清单</div>\n                <div style="font-size:0.8rem;color:#666;">需含物理站编号、经度、纬度</div>\n                <div class="file-name" id="fileName2"></div>\n                <input type="file" id="fileInput2" accept=".xlsx,.xls">\n            </div>\n        </div>\n        <div class="btn-row">\n            <button class="btn btn-primary" id="btnRun" disabled>⚡ 开始智能选址</button>\n            <button class="btn btn-outline" id="btnClear" style="display:none;">🔄 清除重传</button>\n            <button class="btn btn-outline" id="btnDownload" style="display:none;">📥 下载选址结果</button>\n        </div>\n        <div class="progress-area" id="progressArea">\n            <div id="progressText">准备中...</div>\n            <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>\n        </div>\n    </div>\n    <div class="stats-row" id="statsRow" style="display:none;"></div>\n    <div class="log-area" id="logArea"></div>\n    <div class="result-table-wrap" id="resultTableWrap">\n        <table id="resultTable"><thead id="resultTableHead"></thead><tbody id="resultTableBody"></tbody></table>\n    </div>\n</div>\n<script>\n(function() {\n    const fileInput1 = document.getElementById(\'fileInput1\');\n    const fileInput2 = document.getElementById(\'fileInput2\');\n    const uploadBox1 = document.getElementById(\'uploadBox1\');\n    const uploadBox2 = document.getElementById(\'uploadBox2\');\n    const fileName1 = document.getElementById(\'fileName1\');\n    const fileName2 = document.getElementById(\'fileName2\');\n    const btnRun = document.getElementById(\'btnRun\');\n    const btnClear = document.getElementById(\'btnClear\');\n    const btnDownload = document.getElementById(\'btnDownload\');\n    const progressArea = document.getElementById(\'progressArea\');\n    const progressBar = document.getElementById(\'progressBar\');\n    const progressText = document.getElementById(\'progressText\');\n    const logArea = document.getElementById(\'logArea\');\n    const resultTableWrap = document.getElementById(\'resultTableWrap\');\n    const resultTableHead = document.getElementById(\'resultTableHead\');\n    const resultTableBody = document.getElementById(\'resultTableBody\');\n    const statsRow = document.getElementById(\'statsRow\');\n\n    let file1Data = null, file2Data = null, resultWorkbook = null;\n\n    function addLog(msg, type=\'info\') {\n        const t = new Date().toLocaleTimeString();\n        const div = document.createElement(\'div\');\n        div.className = `log-${type}`;\n        div.textContent = `[${t}] ${msg}`;\n        logArea.appendChild(div);\n        logArea.scrollTop = logArea.scrollHeight;\n        logArea.classList.add(\'active\');\n    }\n    function clearLogs() { logArea.innerHTML = \'\'; logArea.classList.remove(\'active\'); }\n\n    fileInput1.addEventListener(\'change\', e => {\n        if (e.target.files[0]) {\n            fileName1.textContent = \'✅ \' + e.target.files[0].name;\n            uploadBox1.classList.add(\'has-file\');\n            file1Data = e.target.files[0];\n        } else {\n            fileName1.textContent = \'\';\n            uploadBox1.classList.remove(\'has-file\');\n            file1Data = null;\n        }\n        checkReady();\n    });\n    fileInput2.addEventListener(\'change\', e => {\n        if (e.target.files[0]) {\n            fileName2.textContent = \'✅ \' + e.target.files[0].name;\n            uploadBox2.classList.add(\'has-file\');\n            file2Data = e.target.files[0];\n        } else {\n            fileName2.textContent = \'\';\n            uploadBox2.classList.remove(\'has-file\');\n            file2Data = null;\n        }\n        checkReady();\n    });\n    function checkReady() { btnRun.disabled = !(file1Data && file2Data); }\n\n    btnClear.addEventListener(\'click\', () => {\n        file1Data = file2Data = null;\n        fileInput1.value = fileInput2.value = \'\';\n        fileName1.textContent = fileName2.textContent = \'\';\n        uploadBox1.classList.remove(\'has-file\');\n        uploadBox2.classList.remove(\'has-file\');\n        btnRun.disabled = true;\n        btnClear.style.display = \'none\';\n        btnDownload.style.display = \'none\';\n        resultWorkbook = null;\n        clearLogs();\n        resultTableWrap.classList.remove(\'active\');\n        resultTableHead.innerHTML = resultTableBody.innerHTML = \'\';\n        statsRow.style.display = \'none\';\n        statsRow.innerHTML = \'\';\n        progressArea.classList.remove(\'active\');\n        progressBar.style.width = \'0%\';\n        addLog(\'已清除。\', \'info\');\n    });\n\n    // ----- 几何工具 -----\n    function parseWKT(wktStr) {\n        if (!wktStr || typeof wktStr !== \'string\') return null;\n        let s = wktStr.trim();\n        if (!s.toUpperCase().startsWith(\'POLYGON\')) return null;\n        const outerMatch = s.match(/\\((.+)\\)/s);\n        if (!outerMatch) return null;\n        const inner = outerMatch[1];\n        const ringsRaw = [];\n        const ringRegex = /\\(([^)]+)\\)/g;\n        let match;\n        while ((match = ringRegex.exec(inner)) !== null) ringsRaw.push(match[1]);\n        const allRings = [];\n        for (const ringStr of ringsRaw) {\n            const coords = [];\n            const pts = ringStr.split(\',\');\n            for (const pt of pts) {\n                const parts = pt.trim().split(/\\s+/);\n                if (parts.length >= 2) {\n                    const lon = parseFloat(parts[0]), lat = parseFloat(parts[1]);\n                    if (!isNaN(lon) && !isNaN(lat)) coords.push([lon, lat]);\n                }\n            }\n            if (coords.length >= 3) {\n                if (coords[0][0] !== coords[coords.length-1][0] || coords[0][1] !== coords[coords.length-1][1])\n                    coords.push([coords[0][0], coords[0][1]]);\n                allRings.push(coords);\n            }\n        }\n        return allRings.length > 0 ? turf.polygon(allRings) : null;\n    }\n\n    function readExcelFile(file) {\n        return new Promise((resolve, reject) => {\n            const reader = new FileReader();\n            reader.onload = e => {\n                try { resolve(XLSX.read(new Uint8Array(e.target.result), {type:\'array\'})); }\n                catch(err) { reject(err); }\n            };\n            reader.onerror = () => reject(new Error(\'读取失败\'));\n            reader.readAsArrayBuffer(file);\n        });\n    }\n\n    function sheetToJsonArray(ws) {\n        const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:\'\'});\n        if (!json.length) return {headers:[], rows:[]};\n        const headers = json[0].map(h=>String(h).trim());\n        const rows = json.slice(1).map(r=>r.map(c=>c===null||c===undefined?\'\':c));\n        return {headers, rows};\n    }\n\n    function findColumnIndex(headers, names) {\n        for (const n of names) {\n            const idx = headers.findIndex(h=>h.includes(n)||h===n);\n            if (idx>=0) return idx;\n        }\n        return -1;\n    }\n\n    function getBboxCenter(polygon) {\n        return turf.pointOnFeature(polygon).geometry.coordinates;\n    }\n\n    function getMaxDiameter(polygon) {\n        const coords = turf.coordAll(polygon);\n        let maxDist = 0, p1 = coords[0], p2 = coords[0];\n        for (let i=0; i<coords.length; i++)\n            for (let j=i+1; j<coords.length; j++) {\n                const d = turf.distance(turf.point(coords[i]), turf.point(coords[j]), {units:\'meters\'});\n                if (d > maxDist) { maxDist = d; p1 = coords[i]; p2 = coords[j]; }\n            }\n        return { distance: maxDist, pair: [p1, p2] };\n    }\n\n    function getArea(polygon) { return turf.area(polygon); }\n\n    function equalAreaSplit(polygon, k) {\n        const bbox = turf.bbox(polygon);\n        const [minLon, minLat, maxLon, maxLat] = bbox;\n        const steps = 50;\n        const samples = [];\n        for (let i = 0; i <= steps; i++) {\n            for (let j = 0; j <= steps; j++) {\n                const lon = minLon + (i / steps) * (maxLon - minLon);\n                const lat = minLat + (j / steps) * (maxLat - minLat);\n                const pt = turf.point([lon, lat]);\n                if (turf.booleanPointInPolygon(pt, polygon)) {\n                    samples.push([lon, lat]);\n                }\n            }\n        }\n        if (samples.length < k * 2) return fallbackBboxSplit(polygon, k);\n\n        const diam = getMaxDiameter(polygon);\n        const [p1, p2] = diam.pair;\n        const dx = p2[0] - p1[0], dy = p2[1] - p1[1];\n        const len = Math.sqrt(dx*dx + dy*dy) || 1;\n        const ux = dx / len, uy = dy / len;\n\n        const projections = samples.map(s => ({\n            c: s,\n            p: (s[0] - p1[0]) * ux + (s[1] - p1[1]) * uy\n        }));\n        projections.sort((a, b) => a.p - b.p);\n        const n = projections.length;\n        const subs = [];\n        for (let i = 0; i < k; i++) {\n            const start = Math.floor(i * n / k);\n            const end = Math.floor((i + 1) * n / k);\n            const group = projections.slice(start, end);\n            if (group.length === 0) return fallbackBboxSplit(polygon, k);\n            let slon = 0, slat = 0;\n            group.forEach(g => { slon += g.c[0]; slat += g.c[1]; });\n            const avg = turf.point([slon / group.length, slat / group.length]);\n            const centerCoords = turf.booleanPointInPolygon(avg, polygon)\n                ? avg.geometry.coordinates\n                : turf.pointOnFeature(polygon).geometry.coordinates;\n            subs.push(centerCoords);\n        }\n        return subs;\n    }\n\n    function fallbackBboxSplit(polygon, k) {\n        const [minLon, minLat, maxLon, maxLat] = turf.bbox(polygon);\n        const w = maxLon - minLon, h = maxLat - minLat;\n        const pts = [];\n        for (let i = 0; i < k; i++) {\n            const lon = minLon + (i + 0.5) * w / k;\n            const lat = (minLat + maxLat) / 2;\n            const p = turf.point([lon, lat]);\n            pts.push(turf.booleanPointInPolygon(p, polygon) ? [lon, lat] : turf.pointOnFeature(polygon).geometry.coordinates);\n        }\n        return pts;\n    }\n\n    function getDmin(region, scenario) {\n        const r = String(region).trim();\n        const s = String(scenario).trim();\n        const high = s.includes(\'高层居民区\');\n        if (r.includes(\'一\') || r.includes(\'二\')) {\n            return high ? 200 : 300;\n        }\n        if (r.includes(\'三\')) {\n            return high ? 250 : 350;\n        }\n        if (r.includes(\'四\')) {\n            return high ? 300 : 450;\n        }\n        return high ? 250 : 350;\n    }\n\n    function distToStations(coords, stations) {\n        const pt = turf.point(coords);\n        return stations.map(st=>({\n            id: st.id,\n            dist: turf.distance(pt, turf.point([st.lon, st.lat]), {units:\'meters\'})\n        }));\n    }\n\n    function minDistToStations(coords, stations) {\n        const arr = distToStations(coords, stations);\n        return arr.length ? Math.min(...arr.map(a=>a.dist)) : Infinity;\n    }\n\n    function allSatisfy(coordsList, stations, dmin) {\n        for (const c of coordsList) {\n            if (minDistToStations(c, stations) < dmin - 0.01) return false;\n        }\n        for (let i=0; i<coordsList.length; i++)\n            for (let j=i+1; j<coordsList.length; j++) {\n                const d = turf.distance(turf.point(coordsList[i]), turf.point(coordsList[j]), {units:\'meters\'});\n                if (d < dmin - 0.01) return false;\n            }\n        return true;\n    }\n\n    function normalizeBearing(b) { return ((b % 360) + 360) % 360; }\n    function isBearingInRange(b, start, end) {\n        b = normalizeBearing(b);\n        start = normalizeBearing(start);\n        end = normalizeBearing(end);\n        if (start <= end) return b >= start && b <= end;\n        else return b >= start || b <= end;\n    }\n\n    function computeCircumcenter(p1, p2, p3) {\n        const [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3;\n        const d = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2));\n        if (Math.abs(d) < 1e-9) return null;\n        const ux = ((x1*x1 + y1*y1) * (y2 - y3) + (x2*x2 + y2*y2) * (y3 - y1) + (x3*x3 + y3*y3) * (y1 - y2)) / d;\n        const uy = ((x1*x1 + y1*y1) * (x3 - x2) + (x2*x2 + y2*y2) * (x1 - x3) + (x3*x3 + y3*y3) * (x2 - x1)) / d;\n        return [ux, uy];\n    }\n\n    function adjustSingleStation(center, polygon, stations, dmin) {\n        if (!stations.length) return center;\n        const centerPt = turf.point(center);\n        const stationInfos = stations.map(s => {\n            const sPt = turf.point([s.lon, s.lat]);\n            const dist = turf.distance(centerPt, sPt, {units:\'meters\'});\n            const bearing = turf.bearing(centerPt, sPt);\n            return { ...s, dist, bearing: normalizeBearing(bearing) };\n        });\n\n        const directions = [\n            { name: \'0°扇区\', start: 300, end: 60 },\n            { name: \'120°扇区\', start: 60, end: 180 },\n            { name: \'240°扇区\', start: 180, end: 300 }\n        ];\n\n        const nearestPerSector = [];\n        for (const dir of directions) {\n            let nearest = null, minDist = Infinity;\n            for (const info of stationInfos) {\n                if (isBearingInRange(info.bearing, dir.start, dir.end)) {\n                    if (info.dist < minDist) { minDist = info.dist; nearest = info; }\n                }\n            }\n            nearestPerSector.push({ dir: dir.name, station: nearest, minDist });\n        }\n\n        const farSector = nearestPerSector.find(s => s.station && s.minDist > 1000);\n        let targetBearing;\n\n        if (farSector) {\n            const otherSectors = nearestPerSector.filter(s => s !== farSector && s.station);\n            if (otherSectors.length === 0) {\n                addLog(\'    [原则三] 存在远端方向但无其他可用宏站，无法调整\', \'warn\');\n                return null;\n            }\n            otherSectors.sort((a, b) => a.minDist - b.minDist);\n            const targetStation = otherSectors[0].station;\n            addLog(`    [原则三] 远端方向 ${farSector.dir} (${farSector.station.id} ${farSector.minDist.toFixed(0)}m >1000m)，采用其他方向最近站 ${targetStation.id} (${otherSectors[0].minDist.toFixed(0)}m) 的反方向`, \'info\');\n            targetBearing = normalizeBearing(targetStation.bearing + 180);\n        } else {\n            const threeStations = nearestPerSector.filter(s => s.station).map(s => s.station);\n            if (threeStations.length === 3) {\n                const pts = threeStations.map(s => [s.lon, s.lat]);\n                const circumcenter = computeCircumcenter(pts[0], pts[1], pts[2]);\n                if (circumcenter) {\n                    const [clon, clat] = circumcenter;\n                    const targetPt = turf.point([clon, clat]);\n                    const bearingToCircum = turf.bearing(centerPt, targetPt);\n                    targetBearing = normalizeBearing(bearingToCircum);\n                    addLog(`    [原则三] 无远端方向，计算三站外心 [${clon.toFixed(6)}, ${clat.toFixed(6)}]，方向角: ${targetBearing.toFixed(1)}°`, \'info\');\n                } else {\n                    addLog(\'    [原则三] 三站共线无法求外心，使用合成向量法\', \'info\');\n                    let sumX = 0, sumY = 0;\n                    for (const sec of nearestPerSector) {\n                        if (!sec.station) continue;\n                        const angle = sec.station.bearing;\n                        const rad = angle * Math.PI / 180;\n                        sumX += Math.sin(rad);\n                        sumY += Math.cos(rad);\n                    }\n                    if (Math.abs(sumX) < 1e-9 && Math.abs(sumY) < 1e-9) {\n                        addLog(\'    [原则三] 合成向量为零，无法调整\', \'warn\');\n                        return null;\n                    }\n                    targetBearing = normalizeBearing(Math.atan2(sumX, sumY) * 180 / Math.PI);\n                    addLog(`    [原则三] 合成方向角: ${targetBearing.toFixed(1)}°`, \'info\');\n                }\n            } else {\n                let sumX = 0, sumY = 0;\n                for (const sec of nearestPerSector) {\n                    if (!sec.station) continue;\n                    const angle = sec.station.bearing;\n                    const rad = angle * Math.PI / 180;\n                    sumX += Math.sin(rad);\n                    sumY += Math.cos(rad);\n                }\n                if (Math.abs(sumX) < 1e-9 && Math.abs(sumY) < 1e-9) {\n                    addLog(\'    [原则三] 合成向量为零，无法调整\', \'warn\');\n                    return null;\n                }\n                targetBearing = normalizeBearing(Math.atan2(sumX, sumY) * 180 / Math.PI);\n                addLog(`    [原则三] 不足三站，合成方向角: ${targetBearing.toFixed(1)}°`, \'info\');\n            }\n        }\n\n        const maxStationDist = Math.max(...stationInfos.map(s=>s.dist));\n        const maxSearchDist = Math.max(maxStationDist * 2, 500);\n        for (let d = 0; d <= maxSearchDist; d += 5) {\n            const cand = turf.destination(centerPt, d, targetBearing, {units:\'meters\'});\n            if (turf.booleanPointInPolygon(cand, polygon) && minDistToStations(cand.geometry.coordinates, stations) >= dmin - 0.01) {\n                addLog(`    [原则三] 偏移${d}m 找到可用点 [${cand.geometry.coordinates[0].toFixed(6)}, ${cand.geometry.coordinates[1].toFixed(6)}]`, \'success\');\n                return cand.geometry.coordinates;\n            }\n        }\n        addLog(\'    [原则三] 搜索失败\', \'warn\');\n        return null;\n    }\n\n    async function processAll() {\n        if (!file1Data || !file2Data) return;\n        btnRun.disabled = true;\n        btnRun.textContent = \'⏳ 处理中...\';\n        btnClear.style.display = \'none\';\n        btnDownload.style.display = \'none\';\n        resultWorkbook = null;\n        clearLogs();\n        resultTableWrap.classList.remove(\'active\');\n        statsRow.style.display = \'none\';\n        progressArea.classList.add(\'active\');\n        progressBar.style.width = \'0%\';\n        progressText.textContent = \'读取文件中...\';\n\n        try {\n            const wb1 = await readExcelFile(file1Data);\n            const {headers: h1, rows: r1} = sheetToJsonArray(wb1.Sheets[wb1.SheetNames[0]]);\n            const colId = findColumnIndex(h1, [\'编号\',\'ID\',\'序号\']);\n            const colRegion = findColumnIndex(h1, [\'区域\']);\n            const colScenario = findColumnIndex(h1, [\'覆盖场景\',\'场景\']);\n            const colWkt = findColumnIndex(h1, [\'WKT\',\'WKT坐标边框\']);\n            if (colWkt<0 || colRegion<0) throw new Error(\'缺少必要列\');\n            addLog(`问题区域: ${r1.length} 条`, \'info\');\n\n            const wb2 = await readExcelFile(file2Data);\n            const {headers: h2, rows: r2} = sheetToJsonArray(wb2.Sheets[wb2.SheetNames[0]]);\n            const colLon = findColumnIndex(h2, [\'经度\',\'LON\',\'lon\']);\n            const colLat = findColumnIndex(h2, [\'纬度\',\'LAT\',\'lat\']);\n            const colStaId = findColumnIndex(h2, [\'物理站编号\',\'编号\',\'ID\']);\n            if (colLon<0 || colLat<0) throw new Error(\'宏站清单缺少经度/纬度列\');\n            const stations = r2.map((r,i)=>({\n                id: colStaId>=0?String(r[colStaId]||i+1):String(i+1),\n                lon: parseFloat(r[colLon]),\n                lat: parseFloat(r[colLat])\n            })).filter(s=>!isNaN(s.lon)&&!isNaN(s.lat));\n            addLog(`宏站: ${stations.length} 个`, \'info\');\n\n            const regions = r1.map((r,i)=>({\n                id: colId>=0?String(r[colId]||i+1):String(i+1),\n                region: String(r[colRegion]||\'\'),\n                scenario: colScenario>=0?String(r[colScenario]||\'\'):\'\',\n                wkt: String(r[colWkt]||\'\'),\n                orig: [...r]\n            }));\n\n            const results = [];\n            let success=0, fail=0;\n            const kCounts = {1:0,2:0,3:0,4:0,5:0};\n\n            for (let i=0; i<regions.length; i++) {\n                const reg = regions[i];\n                addLog(`区域[${reg.id}]：区域=${reg.region}，场景=${reg.scenario}`, \'info\');\n                const poly = parseWKT(reg.wkt);\n                if (!poly) { addLog(\'  WKT解析失败\', \'warn\'); results.push({coords:[], orig:reg.orig}); fail++; continue; }\n\n                const center = getBboxCenter(poly);\n                const diam = getMaxDiameter(poly).distance;\n                const area = getArea(poly);\n                const dmin = getDmin(reg.region, reg.scenario);\n                addLog(`  边框中心(内部代表点)=[${center[0].toFixed(6)}, ${center[1].toFixed(6)}] 直径=${diam.toFixed(1)}m 面积=${area.toFixed(0)}㎡ Dmin=${dmin}m`, \'info\');\n\n                const minDist = minDistToStations(center, stations);\n                addLog(`  代表点到最近宏站: ${minDist.toFixed(2)}m (需≥${dmin}m)`, minDist>=dmin?\'success\':\'warn\');\n                if (minDist < dmin) {\n                    const closest = distToStations(center, stations).reduce((a,b)=>a.dist<b.dist?a:b);\n                    addLog(`    最近宏站 ${closest.id} 距离=${closest.dist.toFixed(2)}m`, \'warn\');\n                }\n\n                const high = String(reg.scenario).includes(\'高层居民区\');\n                const is12 = String(reg.region).includes(\'一\')||String(reg.region).includes(\'二\');\n                const is34 = String(reg.region).includes(\'三\')||String(reg.region).includes(\'四\');\n                let triggerMulti = false;\n                if (high) {\n                    if (is12 && diam>500) triggerMulti=true;\n                    if (is34 && diam>600) triggerMulti=true;\n                    if (area>80000) triggerMulti=true;\n                } else {\n                    if (is12 && diam>600) triggerMulti=true;\n                    if (String(reg.region).includes(\'三\') && diam>700) triggerMulti=true;\n                    if (String(reg.region).includes(\'四\') && diam>800) triggerMulti=true;\n                    if (area>350000) triggerMulti=true;\n                }\n                const tryK = triggerMulti ? [5,4,3,2,1] : [1];\n                addLog(`  多站址触发: ${triggerMulti}，尝试K=${tryK.join(\'→\')}`, \'info\');\n                let finalCoords = null;\n\n                for (const k of tryK) {\n                    addLog(`  尝试K=${k}`, \'info\');\n                    let cands;\n                    if (k===1) cands = [center];\n                    else {\n                        cands = equalAreaSplit(poly, k);\n                        if (!cands || cands.length<k) { addLog(\'    面积等分失败\', \'warn\'); continue; }\n                    }\n                    if (allSatisfy(cands, stations, dmin)) {\n                        finalCoords = cands;\n                        addLog(`    K=${k} 满足原则一 ✓`, \'success\');\n                        break;\n                    } else {\n                        if (k===1) {\n                            addLog(\'    K=1不满足原则一，启动方位角分区调整（外心版）\', \'info\');\n                            const adjusted = adjustSingleStation(center, poly, stations, dmin);\n                            if (adjusted && allSatisfy([adjusted], stations, dmin)) {\n                                finalCoords = [adjusted];\n                                addLog(\'    原则三调整成功 ✓\', \'success\');\n                                break;\n                            } else addLog(\'    原则三调整失败\', \'warn\');\n                        } else {\n                            addLog(`    K=${k}候选点: ${JSON.stringify(cands.map(c=>[c[0].toFixed(6),c[1].toFixed(6)]))}`, \'info\');\n                            addLog(`    K=${k}不满足原则一，将减站重试`, \'warn\');\n                        }\n                    }\n                }\n\n                if (finalCoords) {\n                    results.push({coords:finalCoords, orig:reg.orig});\n                    success++;\n                    if (finalCoords.length in kCounts) kCounts[finalCoords.length]++;\n                    addLog(`  最终选址数量=${finalCoords.length} ✓`, \'success\');\n                } else {\n                    results.push({coords:[], orig:reg.orig});\n                    fail++;\n                    addLog(\'  无法选出有效站址，留空。\', \'error\');\n                }\n                progressBar.style.width = (25 + 70*(i+1)/regions.length) + \'%\';\n                progressText.textContent = `处理 ${i+1}/${regions.length} (成功${success} 失败${fail})`;\n                await new Promise(r=>setTimeout(r,5));\n            }\n\n            const maxK = 5;\n            const outHeaders = [...h1];\n            for (let c=1; c<=maxK; c++) {\n                outHeaders.push(`选址经度${c}`);\n                outHeaders.push(`选址纬度${c}`);\n            }\n            const outRows = results.map(r=>{\n                const row = [...r.orig];\n                for (let c=0; c<maxK; c++) {\n                    row.push(c < r.coords.length ? r.coords[c][0] : \'\');\n                    row.push(c < r.coords.length ? r.coords[c][1] : \'\');\n                }\n                return row;\n            });\n            const outWb = XLSX.utils.book_new();\n            XLSX.utils.book_append_sheet(outWb, XLSX.utils.aoa_to_sheet([h1, ...r1]), wb1.SheetNames[0]);\n            XLSX.utils.book_append_sheet(outWb, XLSX.utils.aoa_to_sheet([outHeaders, ...outRows]), \'选址结果\');\n            resultWorkbook = outWb;\n\n            statsRow.style.display = \'flex\';\n            statsRow.innerHTML = `\n                <div class=\"stat-chip\">📊 总区域：${regions.length}</div>\n                <div class=\"stat-chip\" style=\"background:#e6f4ea;\">✅ 成功：${success}</div>\n                <div class=\"stat-chip\" style=\"background:#fce8e6;\">❌ 失败：${fail}</div>\n                <div class=\"stat-chip\">K=1：${kCounts[1]}</div>\n                <div class=\"stat-chip\">K=2：${kCounts[2]}</div>\n                <div class=\"stat-chip\">K=3：${kCounts[3]}</div>\n                <div class=\"stat-chip\">K=4：${kCounts[4]}</div>\n                <div class=\"stat-chip\">K=5：${kCounts[5]}</div>`;\n            addLog(\'\\n========== 完成 ==========\', \'success\');\n            addLog(`成功 ${success} / 失败 ${fail}`, \'info\');\n            btnDownload.style.display = \'inline-flex\';\n            btnClear.style.display = \'inline-flex\';\n            btnRun.textContent = \'⚡ 重新选址\';\n            btnRun.disabled = false;\n            progressBar.style.width = \'100%\';\n            progressText.textContent = \'处理完成\';\n\n            resultTableHead.innerHTML = \'\';\n            resultTableBody.innerHTML = \'\';\n            const htr = document.createElement(\'tr\');\n            outHeaders.forEach(h=>{ const th=document.createElement(\'th\'); th.textContent=h; htr.appendChild(th); });\n            resultTableHead.appendChild(htr);\n            outRows.slice(0,50).forEach(r=>{\n                const tr = document.createElement(\'tr\');\n                r.forEach(v=>{ const td=document.createElement(\'td\'); td.textContent=v!==\'\'?v:\'\'; tr.appendChild(td); });\n                resultTableBody.appendChild(tr);\n            });\n            resultTableWrap.classList.add(\'active\');\n        } catch(err) {\n            addLog(`错误：${err.message}`, \'error\');\n            progressText.textContent = \'处理失败\';\n            btnRun.disabled = false;\n            btnClear.style.display = \'inline-flex\';\n        }\n    }\n\n    btnRun.addEventListener(\'click\', processAll);\n    btnDownload.addEventListener(\'click\', () => {\n        if (!resultWorkbook) return alert(\'无结果\');\n        const wbout = XLSX.write(resultWorkbook, {bookType:\'xlsx\', type:\'array\'});\n        const blob = new Blob([wbout], {type:\'application/octet-stream\'});\n        const a = document.createElement(\'a\');\n        a.href = URL.createObjectURL(blob);\n        a.download = `选址结果_${new Date().toISOString().slice(0,19).replace(/:/g,\'-\')}.xlsx`;\n        a.click();\n    });\n\n    addLog(\'工具就绪。\', \'info\');\n})();\n<\/script>\n</body>\n</html>';
+          toolHTMLs[5] = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能选址工具 · 四级场景间距修订版</title>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"><\/script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"><\/script>
+    <style>
+        :root {
+            --primary: #1a73e8; --primary-hover: #1557b0; --bg: #f8f9fa; --card-bg: #ffffff;
+            --border: #e0e0e0; --text: #202124; --text-secondary: #5f6368; --success: #0d904f;
+            --warning: #e6a817; --error: #d93025; --radius: 12px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #e8edf5 0%, #f0f4f8 30%, #eef1f5 60%, #f5f6f8 100%);
+            min-height: 100vh; color: var(--text);
+        }
+        .header {
+            background: var(--card-bg); border-bottom: 1px solid var(--border);
+            padding: 18px 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex; align-items: center; gap: 14px;
+        }
+        .header .logo-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: linear-gradient(135deg, #1a73e8, #4a9af5);
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px;
+        }
+        .header h1 { font-size: 1.25rem; }
+        .header .subtitle { font-size: 0.85rem; color: var(--text-secondary); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 40px; }
+        .card {
+            background: var(--card-bg); border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            padding: 24px 28px; margin-bottom: 20px;
+        }
+        .upload-row { display: flex; gap: 20px; flex-wrap: wrap; }
+        .upload-box {
+            flex: 1; min-width: 280px; border: 2px dashed var(--border);
+            border-radius: var(--radius); padding: 24px 20px; text-align: center;
+            cursor: pointer; position: relative; background: #fafbfc;
+        }
+        .upload-box:hover { border-color: var(--primary); background: #f5f8fd; }
+        .upload-box.has-file { border-color: var(--success); border-style: solid; background: #f6fdf8; }
+        .upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px; padding: 11px 24px;
+            border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer; border: none; transition: 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:disabled { background: #a8c7f5; cursor: not-allowed; }
+        .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .progress-area { display: none; margin-top: 16px; }
+        .progress-area.active { display: block; }
+        .progress-bar-outer { background: #e8eaed; border-radius: 20px; height: 10px; overflow: hidden; margin: 8px 0; }
+        .progress-bar-inner { height: 100%; background: linear-gradient(90deg, #1a73e8, #4a9af5); border-radius: 20px; transition: width 0.3s; width: 0%; }
+        .log-area {
+            background: #1e1e1e; color: #d4d4d4; border-radius: 8px; padding: 14px 18px;
+            max-height: 320px; overflow-y: auto; font-family: monospace; font-size: 0.8rem;
+            white-space: pre-wrap; display: none; margin-top: 12px;
+        }
+        .log-area.active { display: block; }
+        .result-table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border); display: none; }
+        .result-table-wrap.active { display: block; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        th, td { padding: 10px 12px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }
+        th { background: #f5f6f8; font-weight: 600; position: sticky; top: 0; }
+        .stats-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+        .stat-chip { padding: 8px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; background: #f0f4f8; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="logo-icon">📍</div>
+    <div>
+        <h1>智能选址工具</h1>
+        <div class="subtitle">四级场景间距调整 · 全局冲突合并 · 垂直平分线外心</div>
+    </div>
+</div>
+<div class="container">
+    <div class="card">
+        <div class="upload-row">
+            <div class="upload-box" id="uploadBox1">
+                <div style="font-size:1.1rem;">📋 问题区域边框清单</div>
+                <div style="font-size:0.8rem;color:#666;">需含编号、区域、覆盖场景、WKT边框</div>
+                <div class="file-name" id="fileName1"></div>
+                <input type="file" id="fileInput1" accept=".xlsx,.xls">
+            </div>
+            <div class="upload-box" id="uploadBox2">
+                <div style="font-size:1.1rem;">📡 宏站物理站清单</div>
+                <div style="font-size:0.8rem;color:#666;">需含物理站编号、经度、纬度</div>
+                <div class="file-name" id="fileName2"></div>
+                <input type="file" id="fileInput2" accept=".xlsx,.xls">
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" id="btnRun" disabled>⚡ 开始智能选址</button>
+            <button class="btn btn-outline" id="btnClear" style="display:none;">🔄 清除重传</button>
+            <button class="btn btn-outline" id="btnDownload" style="display:none;">📥 下载选址结果</button>
+        </div>
+        <div class="progress-area" id="progressArea">
+            <div id="progressText">准备中...</div>
+            <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+        </div>
+    </div>
+    <div class="stats-row" id="statsRow" style="display:none;"></div>
+    <div class="log-area" id="logArea"></div>
+    <div class="result-table-wrap" id="resultTableWrap">
+        <table id="resultTable"><thead id="resultTableHead"></thead><tbody id="resultTableBody"></tbody></table>
+    </div>
+</div>
+<script>
+(function() {
+    // DOM 元素
+    const fileInput1 = document.getElementById('fileInput1');
+    const fileInput2 = document.getElementById('fileInput2');
+    const uploadBox1 = document.getElementById('uploadBox1');
+    const uploadBox2 = document.getElementById('uploadBox2');
+    const fileName1 = document.getElementById('fileName1');
+    const fileName2 = document.getElementById('fileName2');
+    const btnRun = document.getElementById('btnRun');
+    const btnClear = document.getElementById('btnClear');
+    const btnDownload = document.getElementById('btnDownload');
+    const progressArea = document.getElementById('progressArea');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const logArea = document.getElementById('logArea');
+    const resultTableWrap = document.getElementById('resultTableWrap');
+    const resultTableHead = document.getElementById('resultTableHead');
+    const resultTableBody = document.getElementById('resultTableBody');
+    const statsRow = document.getElementById('statsRow');
+
+    let file1Data = null, file2Data = null, resultWorkbook = null;
+
+    function addLog(msg, type='info') {
+        const t = new Date().toLocaleTimeString();
+        const div = document.createElement('div');
+        div.className = `log-${type}`;
+        div.textContent = `[${t}] ${msg}`;
+        logArea.appendChild(div);
+        logArea.scrollTop = logArea.scrollHeight;
+        logArea.classList.add('active');
+    }
+    function clearLogs() { logArea.innerHTML = ''; logArea.classList.remove('active'); }
+
+    fileInput1.addEventListener('change', e => {
+        if (e.target.files[0]) {
+            fileName1.textContent = '✅ ' + e.target.files[0].name;
+            uploadBox1.classList.add('has-file');
+            file1Data = e.target.files[0];
+        } else {
+            fileName1.textContent = '';
+            uploadBox1.classList.remove('has-file');
+            file1Data = null;
+        }
+        checkReady();
+    });
+    fileInput2.addEventListener('change', e => {
+        if (e.target.files[0]) {
+            fileName2.textContent = '✅ ' + e.target.files[0].name;
+            uploadBox2.classList.add('has-file');
+            file2Data = e.target.files[0];
+        } else {
+            fileName2.textContent = '';
+            uploadBox2.classList.remove('has-file');
+            file2Data = null;
+        }
+        checkReady();
+    });
+    function checkReady() { btnRun.disabled = !(file1Data && file2Data); }
+
+    btnClear.addEventListener('click', () => {
+        file1Data = file2Data = null;
+        fileInput1.value = fileInput2.value = '';
+        fileName1.textContent = fileName2.textContent = '';
+        uploadBox1.classList.remove('has-file');
+        uploadBox2.classList.remove('has-file');
+        btnRun.disabled = true;
+        btnClear.style.display = 'none';
+        btnDownload.style.display = 'none';
+        resultWorkbook = null;
+        clearLogs();
+        resultTableWrap.classList.remove('active');
+        resultTableHead.innerHTML = resultTableBody.innerHTML = '';
+        statsRow.style.display = 'none'; statsRow.innerHTML = '';
+        progressArea.classList.remove('active'); progressBar.style.width = '0%';
+        addLog('已清除。', 'info');
+    });
+
+    // ----- 几何工具（同前，略）-----
+    function parseWKT(wktStr) {
+        if (!wktStr || typeof wktStr !== 'string') return null;
+        let s = wktStr.trim();
+        if (!s.toUpperCase().startsWith('POLYGON')) return null;
+        const outerMatch = s.match(/\\((.+)\\)/s);
+        if (!outerMatch) return null;
+        const inner = outerMatch[1];
+        const ringsRaw = [];
+        const ringRegex = /\\(([^)]+)\\)/g;
+        let match;
+        while ((match = ringRegex.exec(inner)) !== null) ringsRaw.push(match[1]);
+        const allRings = [];
+        for (const ringStr of ringsRaw) {
+            const coords = [];
+            const pts = ringStr.split(',');
+            for (const pt of pts) {
+                const parts = pt.trim().split(/\\s+/);
+                if (parts.length >= 2) {
+                    const lon = parseFloat(parts[0]), lat = parseFloat(parts[1]);
+                    if (!isNaN(lon) && !isNaN(lat)) coords.push([lon, lat]);
+                }
+            }
+            if (coords.length >= 3) {
+                if (coords[0][0] !== coords[coords.length-1][0] || coords[0][1] !== coords[coords.length-1][1])
+                    coords.push([coords[0][0], coords[0][1]]);
+                allRings.push(coords);
+            }
+        }
+        return allRings.length > 0 ? turf.polygon(allRings) : null;
+    }
+
+    function readExcelFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                try { resolve(XLSX.read(new Uint8Array(e.target.result), {type:'array'})); }
+                catch(err) { reject(err); }
+            };
+            reader.onerror = () => reject(new Error('读取失败'));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function sheetToJsonArray(ws) {
+        const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        if (!json.length) return {headers:[], rows:[]};
+        const headers = json[0].map(h=>String(h).trim());
+        const rows = json.slice(1).map(r=>r.map(c=>c===null||c===undefined?'':c));
+        return {headers, rows};
+    }
+
+    function findColumnIndex(headers, names) {
+        for (const n of names) {
+            const idx = headers.findIndex(h=>h.includes(n)||h===n);
+            if (idx>=0) return idx;
+        }
+        return -1;
+    }
+
+    function getBboxCenter(polygon) { return turf.pointOnFeature(polygon).geometry.coordinates; }
+    function getMaxDiameter(polygon) {
+        const coords = turf.coordAll(polygon);
+        let maxDist = 0, p1 = coords[0], p2 = coords[0];
+        for (let i=0; i<coords.length; i++)
+            for (let j=i+1; j<coords.length; j++) {
+                const d = turf.distance(turf.point(coords[i]), turf.point(coords[j]), {units:'meters'});
+                if (d > maxDist) { maxDist = d; p1 = coords[i]; p2 = coords[j]; }
+            }
+        return { distance: maxDist, pair: [p1, p2] };
+    }
+    function getArea(polygon) { return turf.area(polygon); }
+
+    function getMajorAxis(polygon) {
+        const bbox = turf.bbox(polygon);
+        const [minLon, minLat, maxLon, maxLat] = bbox;
+        const width = maxLon - minLon;
+        const height = maxLat - minLat;
+        if (width >= height) return { p1: [minLon, (minLat + maxLat) / 2], p2: [maxLon, (minLat + maxLat) / 2] };
+        else return { p1: [(minLon + maxLon) / 2, minLat], p2: [(minLon + maxLon) / 2, maxLat] };
+    }
+
+    function equalAreaSplit(polygon, k) {
+        const bbox = turf.bbox(polygon);
+        const [minLon, minLat, maxLon, maxLat] = bbox;
+        const steps = 50;
+        const samples = [];
+        for (let i = 0; i <= steps; i++) {
+            for (let j = 0; j <= steps; j++) {
+                const lon = minLon + (i / steps) * (maxLon - minLon);
+                const lat = minLat + (j / steps) * (maxLat - minLat);
+                const pt = turf.point([lon, lat]);
+                if (turf.booleanPointInPolygon(pt, polygon)) samples.push([lon, lat]);
+            }
+        }
+        if (samples.length < k * 2) return fallbackBboxSplit(polygon, k);
+        const axis = getMajorAxis(polygon);
+        const p1 = turf.point(axis.p1), p2 = turf.point(axis.p2);
+        const dx = p2.geometry.coordinates[0] - p1.geometry.coordinates[0];
+        const dy = p2.geometry.coordinates[1] - p1.geometry.coordinates[1];
+        const len = Math.sqrt(dx*dx + dy*dy) || 1;
+        const ux = dx / len, uy = dy / len;
+        const projections = samples.map(s => ({
+            c: s, p: (s[0] - p1.geometry.coordinates[0]) * ux + (s[1] - p1.geometry.coordinates[1]) * uy
+        }));
+        projections.sort((a, b) => a.p - b.p);
+        const n = projections.length;
+        const subs = [];
+        for (let i = 0; i < k; i++) {
+            const start = Math.floor(i * n / k);
+            const end = Math.floor((i + 1) * n / k);
+            const group = projections.slice(start, end);
+            if (group.length === 0) return fallbackBboxSplit(polygon, k);
+            let slon = 0, slat = 0;
+            group.forEach(g => { slon += g.c[0]; slat += g.c[1]; });
+            const avg = turf.point([slon / group.length, slat / group.length]);
+            const centerCoords = turf.booleanPointInPolygon(avg, polygon) ? avg.geometry.coordinates : turf.pointOnFeature(polygon).geometry.coordinates;
+            subs.push(centerCoords);
+        }
+        return subs;
+    }
+
+    function fallbackBboxSplit(polygon, k) {
+        const [minLon, minLat, maxLon, maxLat] = turf.bbox(polygon);
+        const w = maxLon - minLon, h = maxLat - minLat;
+        const pts = [];
+        for (let i = 0; i < k; i++) {
+            const lon = minLon + (i + 0.5) * w / k;
+            const lat = (minLat + maxLat) / 2;
+            const p = turf.point([lon, lat]);
+            pts.push(turf.booleanPointInPolygon(p, polygon) ? [lon, lat] : turf.pointOnFeature(polygon).geometry.coordinates);
+        }
+        return pts;
+    }
+
+    // ★ 四级场景（修订版）
+    function getDmin(region, scenario) {
+        const r = String(region).trim(), s = String(scenario).trim();
+        const is12 = r.includes('一') || r.includes('二'), is3 = r.includes('三'), is4 = r.includes('四');
+
+        // 四级（强制500米）
+        const level4 = ['郊区道路','国道省道','山农牧林','高速公路','城区道路','航道','公墓'];
+        if (level4.some(k => s.includes(k))) return 500;
+
+        // 三级
+        const level3 = ['工业园区','村庄','风景区','广场公园','码头','近水近海域','乡镇','景区'];
+        if (level3.some(k => s.includes(k))) {
+            if (is12) return 300;
+            if (is3) return 350;  // 修订：400→350
+            if (is4) return 450;
+            return 350;
+        }
+
+        // 二级
+        const level2 = ['低层居民区','医院','商业中心','休闲娱乐场所','星级酒店','会展中心','党政军机关','高校','企事业单位','写字楼','别墅群','武警军区','机场','体育场馆','集贸市场','火车站','城中村','长途汽车站','地铁','高铁','党政军宿舍','中小学'];
+        if (level2.some(k => s.includes(k))) {
+            if (is12) return 250;
+            if (is3) return 300;  // 修订：350→300
+            if (is4) return 400;  // 修订：450→400
+            return 300;
+        }
+
+        // 一级（高层居民区）
+        if (s.includes('高层居民区')) {
+            if (is12) return 200;
+            if (is3) return 250;
+            if (is4) return 300;
+            return 250;
+        }
+
+        // 默认
+        if (is12) return 300;
+        if (is3) return 350;
+        if (is4) return 450;
+        return 350;
+    }
+
+    function getIndustrialInterSiteDmin(region) {
+        const r = String(region).trim();
+        if (r.includes('一') || r.includes('二')) return 350;
+        if (r.includes('三')) return 400;
+        if (r.includes('四')) return 450;
+        return 400;
+    }
+
+    function distToStations(coords, stations) {
+        const pt = turf.point(coords);
+        return stations.map(st=>({ id: st.id, dist: turf.distance(pt, turf.point([st.lon, st.lat]), {units:'meters'}) }));
+    }
+    function minDistToStations(coords, stations) {
+        const arr = distToStations(coords, stations);
+        return arr.length ? Math.min(...arr.map(a=>a.dist)) : Infinity;
+    }
+    function allSatisfy(coordsList, stations, dmin, dminInter = null) {
+        const interMin = dminInter || dmin;
+        for (const c of coordsList) if (minDistToStations(c, stations) < dmin - 0.01) return false;
+        for (let i=0; i<coordsList.length; i++)
+            for (let j=i+1; j<coordsList.length; j++)
+                if (turf.distance(turf.point(coordsList[i]), turf.point(coordsList[j]), {units:'meters'}) < interMin - 0.01) return false;
+        return true;
+    }
+
+    function normalizeBearing(b) { return ((b % 360) + 360) % 360; }
+    function isBearingInRange(b, start, end) {
+        b = normalizeBearing(b); start = normalizeBearing(start); end = normalizeBearing(end);
+        if (start <= end) return b >= start && b <= end;
+        else return b >= start || b <= end;
+    }
+
+    function computeCircumcenter(p1, p2, p3) {
+        const [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3;
+        const a1 = x2 - x1, b1 = y2 - y1, c1 = a1 * (x1 + x2) / 2 + b1 * (y1 + y2) / 2;
+        const a2 = x3 - x2, b2 = y3 - y2, c2 = a2 * (x2 + x3) / 2 + b2 * (y2 + y3) / 2;
+        const det = a1 * b2 - a2 * b1;
+        if (Math.abs(det) < 1e-12) return null;
+        return [(c1 * b2 - c2 * b1) / det, (a1 * c2 - a2 * c1) / det];
+    }
+
+    function adjustSingleStation(center, polygon, stations, dmin) {
+        if (!stations.length) return center;
+        const centerPt = turf.point(center);
+        const stationInfos = stations.map(s => {
+            const sPt = turf.point([s.lon, s.lat]);
+            const dist = turf.distance(centerPt, sPt, {units:'meters'});
+            const bearing = turf.bearing(centerPt, sPt);
+            return { ...s, dist, bearing: normalizeBearing(bearing) };
+        });
+        const directions = [
+            { name: '0°扇区', start: 300, end: 60 },
+            { name: '120°扇区', start: 60, end: 180 },
+            { name: '240°扇区', start: 180, end: 300 }
+        ];
+        const nearestPerSector = [];
+        for (const dir of directions) {
+            let nearest = null, minDist = Infinity;
+            for (const info of stationInfos)
+                if (isBearingInRange(info.bearing, dir.start, dir.end) && info.dist < minDist) { minDist = info.dist; nearest = info; }
+            nearestPerSector.push({ dir: dir.name, station: nearest, minDist });
+        }
+        const sectorInfo = nearestPerSector.map(s => s.station ? `${s.dir}: ${s.station.id} [${s.station.lon.toFixed(6)}, ${s.station.lat.toFixed(6)}] (${s.minDist.toFixed(0)}m)` : `${s.dir}: 无宏站`).join('; ');
+        addLog(`    [原则三] 三方向最近站: ${sectorInfo}`, 'info');
+        const farSector = nearestPerSector.find(s => s.station && s.minDist > 1000);
+        let targetBearing;
+        if (farSector) {
+            const otherSectors = nearestPerSector.filter(s => s !== farSector && s.station);
+            if (otherSectors.length === 0) { addLog('    [原则三] 存在远端方向但无其他可用宏站，无法调整', 'warn'); return null; }
+            otherSectors.sort((a, b) => a.minDist - b.minDist);
+            const targetStation = otherSectors[0].station;
+            addLog(`    [原则三] 远端方向 ${farSector.dir} (${farSector.station.id} ${farSector.minDist.toFixed(0)}m >1000m)，采用其他方向最近站 ${targetStation.id} 的反方向`, 'info');
+            targetBearing = normalizeBearing(targetStation.bearing + 180);
+        } else {
+            const threeStations = nearestPerSector.filter(s => s.station).map(s => s.station);
+            if (threeStations.length === 3) {
+                const pts = threeStations.map(s => [s.lon, s.lat]);
+                const circumcenter = computeCircumcenter(pts[0], pts[1], pts[2]);
+                if (circumcenter) {
+                    const [clon, clat] = circumcenter;
+                    const bearingToCircum = turf.bearing(centerPt, turf.point([clon, clat]));
+                    targetBearing = normalizeBearing(bearingToCircum);
+                    addLog(`    [原则三] 无远端方向，三站外心 [${clon.toFixed(6)}, ${clat.toFixed(6)}]，方向角: ${targetBearing.toFixed(1)}°`, 'info');
+                } else {
+                    addLog('    [原则三] 三站共线，使用合成向量', 'info');
+                    let sumX=0, sumY=0;
+                    for (const sec of nearestPerSector) { if (!sec.station) continue; const rad = sec.station.bearing * Math.PI / 180; sumX += Math.sin(rad); sumY += Math.cos(rad); }
+                    if (Math.abs(sumX) < 1e-9 && Math.abs(sumY) < 1e-9) return null;
+                    targetBearing = normalizeBearing(Math.atan2(sumX, sumY) * 180 / Math.PI);
+                }
+            } else {
+                let sumX=0, sumY=0;
+                for (const sec of nearestPerSector) { if (!sec.station) continue; const rad = sec.station.bearing * Math.PI / 180; sumX += Math.sin(rad); sumY += Math.cos(rad); }
+                if (Math.abs(sumX) < 1e-9 && Math.abs(sumY) < 1e-9) return null;
+                targetBearing = normalizeBearing(Math.atan2(sumX, sumY) * 180 / Math.PI);
+            }
+        }
+        const maxStationDist = Math.max(...stationInfos.map(s=>s.dist));
+        const maxSearchDist = Math.max(maxStationDist * 2, 500);
+        for (let d = 0; d <= maxSearchDist; d += 5) {
+            const cand = turf.destination(centerPt, d, targetBearing, {units:'meters'});
+            if (turf.booleanPointInPolygon(cand, polygon) && minDistToStations(cand.geometry.coordinates, stations) >= dmin - 0.01) {
+                addLog(`    [原则三] 偏移${d}m 找到可用点 [${cand.geometry.coordinates[0].toFixed(6)}, ${cand.geometry.coordinates[1].toFixed(6)}]`, 'success');
+                return cand.geometry.coordinates;
+            }
+        }
+        addLog('    [原则三] 搜索失败', 'warn');
+        return null;
+    }
+
+    function resolveGlobalConflicts(regionsResults, allStations, regionPolys) {
+        let siteList = [];
+        const rebuildSiteList = () => {
+            siteList = [];
+            regionsResults.forEach((res, idx) => {
+                if (res.coords.length > 0) {
+                    res.coords.forEach((coord, ci) => {
+                        siteList.push({
+                            regionIdx: idx, siteIdx: ci, coord: coord,
+                            regionId: res.id, polygon: regionPolys[idx], dmin: res.dmin, isIndustrial: res.isIndustrial
+                        });
+                    });
+                }
+            });
+        };
+        rebuildSiteList();
+        const failedPairs = new Set();
+        const pairKey = (a, b) => `${a.regionIdx}-${a.siteIdx}|${b.regionIdx}-${b.siteIdx}`;
+        let totalProcessed = 0, changed = true;
+        while (changed) {
+            changed = false;
+            rebuildSiteList();
+            const conflicts = [];
+            for (let i = 0; i < siteList.length; i++) {
+                for (let j = i + 1; j < siteList.length; j++) {
+                    const a = siteList[i], b = siteList[j];
+                    const d = turf.distance(turf.point(a.coord), turf.point(b.coord), {units:'meters'});
+                    const strictDmin = Math.max(a.dmin, b.dmin);
+                    if (d < strictDmin - 0.01) {
+                        const key = pairKey(a, b);
+                        if (!failedPairs.has(key)) conflicts.push({ a: i, b: j, dist: d, strictDmin });
+                    }
+                }
+            }
+            addLog(`  检测到 ${conflicts.length} 个冲突对（已排除 ${failedPairs.size} 个失败记录）`, 'info');
+            if (conflicts.length === 0) break;
+            for (const conflict of conflicts) {
+                const siteA = siteList[conflict.a], siteB = siteList[conflict.b];
+                if (!regionsResults[siteA.regionIdx].coords[siteA.siteIdx] || !regionsResults[siteB.regionIdx].coords[siteB.siteIdx]) continue;
+                addLog(`  [全局冲突] ${siteA.regionId}-站${siteA.siteIdx+1} 与 ${siteB.regionId}-站${siteB.siteIdx+1} 距离 ${conflict.dist.toFixed(1)}m < ${conflict.strictDmin}m，尝试合并`, 'warn');
+                const midLon = (siteA.coord[0] + siteB.coord[0]) / 2;
+                const midLat = (siteA.coord[1] + siteB.coord[1]) / 2;
+                const midCoord = [midLon, midLat];
+                const midPt = turf.point(midCoord);
+                const inA = turf.booleanPointInPolygon(midPt, siteA.polygon);
+                const inB = turf.booleanPointInPolygon(midPt, siteB.polygon);
+                let keeper, removed;
+                if (inA && !inB) { keeper = siteA; removed = siteB; }
+                else if (inB && !inA) { keeper = siteB; removed = siteA; }
+                else if (inA && inB) { if (siteA.regionId < siteB.regionId) { keeper = siteA; removed = siteB; } else { keeper = siteB; removed = siteA; } }
+                else {
+                    let found = false;
+                    for (let angle = 0; angle < 360; angle += 30) {
+                        const tryPt = turf.destination(midPt, 10, angle, {units:'meters'});
+                        const tryCoord = tryPt.geometry.coordinates;
+                        const inANew = turf.booleanPointInPolygon(tryPt, siteA.polygon);
+                        const inBNew = turf.booleanPointInPolygon(tryPt, siteB.polygon);
+                        if (inANew && !inBNew) { keeper = siteA; removed = siteB; midCoord[0] = tryCoord[0]; midCoord[1] = tryCoord[1]; found = true; break; }
+                        else if (inBNew && !inANew) { keeper = siteB; removed = siteA; midCoord[0] = tryCoord[0]; midCoord[1] = tryCoord[1]; found = true; break; }
+                    }
+                    if (!found) { addLog(`    中点不在任何边框内且微调失败，取消合并`, 'warn'); failedPairs.add(pairKey(siteA, siteB)); totalProcessed++; continue; }
+                }
+                const strictDmin = Math.max(keeper.dmin, removed.dmin);
+                if (minDistToStations(midCoord, allStations) < strictDmin - 0.01) {
+                    addLog(`    合并后的中点不满足与宏站的距离要求，取消合并`, 'warn');
+                    failedPairs.add(pairKey(siteA, siteB)); totalProcessed++; continue;
+                }
+                const keeperRegion = regionsResults[keeper.regionIdx];
+                keeperRegion.coords[keeper.siteIdx] = midCoord;
+                const removedRegion = regionsResults[removed.regionIdx];
+                removedRegion.coords.splice(removed.siteIdx, 1);
+                if (!removedRegion.remarks) removedRegion.remarks = [];
+                removedRegion.remarks.push(`与${keeper.regionId}共站址`);
+                addLog(`    合并成功，新站址 [${midCoord[0].toFixed(6)}, ${midCoord[1].toFixed(6)}] 归入区域 ${keeper.regionId}`, 'success');
+                changed = true; totalProcessed++; rebuildSiteList(); break;
+            }
+            if (totalProcessed > 1000) { addLog('冲突处理次数过多，强制退出', 'error'); break; }
+        }
+        addLog(`全局冲突处理完毕，共处理 ${totalProcessed} 对冲突`, 'info');
+        return regionsResults;
+    }
+
+    async function processAll() {
+        if (!file1Data || !file2Data) return;
+        btnRun.disabled = true; btnRun.textContent = '⏳ 处理中...';
+        btnClear.style.display = 'none'; btnDownload.style.display = 'none';
+        resultWorkbook = null; clearLogs();
+        resultTableWrap.classList.remove('active'); statsRow.style.display = 'none';
+        progressArea.classList.add('active'); progressBar.style.width = '0%'; progressText.textContent = '读取文件中...';
+
+        try {
+            const wb1 = await readExcelFile(file1Data);
+            const {headers: h1, rows: r1} = sheetToJsonArray(wb1.Sheets[wb1.SheetNames[0]]);
+            const colId = findColumnIndex(h1, ['编号','ID','序号']);
+            const colRegion = findColumnIndex(h1, ['区域']);
+            const colScenario = findColumnIndex(h1, ['覆盖场景','场景']);
+            const colWkt = findColumnIndex(h1, ['WKT','WKT坐标边框']);
+            if (colWkt<0 || colRegion<0) throw new Error('缺少必要列');
+            addLog(`问题区域: ${r1.length} 条`, 'info');
+
+            const wb2 = await readExcelFile(file2Data);
+            const {headers: h2, rows: r2} = sheetToJsonArray(wb2.Sheets[wb2.SheetNames[0]]);
+            const colLon = findColumnIndex(h2, ['经度','LON','lon']);
+            const colLat = findColumnIndex(h2, ['纬度','LAT','lat']);
+            const colStaId = findColumnIndex(h2, ['物理站编号','编号','ID']);
+            if (colLon<0 || colLat<0) throw new Error('宏站清单缺少经度/纬度列');
+            const stations = r2.map((r,i)=>({
+                id: colStaId>=0?String(r[colStaId]||i+1):String(i+1),
+                lon: parseFloat(r[colLon]), lat: parseFloat(r[colLat])
+            })).filter(s=>!isNaN(s.lon)&&!isNaN(s.lat));
+            addLog(`宏站: ${stations.length} 个`, 'info');
+
+            const regions = r1.map((r,i)=>({
+                id: colId>=0?String(r[colId]||i+1):String(i+1),
+                region: String(r[colRegion]||''),
+                scenario: colScenario>=0?String(r[colScenario]||''):'',
+                wkt: String(r[colWkt]||''), orig: [...r]
+            }));
+
+            const regionPolys = [];
+            const regionsResults = [];
+            let success=0, fail=0;
+            const kCounts = {1:0,2:0,3:0,4:0,5:0};
+
+            for (let i=0; i<regions.length; i++) {
+                const reg = regions[i];
+                addLog(`区域[${reg.id}]：区域=${reg.region}，场景=${reg.scenario}`, 'info');
+                const poly = parseWKT(reg.wkt);
+                if (!poly) { addLog('  WKT解析失败', 'warn'); regionsResults.push({id: reg.id, coords:[], orig: reg.orig, remarks: []}); fail++; regionPolys.push(null); continue; }
+                regionPolys.push(poly);
+
+                const center = getBboxCenter(poly);
+                const diam = getMaxDiameter(poly).distance;
+                const area = getArea(poly);
+                const dmin = getDmin(reg.region, reg.scenario);
+                const isIndustrial = String(reg.scenario).includes('工业园区');
+                let dminInterSite = dmin;
+                if (isIndustrial) { dminInterSite = getIndustrialInterSiteDmin(reg.region); addLog(`  工业园区场景：站间间距 ${dminInterSite}m`, 'info'); }
+
+                addLog(`  边框中心=[${center[0].toFixed(6)}, ${center[1].toFixed(6)}] 直径=${diam.toFixed(1)}m 面积=${area.toFixed(0)}㎡ Dmin=${dmin}m`, 'info');
+                const high = String(reg.scenario).includes('高层居民区');
+                const is12 = String(reg.region).includes('一')||String(reg.region).includes('二');
+                const is34 = String(reg.region).includes('三')||String(reg.region).includes('四');
+                let triggerMulti = false;
+                if (high) {
+                    if (is12 && diam>500) triggerMulti=true;
+                    if (is34 && diam>600) triggerMulti=true;
+                    if (area>60000) triggerMulti=true;
+                } else {
+                    if (is12 && diam>600) triggerMulti=true;
+                    if (String(reg.region).includes('三') && diam>700) triggerMulti=true;
+                    if (String(reg.region).includes('四') && diam>800) triggerMulti=true;
+                    if (area>200000) triggerMulti=true;
+                }
+                const tryK = triggerMulti ? [5,4,3,2,1] : [1];
+                addLog(`  多站址触发: ${triggerMulti}，尝试K=${tryK.join('→')}`, 'info');
+                let finalCoords = null;
+                for (const k of tryK) {
+                    addLog(`  尝试K=${k}`, 'info');
+                    let cands;
+                    if (k===1) cands = [center];
+                    else { cands = equalAreaSplit(poly, k); if (!cands || cands.length<k) { addLog('    面积等分失败', 'warn'); continue; } }
+                    const effectiveInter = (k > 1 && isIndustrial) ? dminInterSite : dmin;
+                    if (allSatisfy(cands, stations, dmin, effectiveInter)) { finalCoords = cands; addLog(`    K=${k} 满足原则一 ✓`, 'success'); break; }
+                    else {
+                        if (k===1) {
+                            addLog('    K=1不满足原则一，启动原则三调整', 'info');
+                            const adjusted = adjustSingleStation(center, poly, stations, dmin);
+                            if (adjusted && allSatisfy([adjusted], stations, dmin)) { finalCoords = [adjusted]; addLog('    原则三调整成功 ✓', 'success'); break; }
+                            else addLog('    原则三调整失败', 'warn');
+                        } else {
+                            addLog(`    K=${k}候选点: ${JSON.stringify(cands.map(c=>[c[0].toFixed(6),c[1].toFixed(6)]))}`, 'info');
+                            addLog(`    K=${k}不满足原则一，减站重试`, 'warn');
+                        }
+                    }
+                }
+                const resObj = { id: reg.id, coords: finalCoords || [], orig: reg.orig, dmin, isIndustrial, remarks: [] };
+                regionsResults.push(resObj);
+                if (finalCoords) { success++; if (finalCoords.length in kCounts) kCounts[finalCoords.length]++; addLog(`  最终选址数量=${finalCoords.length} ✓`, 'success'); }
+                else { fail++; addLog('  无法选出有效站址，留空。', 'error'); }
+                progressBar.style.width = (25 + 70*(i+1)/regions.length) + '%';
+                progressText.textContent = `处理 ${i+1}/${regions.length} (成功${success} 失败${fail})`;
+                await new Promise(r=>setTimeout(r,5));
+            }
+
+            addLog('\\n--- 开始全局冲突检测与合并 ---', 'info');
+            const updatedResults = resolveGlobalConflicts(regionsResults, stations, regionPolys);
+            addLog('--- 全局冲突检测完成 ---', 'info');
+
+            success = 0; fail = 0;
+            for (const k in kCounts) kCounts[k] = 0;
+            updatedResults.forEach(r => {
+                if (r.coords.length > 0) { success++; if (r.coords.length in kCounts) kCounts[r.coords.length]++; }
+                else fail++;
+            });
+
+            const maxK = 5;
+            const outHeaders = [...h1];
+            for (let c=1; c<=maxK; c++) { outHeaders.push(`选址经度${c}`); outHeaders.push(`选址纬度${c}`); }
+            outHeaders.push('备注');
+            const outRows = updatedResults.map(r=>{
+                const row = [...r.orig];
+                for (let c=0; c<maxK; c++) { row.push(c < r.coords.length ? r.coords[c][0] : ''); row.push(c < r.coords.length ? r.coords[c][1] : ''); }
+                row.push((r.remarks && r.remarks.length > 0) ? r.remarks.join('; ') : '');
+                return row;
+            });
+            const outWb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(outWb, XLSX.utils.aoa_to_sheet([h1, ...r1]), wb1.SheetNames[0]);
+            XLSX.utils.book_append_sheet(outWb, XLSX.utils.aoa_to_sheet([outHeaders, ...outRows]), '选址结果');
+            resultWorkbook = outWb;
+
+            statsRow.style.display = 'flex';
+            statsRow.innerHTML = `
+                <div class="stat-chip">📊 总区域：${regions.length}</div>
+                <div class="stat-chip" style="background:#e6f4ea;">✅ 成功：${success}</div>
+                <div class="stat-chip" style="background:#fce8e6;">❌ 失败：${fail}</div>
+                <div class="stat-chip">K=1：${kCounts[1]}</div>
+                <div class="stat-chip">K=2：${kCounts[2]}</div>
+                <div class="stat-chip">K=3：${kCounts[3]}</div>
+                <div class="stat-chip">K=4：${kCounts[4]}</div>
+                <div class="stat-chip">K=5：${kCounts[5]}</div>`;
+            addLog('\\n========== 完成 ==========', 'success');
+            btnDownload.style.display = 'inline-flex'; btnClear.style.display = 'inline-flex';
+            btnRun.textContent = '⚡ 重新选址'; btnRun.disabled = false;
+            progressBar.style.width = '100%'; progressText.textContent = '处理完成';
+
+            resultTableHead.innerHTML = ''; resultTableBody.innerHTML = '';
+            const htr = document.createElement('tr');
+            outHeaders.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; htr.appendChild(th); });
+            resultTableHead.appendChild(htr);
+            outRows.slice(0,50).forEach(r=>{
+                const tr = document.createElement('tr');
+                r.forEach(v=>{ const td=document.createElement('td'); td.textContent=v!==''?v:''; tr.appendChild(td); });
+                resultTableBody.appendChild(tr);
+            });
+            resultTableWrap.classList.add('active');
+        } catch(err) {
+            addLog(`错误：${err.message}`, 'error');
+            progressText.textContent = '处理失败';
+            btnRun.disabled = false; btnClear.style.display = 'inline-flex';
+        }
+    }
+
+    btnRun.addEventListener('click', processAll);
+    btnDownload.addEventListener('click', () => {
+        if (!resultWorkbook) return alert('无结果');
+        const wbout = XLSX.write(resultWorkbook, {bookType:'xlsx', type:'array'});
+        const blob = new Blob([wbout], {type:'application/octet-stream'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `选址结果_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx`;
+        a.click();
+    });
+
+    addLog('工具就绪（二级三四类调整、三级三类调整）。', 'info');
+})();
+<\/script>
+</body>
+</html>`;
 
             // ==================== 创建Blob URL ====================
             function createBlobURL(htmlString, index) {
