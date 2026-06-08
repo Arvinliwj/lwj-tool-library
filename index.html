@@ -1260,12 +1260,15 @@
             // ────────────────────────────────────────────
             // 工具3：工参邻近匹配工具（已更新：支持流量输出、过滤空列）
             // ────────────────────────────────────────────
+                       // ────────────────────────────────────────────
+            // 工具3：三扇区匹配工具（动态方向扇区）
+            // ────────────────────────────────────────────
             toolHTMLs[2] = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>工参匹配工具 </title>
+    <title>三扇区匹配工具 - 最近站方向动态扇区</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"><\/script>
     <style>
         * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; }
@@ -1307,8 +1310,8 @@
 </head>
 <body>
 <div class="container">
-    <h1>🗺️ 工参邻近匹配 · 支持流量输出</h1>
-    <div class="sub">方位角拆分(/) | 最近N点 | 名称/距离去重 | 自动过滤空列 | 自动输出工参流量</div>
+    <h1>🗺️ 三扇区匹配工具 · 动态方向</h1>
+    <div class="sub">先找全局最近站 → 以其方向为基准生成三个120°扇区 → 每个扇区内独立找最近宏站 | 支持最近N点 | 去重 | 流量输出</div>
 
     <div class="grid-2col">
         <div class="card">
@@ -1320,9 +1323,8 @@
                 <div class="select-row">
                     <div class="select-group"><label>经度列</label><select id="origLonCol"></select></div>
                     <div class="select-group"><label>纬度列</label><select id="origLatCol"></select></div>
-                    <div class="select-group"><label>方位角列(可选)</label><select id="origAzCol"><option value="">无</option></select></div>
                 </div>
-                <div class="info-text" style="font-size:0.7rem;">💡 方位角列支持用 / 分隔多个值，每个值独立计算</div>
+                <div class="info-text" style="font-size:0.7rem;">💡 系统自动计算全局最近站，并以该站方向为基准生成三个扇区（±60°）</div>
             </div>
         </div>
         <div class="card">
@@ -1345,7 +1347,7 @@
                 </div>
                 
                 <div class="param-opt">
-                    <label>📌 最近N个站:</label>
+                    <label>📌 每个扇区最近N个站:</label>
                     <input type="number" id="topN" value="1" min="1" max="99" step="1">
                 </div>
                 
@@ -1363,7 +1365,7 @@
 
     <div class="action-bar">
         <div class="btn-group">
-            <button id="runMatchBtn">⚡ 开始匹配</button>
+            <button id="runMatchBtn">⚡ 开始匹配 (三扇区)</button>
         </div>
         <div class="example-link" id="downloadSample">📎 下载示例数据模板</div>
     </div>
@@ -1374,7 +1376,7 @@
     </div>
     <div id="messageArea" class="status-msg" style="margin-bottom: 12px;"></div>
 
-    <footer>⚡ 高性能网格索引，支持工参10万+级别。自动识别流量列（关键词：流量/业务量/traffic等），并在结果中输出。</footer>
+    <footer>⚡ 高性能网格索引，支持工参10万+级别。算法：先找全局最近站，再以其方向为基准生成三个扇区，每个扇区内独立匹配。</footer>
 </div>
 
 <script>
@@ -1424,7 +1426,7 @@
         return { filteredData, filteredHeaders };
     }
 
-    // ---------- 智能列名匹配（增加流量关键词）----------
+    // ---------- 智能列名匹配 ----------
     function findBestMatch(headers, patterns, caseSensitive = false) {
         for (let pattern of patterns) {
             const regex = new RegExp(pattern, caseSensitive ? '' : 'i');
@@ -1437,7 +1439,6 @@
 
     const lonPatterns = ['^lon$', '^lng$', '^longitude$', '经度', 'long', 'x', 'easting'];
     const latPatterns = ['^lat$', '^latitude$', '纬度', 'lat', 'y', 'northing'];
-    const azPatterns = ['^azimuth$', '^az$', '方位角', '方向角', 'angle', 'bearing', 'direction'];
     const namePatterns = ['^name$', '^site$', '^站名$', '^基站名$', '^sitename$', '^cellname$', '名称', '站点', '小区'];
     const trafficPatterns = ['流量', '业务量', '话务量', 'traffic', 'throughput', '负荷', 'load', '数据量'];
 
@@ -1447,7 +1448,6 @@
         switch(type) {
             case 'lon': patterns = lonPatterns; break;
             case 'lat': patterns = latPatterns; break;
-            case 'az': patterns = azPatterns; break;
             case 'name': patterns = namePatterns; break;
             case 'traffic': patterns = trafficPatterns; break;
             default: return "";
@@ -1461,7 +1461,7 @@
         if (withNone) {
             let noneOpt = document.createElement("option");
             noneOpt.value = "";
-            noneOpt.textContent = "无 (不约束)";
+            noneOpt.textContent = "无";
             selectEl.appendChild(noneOpt);
         }
         headers.forEach(h => {
@@ -1541,21 +1541,7 @@
     function isValidLon(l) { return !isNaN(l) && l >= -180 && l <= 180; }
     function isValidLat(l) { return !isNaN(l) && l >= -90 && l <= 90; }
 
-    function splitAzimuths(azValue) {
-        if (azValue === undefined || azValue === null || azValue === "") return [];
-        const str = String(azValue).trim();
-        if (str === "") return [];
-        const parts = str.split('/').map(p => p.trim()).filter(p => p !== "");
-        const numbers = [];
-        for (let part of parts) {
-            let num = parseFloat(part);
-            if (!isNaN(num) && num >= 0 && num <= 360) {
-                numbers.push(num);
-            }
-        }
-        return numbers;
-    }
-
+    // 构建网格索引
     function buildGridIndex(paramPoints) {
         const grid = new Map();
         for (let pt of paramPoints) {
@@ -1590,7 +1576,8 @@
         });
     }
 
-    function getAllCandidatesInRadius(origLon, origLat, azimuth, initialRadiusKm) {
+    // 获取一定半径内的所有候选点（带距离和方位角）
+    function getAllCandidatesInRadius(origLon, origLat, initialRadiusKm) {
         let radius = initialRadiusKm;
         const maxRadius = 100;
         let candidates = [];
@@ -1605,17 +1592,14 @@
 
         let result = candidates.map(p => {
             const dist = haversineDistance(origLon, origLat, p.lon, p.lat);
-            let bearing = null, angleDiff = null;
-            if (azimuth !== null) {
-                bearing = calculateBearing(origLon, origLat, p.lon, p.lat);
-                angleDiff = angleDifference(azimuth, bearing);
-            }
-            return { ...p, distance_m: dist, bearing, angleDiff };
+            const bearing = calculateBearing(origLon, origLat, p.lon, p.lat);
+            return { ...p, distance_m: dist, bearing };
         });
         result.sort((a,b) => a.distance_m - b.distance_m);
         return result;
     }
 
+    // 去重（基于当前候选列表）
     function deduplicateCandidates(candidates, mode) {
         if (mode === "none") return candidates;
         if (mode === "name") {
@@ -1635,25 +1619,62 @@
         return candidates;
     }
 
-    function matchSingleAzimuthTopN(origLon, origLat, azimuth, topN, dedupMode, initialRadiusKm) {
-        let allCandidates = getAllCandidatesInRadius(origLon, origLat, azimuth, initialRadiusKm);
-        if (allCandidates.length === 0) return [];
-
-        let filtered = allCandidates;
-        if (azimuth !== null) {
-            filtered = filtered.filter(c => c.angleDiff <= 60);
-        }
-        if (filtered.length === 0) return [];
-
-        let deduped = deduplicateCandidates(filtered, dedupMode);
-        return deduped.slice(0, topN);
+    // 根据扇区中心方向角筛选候选点（扇区范围±60°）
+    function filterBySector(candidates, centerAzimuth) {
+        return candidates.filter(c => {
+            const diff = angleDifference(centerAzimuth, c.bearing);
+            return diff <= 60;
+        });
     }
 
+    // 核心匹配：对单个原始点，执行三扇区匹配
+    function matchThreeSectors(origLon, origLat, paramPoints, topN, dedupMode, initialRadiusKm) {
+        // 1. 获取半径内所有候选点（已按距离排序）
+        let allCandidates = getAllCandidatesInRadius(origLon, origLat, initialRadiusKm);
+        if (allCandidates.length === 0) {
+            return { error: "无任何工参点", sectors: [] };
+        }
+
+        // 2. 找全局最近站（第一个即最近）
+        const nearestStation = allCandidates[0];
+        const baseAzimuth = nearestStation.bearing; // 中心点指向最近站的方向
+
+        // 3. 生成三个扇区中心方向
+        const sectorCenters = [baseAzimuth, (baseAzimuth + 120) % 360, (baseAzimuth + 240) % 360];
+        
+        const sectorResults = [];
+        for (let idx = 0; idx < sectorCenters.length; idx++) {
+            const centerAz = sectorCenters[idx];
+            // 筛选扇区内候选点
+            let sectorCandidates = filterBySector(allCandidates, centerAz);
+            if (sectorCandidates.length === 0) {
+                sectorResults.push({
+                    sectorIndex: idx,
+                    centerAzimuth: centerAz,
+                    matches: [],
+                    warning: "扇区内无点"
+                });
+                continue;
+            }
+            // 去重
+            let deduped = deduplicateCandidates(sectorCandidates, dedupMode);
+            // 取前 topN 个
+            const topMatches = deduped.slice(0, topN);
+            sectorResults.push({
+                sectorIndex: idx,
+                centerAzimuth: centerAz,
+                matches: topMatches,
+                warning: null
+            });
+        }
+        return { sectors: sectorResults };
+    }
+
+    // 异步匹配并自动下载
     async function runMatchAndDownload() {
         if (isMatching) return;
         const origLonCol = document.getElementById("origLonCol").value;
         const origLatCol = document.getElementById("origLatCol").value;
-        const origAzCol = document.getElementById("origAzCol").value;
         const paramLonCol = document.getElementById("paramLonCol").value;
         const paramLatCol = document.getElementById("paramLatCol").value;
         const paramNameCol = document.getElementById("paramNameCol").value;
@@ -1720,7 +1741,7 @@
         const msgDiv = document.getElementById("messageArea");
         msgDiv.innerHTML = "匹配进行中，请稍候...";
 
-        const outputRows = [];
+        const outputRows = []; // 每个原始点 × 每个扇区 × topN 行
         let processedRawCount = 0;
         const chunkSize = 50;
 
@@ -1733,7 +1754,8 @@
                 if (!isValidLon(origLon) || !isValidLat(origLat)) {
                     outputRows.push({
                         rawRow: rawRow,
-                        usedAz: null,
+                        sectorIndex: null,
+                        centerAzimuth: null,
                         match: null,
                         rank: null,
                         warning: "经纬度无效"
@@ -1742,51 +1764,34 @@
                     continue;
                 }
 
-                let azimuths = [];
-                if (origAzCol && origAzCol !== "") {
-                    const azRaw = rawRow[origAzCol];
-                    if (azRaw !== undefined && azRaw !== null && azRaw !== "") {
-                        azimuths = splitAzimuths(azRaw);
-                    }
-                }
-                if (azimuths.length === 0) {
-                    const matches = matchSingleAzimuthTopN(origLon, origLat, null, topN, dedupMode, searchRadiusKm);
-                    if (matches.length === 0) {
-                        outputRows.push({
-                            rawRow: rawRow,
-                            usedAz: null,
-                            match: null,
-                            rank: null,
-                            warning: "无匹配点"
-                        });
-                    } else {
-                        for (let idx = 0; idx < matches.length; idx++) {
-                            outputRows.push({
-                                rawRow: rawRow,
-                                usedAz: null,
-                                match: matches[idx],
-                                rank: idx + 1,
-                                warning: null
-                            });
-                        }
-                    }
+                const result = matchThreeSectors(origLon, origLat, paramPointsList, topN, dedupMode, searchRadiusKm);
+                if (result.sectors.length === 0) {
+                    outputRows.push({
+                        rawRow: rawRow,
+                        sectorIndex: null,
+                        centerAzimuth: null,
+                        match: null,
+                        rank: null,
+                        warning: result.error || "无匹配扇区"
+                    });
                 } else {
-                    for (let az of azimuths) {
-                        const matches = matchSingleAzimuthTopN(origLon, origLat, az, topN, dedupMode, searchRadiusKm);
-                        if (matches.length === 0) {
+                    for (let sector of result.sectors) {
+                        if (sector.matches.length === 0) {
                             outputRows.push({
                                 rawRow: rawRow,
-                                usedAz: az,
+                                sectorIndex: sector.sectorIndex,
+                                centerAzimuth: sector.centerAzimuth,
                                 match: null,
                                 rank: null,
-                                warning: "无匹配点"
+                                warning: sector.warning || "扇区内无点"
                             });
                         } else {
-                            for (let idx = 0; idx < matches.length; idx++) {
+                            for (let idx = 0; idx < sector.matches.length; idx++) {
                                 outputRows.push({
                                     rawRow: rawRow,
-                                    usedAz: az,
-                                    match: matches[idx],
+                                    sectorIndex: sector.sectorIndex,
+                                    centerAzimuth: sector.centerAzimuth,
+                                    match: sector.matches[idx],
                                     rank: idx + 1,
                                     warning: null
                                 });
@@ -1802,18 +1807,19 @@
             await new Promise(r => setTimeout(r, 5));
         }
 
-        generateAndDownloadCSV(outputRows, origLonCol, origLatCol, origAzCol);
-        msgDiv.innerHTML = \`✅ 匹配完成！原始点 \${totalRaw} 个，输出结果 \${outputRows.length} 行（包含最近\${topN}点及去重），已自动下载。\`;
+        generateAndDownloadCSV(outputRows);
+        msgDiv.innerHTML = \`✅ 匹配完成！原始点 \${totalRaw} 个，输出结果 \${outputRows.length} 行（三扇区 × 最近\${topN}点），已自动下载。\`;
         document.getElementById("progressArea").style.display = "none";
         isMatching = false;
         runBtn.disabled = false;
-        runBtn.textContent = "⚡ 开始匹配";
+        runBtn.textContent = "⚡ 开始匹配 (三扇区)";
     }
 
-    function generateAndDownloadCSV(outputRows, origLonCol, origLatCol, origAzCol) {
+    function generateAndDownloadCSV(outputRows) {
         const headers = [
             ...rawHeaders,
-            "使用方位角(度)",
+            "扇区编号(0/1/2)",
+            "扇区中心方位角(°)",
             "匹配序号",
             "匹配工参名称",
             "匹配工参经度",
@@ -1821,36 +1827,37 @@
             "匹配工参流量",
             "距离(米)",
             "工参方位角(°)",
-            "方位角差(°)",
             "备注"
         ];
         const rows = [];
         for (let item of outputRows) {
             const rawRow = item.rawRow;
             const rawValues = rawHeaders.map(h => rawRow[h] !== undefined ? rawRow[h] : "");
-            const usedAz = (item.usedAz !== null && item.usedAz !== undefined) ? item.usedAz : "";
+            const sectorIdx = (item.sectorIndex !== null && item.sectorIndex !== undefined) ? item.sectorIndex : "";
+            const centerAz = (item.centerAzimuth !== null && item.centerAzimuth !== undefined) ? item.centerAzimuth.toFixed(1) : "";
             const rank = item.rank !== null ? item.rank : "";
             if (!item.match) {
                 rows.push([
                     ...rawValues,
-                    usedAz,
+                    sectorIdx,
+                    centerAz,
                     rank,
-                    "", "", "", "", "", "", "",
+                    "", "", "", "", "", "",
                     item.warning || "无匹配点"
                 ]);
             } else {
                 const m = item.match;
                 rows.push([
                     ...rawValues,
-                    usedAz,
+                    sectorIdx,
+                    centerAz,
                     rank,
                     m.name,
                     m.lon.toFixed(6),
                     m.lat.toFixed(6),
                     m.traffic || "",
                     m.distance_m.toFixed(2),
-                    m.bearing !== null ? m.bearing.toFixed(2) : "",
-                    m.angleDiff !== null ? m.angleDiff.toFixed(2) : "",
+                    m.bearing.toFixed(2),
                     item.warning || ""
                 ]);
             }
@@ -1860,7 +1867,7 @@
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
         link.href = url;
-        link.download = \`matched_result_\${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv\`;
+        link.download = \`three_sector_result_\${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.csv\`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1868,8 +1875,7 @@
     }
 
     function downloadSample() {
-        // 示例工参增加流量列
-        const sampleOrig = "原始经度,原始纬度,方位角,站点名称\\n120.123,30.234,45/90/135,测试站A\\n120.456,30.567,,无方位角站B\\n120.789,30.890,200,站点C";
+        const sampleOrig = "原始经度,原始纬度,站点名称\\n120.123,30.234,测试站A\\n120.456,30.567,测试站B\\n120.789,30.890,测试站C";
         const sampleParam = "工参经度,工参纬度,基站名称,流量(MB)\\n120.122,30.233,近点1,1250.5\\n120.130,30.240,近点2,890.2\\n120.200,30.300,远点1,350.0\\n120.100,30.200,西侧点,0\\n120.150,30.250,北侧点,2100.8";
         const blobOrig = new Blob(["\uFEFF" + sampleOrig], { type: "text/csv;charset=utf-8;" });
         const blobParam = new Blob(["\uFEFF" + sampleParam], { type: "text/csv;charset=utf-8;" });
@@ -1898,13 +1904,11 @@
                 if (isOrig) {
                     updateSelectOptionsWithAuto(document.getElementById("origLonCol"), headers, 'lon', false);
                     updateSelectOptionsWithAuto(document.getElementById("origLatCol"), headers, 'lat', false);
-                    updateSelectOptionsWithAuto(document.getElementById("origAzCol"), headers, 'az', true);
                 } else {
                     updateSelectOptionsWithAuto(document.getElementById("paramLonCol"), headers, 'lon', false);
                     updateSelectOptionsWithAuto(document.getElementById("paramLatCol"), headers, 'lat', false);
                     updateSelectOptionsWithAuto(document.getElementById("paramNameCol"), headers, 'name', false);
                     updateSelectOptionsWithAuto(document.getElementById("paramTrafficCol"), headers, 'traffic', true);
-                    // 统计有效工参点
                     if (paramData && document.getElementById("paramLonCol").value && document.getElementById("paramLatCol").value) {
                         const lonCol = document.getElementById("paramLonCol").value;
                         const latCol = document.getElementById("paramLatCol").value;
