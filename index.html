@@ -2083,489 +2083,488 @@
         </body>
         </html>`;
 
-                        // ────────────────────────────────────────────
+           // ────────────────────────────────────────────
             // 工具6：5G小区效益分析工具
-            // ────────────────────────────────────────────
-            toolHTMLs[5] = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>5G小区效益分析工具</title>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"><\/script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-            background: #f5f7fa;
-        }
-        .container {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            text-align: center;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-top: 0;
-            font-size: 28px;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }
-        .upload-area {
-            border: 2px dashed #bdc3c7;
-            border-radius: 10px;
-            padding: 40px 20px;
-            margin: 30px 0;
-            background: #fafbfc;
-            transition: border-color 0.3s;
-        }
-        .upload-area:hover { border-color: #3498db; }
-        .file-input { display: none; }
-        .upload-btn {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .upload-btn:hover { background: #2980b9; }
-        .process-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 14px 50px;
-            font-size: 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin: 20px 0;
-            transition: background 0.3s;
-            display: inline-block;
-        }
-        .process-btn:hover { background: #219a52; }
-        .process-btn:disabled {
-            background: #b2bec3;
-            cursor: not-allowed;
-        }
-        .status {
-            margin: 15px 0;
-            font-weight: 500;
-            font-size: 16px;
-        }
-        .error { color: #e74c3c; }
-        .success { color: #27ae60; }
-        .info-box {
-            background: #ecf0f1;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            font-size: 14px;
-            text-align: left;
-        }
-        .file-name {
-            color: #2c3e50;
-            font-weight: 600;
-            margin: 10px 0;
-        }
-        .progress-container {
-            width: 100%;
-            background: #ecf0f1;
-            border-radius: 10px;
-            height: 20px;
-            margin: 15px 0;
-            overflow: hidden;
-            display: none;
-        }
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background: #3498db;
-            border-radius: 10px;
-            transition: width 0.3s ease;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>📊 5G小区效益分析工具</h1>
-        <div class="info-box">
-            <strong>使用说明：</strong><br>
-            1. 上传包含 <b>日期、CGI（或ID）、流量、站型</b> 的Excel文件（中/英文列名均可）<br>
-            2. 点击“开始处理”，系统将自动分析并生成结果文件<br>
-            3. 结果包含两个工作表：原始数据 + 分析结果透视表（含标签/备注）<br>
-            4. ⚠️ 流量小于 <b>0.01</b> 或为空时，按 0 计算<br>
-            5. 判定逻辑：以数据截止日期为终点，向前每7天为一个窗口；从最新窗口开始，找到第一个数据天数 ≥ 5 的窗口进行判定；若无窗口满足，则标“缺失数据过多”<br>
-            6. 备注：若判定窗口非最新窗口（因最新窗口数据不足5天），提示“最新周有空值数据，建议核查”；若为零/低效益小区且历史存在“非零低小区”窗口，备注“该小区有数据达标周”
-        </div>
-        <div class="upload-area" id="uploadArea">
-            <p style="font-size: 18px; color: #7f8c8d;">📁 拖拽Excel文件到此处，或点击下方按钮选择</p>
-            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
-            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
-            <div id="fileName" class="file-name"></div>
-        </div>
-        <button class="process-btn" id="processBtn" disabled>⚡ 开始处理</button>
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar" id="progressBar"></div>
-        </div>
-        <div id="statusMessage" class="status"></div>
-    </div>
-
-    <script>
-        (function() {
-            let selectedFile = null;
-            let progressTimer = null;
-            let currentProgress = 0;
-            const MIN_DAYS_PER_WEEK = 5;
-
-            function getDayType(date) {
-                const day = date.getDay();
-                return (day === 0 || day === 6) ? 'weekend' : 'workday';
-            }
-            function addDays(date, days) {
-                const result = new Date(date);
-                result.setDate(result.getDate() + days);
-                return result;
-            }
-            function formatDate(date) {
-                const y = date.getFullYear();
-                const m = String(date.getMonth() + 1).padStart(2, '0');
-                const d = String(date.getDate()).padStart(2, '0');
-                return \`\${y}-\${m}-\${d}\`;
-            }
-            function is5GCGI(cgiStr) {
-                if (!cgiStr) return false;
-                const parts = String(cgiStr).trim().split('-');
-                if (parts.length < 3) return false;
-                return /^\d{8}$/.test(parts[2]);
-            }
-            function findColumnIndex(headers, keywords) {
-                for (let i = 0; i < headers.length; i++) {
-                    const h = headers[i].toLowerCase();
-                    for (let kw of keywords) {
-                        if (h.includes(kw.toLowerCase())) return i;
-                    }
-                }
-                return -1;
-            }
-            function isIndoorSite(stationType) {
-                const st = stationType.toLowerCase();
-                return ['室分', 'indoor', '室内', '室分站', 'indoor site'].some(kw => st.includes(kw.toLowerCase()));
-            }
-
-            function startProgress() {
-                document.getElementById('progressContainer').style.display = 'block';
-                document.getElementById('progressBar').style.width = '0%';
-                currentProgress = 0;
-                progressTimer = setInterval(() => {
-                    if (currentProgress >= 90) { clearInterval(progressTimer); return; }
-                    currentProgress += Math.random() * 15 + 5;
-                    if (currentProgress > 90) currentProgress = 90;
-                    document.getElementById('progressBar').style.width = currentProgress + '%';
-                }, 200);
-            }
-            function finishProgress() {
-                clearInterval(progressTimer);
-                document.getElementById('progressBar').style.width = '100%';
-                setTimeout(() => { document.getElementById('progressContainer').style.display = 'none'; }, 800);
-            }
-
-            function analyzeAndPivot(rows) {
-                const enriched = rows.map(row => {
-                    const cgiStr = String(row.cgi).trim();
-                    const fiveG = is5GCGI(cgiStr);
-                    let traffic = parseFloat(row.traffic);
-                    if (isNaN(traffic) || traffic < 0.01) traffic = 0;
-                    return {
-                        ...row,
-                        cgiStr,
-                        is5G: fiveG,
-                        traffic,
-                        dateObj: new Date(row.date),
-                        stationType: String(row.stationType).trim()
-                    };
-                });
-
-                const dateSet = new Set();
-                const validRows = enriched.filter(r => r.dateObj && r.cgiStr);
-                validRows.forEach(r => dateSet.add(formatDate(r.dateObj)));
-                const allDates = Array.from(dateSet).sort();
-
-                if (allDates.length === 0) {
-                    return { pivotHeaders: [], pivotRows: [] };
-                }
-                const maxDateStr = allDates[allDates.length - 1];
-                const maxDate = new Date(maxDateStr);
-
-                const windows = [];
-                let windowEnd = maxDate;
-                const minDate = new Date(allDates[0]);
-                while (windowEnd >= minDate) {
-                    const start = addDays(windowEnd, -6);
-                    windows.push({
-                        start: start,
-                        end: windowEnd,
-                        key: formatDate(start)
-                    });
-                    windowEnd = addDays(start, -1);
-                }
-
-                const latestWindowKey = windows[0].key;
-
-                const cgiMap = new Map();
-                validRows.forEach(r => {
-                    const cgi = r.cgiStr;
-                    if (!cgiMap.has(cgi)) {
-                        cgiMap.set(cgi, {
-                            stationType: r.stationType,
-                            is5G: r.is5G,
-                            label: null,
-                            remark: '',
-                            dailyTraffic: new Map()
-                        });
-                    }
-                    const info = cgiMap.get(cgi);
-                    const ds = formatDate(r.dateObj);
-                    if (!info.dailyTraffic.has(ds) || r.traffic > info.dailyTraffic.get(ds)) {
-                        info.dailyTraffic.set(ds, r.traffic);
-                    }
-                    if (!info.stationType) info.stationType = r.stationType;
-                });
-
-                const fiveGCGIs = Array.from(cgiMap.keys()).filter(cgi => cgiMap.get(cgi).is5G);
-                if (fiveGCGIs.length > 0) {
-                    for (const cgi of fiveGCGIs) {
-                        const info = cgiMap.get(cgi);
-                        const windowMap = new Map();
-
-                        for (const [dateStr, traffic] of info.dailyTraffic) {
-                            const d = new Date(dateStr);
-                            const win = windows.find(w => d >= w.start && d <= w.end);
-                            if (win) {
-                                if (!windowMap.has(win.key)) {
-                                    windowMap.set(win.key, {
-                                        trafficByDate: new Map(),
-                                        stationType: info.stationType
-                                    });
-                                }
-                                windowMap.get(win.key).trafficByDate.set(dateStr, traffic);
-                            }
-                        }
-
-                        const sortedWindowKeys = windows.map(w => w.key).filter(key => windowMap.has(key));
-                        if (sortedWindowKeys.length === 0) continue;
-
-                        let judgeWindowKey = null;
-                        for (const winKey of windows.map(w => w.key)) {
-                            if (windowMap.has(winKey) && windowMap.get(winKey).trafficByDate.size >= MIN_DAYS_PER_WEEK) {
-                                judgeWindowKey = winKey;
-                                break;
-                            }
-                        }
-
-                        if (!judgeWindowKey) {
-                            info.label = '缺失数据过多，建议手动核查';
-                            info.remark = '';
-                            continue;
-                        }
-
-                        const windowStatuses = new Map();
-                        for (const [winKey, winData] of windowMap) {
-                            const tbd = winData.trafficByDate;
-                            if (tbd.size === 0) {
-                                windowStatuses.set(winKey, 'no_data');
-                                continue;
-                            }
-                            const arr = Array.from(tbd.entries()).map(([ds, tr]) => {
-                                const day = new Date(ds);
-                                return { date: day, traffic: tr, dayType: getDayType(day) };
-                            });
-                            let zeroWD = 0, zeroWE = 0;
-                            arr.forEach(item => {
-                                if (item.traffic === 0) {
-                                    item.dayType === 'workday' ? zeroWD++ : zeroWE++;
-                                }
-                            });
-                            const isZero = (zeroWD >= 2) && (zeroWE >= 1);
-                            let isLow = false;
-                            if (!isZero) {
-                                const sortedTraffic = arr.map(i => i.traffic).sort((a,b)=>b-a);
-                                const top3 = sortedTraffic.slice(0,3);
-                                if (top3.length) {
-                                    const avg = top3.reduce((s,v)=>s+v,0)/top3.length;
-                                    const st = winData.stationType;
-                                    if (isIndoorSite(st)) {
-                                        if (avg < 2) isLow = true;
-                                    } else {
-                                        if (avg < 3) isLow = true;
-                                    }
-                                }
-                            }
-                            windowStatuses.set(winKey, isZero ? 'zero' : (isLow ? 'low' : 'qualified'));
-                        }
-
-                        const judgeStatus = windowStatuses.get(judgeWindowKey);
-                        let label = judgeStatus === 'zero' ? '零效益小区' : (judgeStatus === 'low' ? '低效益小区' : '非零低小区');
-
-                        let remark = '';
-                        if (judgeWindowKey !== latestWindowKey) {
-                            remark = '最新周有空值数据，建议核查';
-                        }
-                        if (label === '零效益小区' || label === '低效益小区') {
-                            let hasQualified = false;
-                            for (const [wk, status] of windowStatuses) {
-                                if (wk !== judgeWindowKey && status === 'qualified') { hasQualified = true; break; }
-                            }
-                            if (hasQualified) {
-                                remark += (remark ? '；' : '') + '该小区有数据达标周';
-                            }
-                        }
-                        info.label = label;
-                        info.remark = remark;
-                    }
-                }
-
-                for (const [cgi, info] of cgiMap) {
-                    if (!info.is5G) {
-                        info.label = '非5G小区';
-                        info.remark = '';
-                    } else if (info.label === null) {
-                        info.label = '非零低小区';
-                        info.remark = '';
-                    }
-                }
-
-                const pivotHeaders = ['CGI', '站型', '标签', '备注', ...allDates];
-                const pivotRows = [];
-                Array.from(cgiMap.keys()).sort().forEach(cgi => {
-                    const info = cgiMap.get(cgi);
-                    const row = [cgi, info.stationType || '', info.label, info.remark];
-                    allDates.forEach(d => row.push(info.dailyTraffic.has(d) ? info.dailyTraffic.get(d) : ''));
-                    pivotRows.push(row);
-                });
-                return { pivotHeaders, pivotRows };
-            }
-
-            const fileInput = document.getElementById('fileInput');
-            const uploadArea = document.getElementById('uploadArea');
-            const fileNameDiv = document.getElementById('fileName');
-            const processBtn = document.getElementById('processBtn');
-            const statusDiv = document.getElementById('statusMessage');
-
-            function setSelectedFile(file) {
-                if (!file) return;
-                if (!file.name.match(/\.(xlsx|xls)$/i)) {
-                    statusDiv.innerHTML = '❌ 请上传Excel文件（.xlsx或.xls）';
-                    statusDiv.className = 'status error';
-                    processBtn.disabled = true;
-                    return;
-                }
-                selectedFile = file;
-                fileNameDiv.textContent = \`已选择文件：\${file.name}\`;
-                processBtn.disabled = false;
-                statusDiv.innerHTML = '';
-            }
-
-            uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = '#3498db'; });
-            uploadArea.addEventListener('dragleave', () => uploadArea.style.borderColor = '#bdc3c7');
-            uploadArea.addEventListener('drop', e => {
-                e.preventDefault();
-                uploadArea.style.borderColor = '#bdc3c7';
-                const files = e.dataTransfer.files;
-                if (files.length) {
-                    fileInput.files = files;
-                    setSelectedFile(files[0]);
-                }
-            });
-            fileInput.addEventListener('change', e => {
-                if (e.target.files.length) setSelectedFile(e.target.files[0]);
-            });
-
-            processBtn.addEventListener('click', () => {
-                if (!selectedFile) return;
-                processBtn.disabled = true;
-                statusDiv.innerHTML = '⏳ 正在分析数据...';
-                startProgress();
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheet = workbook.SheetNames[0];
-                        const sheet = workbook.Sheets[firstSheet];
-                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                        if (json.length < 2) throw new Error('表格至少需要包含表头和一行数据。');
-
-                        const headers = json[0].map(h => String(h).trim());
-                        const dateIdx = findColumnIndex(headers, ['日期', '时间', 'date', 'time']);
-                        const cgiIdx = findColumnIndex(headers, ['cgi', '小区', 'cell', 'id']);
-                        const trafficIdx = findColumnIndex(headers, ['流量', '业务量', 'traffic', 'throughput', '数据流量']);
-                        const stationIdx = findColumnIndex(headers, ['站型', '类型', '覆盖', 'station type', 'site type', '站型']);
-
-                        if (dateIdx === -1) throw new Error(\`未找到“日期”列。当前表头：\${headers.join(', ')}\`);
-                        if (cgiIdx === -1) throw new Error(\`未找到“CGI”或“ID”列。当前表头：\${headers.join(', ')}\`);
-                        if (trafficIdx === -1) throw new Error(\`未找到“流量”列。当前表头：\${headers.join(', ')}\`);
-                        if (stationIdx === -1) throw new Error(\`未找到“站型”列。当前表头：\${headers.join(', ')}\`);
-
-                        const rawRows = [];
-                        for (let i = 1; i < json.length; i++) {
-                            const row = json[i];
-                            if (!row || row.length === 0) continue;
-                            const dateVal = row[dateIdx], cgiVal = row[cgiIdx];
-                            if (dateVal === undefined || cgiVal === undefined) continue;
-                            rawRows.push({
-                                date: dateVal,
-                                cgi: cgiVal,
-                                traffic: row[trafficIdx],
-                                stationType: row[stationIdx]
-                            });
-                        }
-                        if (!rawRows.length) throw new Error('没有有效数据行。');
-
-                        setTimeout(() => {
-                            try {
-                                const { pivotHeaders, pivotRows } = analyzeAndPivot(rawRows);
-                                const newWorkbook = XLSX.utils.book_new();
-                                const origSheetData = [headers, ...rawRows.map(r => [r.date, r.cgi, r.traffic, r.stationType])];
-                                XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.aoa_to_sheet(origSheetData), firstSheet);
-                                XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.aoa_to_sheet([pivotHeaders, ...pivotRows]), '分析结果');
-                                XLSX.writeFile(newWorkbook, '5G小区效益分析结果.xlsx');
-                                finishProgress();
-                                statusDiv.innerHTML = '✅ 分析完成！文件已自动下载。';
-                                statusDiv.className = 'status success';
-                                processBtn.disabled = false;
-                            } catch (err) {
-                                finishProgress();
-                                statusDiv.innerHTML = \`❌ 分析失败: \${err.message}\`;
-                                statusDiv.className = 'status error';
-                                processBtn.disabled = false;
-                            }
-                        }, 100);
-                    } catch (err) {
-                        finishProgress();
-                        statusDiv.innerHTML = \`❌ 文件处理错误: \${err.message}\`;
-                        statusDiv.className = 'status error';
-                        processBtn.disabled = false;
-                    }
-                };
-                reader.onerror = () => {
-                    finishProgress();
-                    statusDiv.innerHTML = '❌ 文件读取失败';
-                    statusDiv.className = 'status error';
-                    processBtn.disabled = false;
-                };
-                reader.readAsArrayBuffer(selectedFile);
-            });
-        })();
-    <\/script>
-</body>
-</html>`;
+toolHTMLs[5] = '<!DOCTYPE html>\n' +
+'<html lang="zh-CN">\n' +
+'<head>\n' +
+'    <meta charset="UTF-8">\n' +
+'    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+'    <title>5G小区效益分析工具</title>\n' +
+'    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"><\/script>\n' +
+'    <style>\n' +
+'        body {\n' +
+'            font-family: \'Segoe UI\', Tahoma, Geneva, Verdana, sans-serif;\n' +
+'            max-width: 800px;\n' +
+'            margin: 40px auto;\n' +
+'            padding: 0 20px;\n' +
+'            background: #f5f7fa;\n' +
+'        }\n' +
+'        .container {\n' +
+'            background: white;\n' +
+'            border-radius: 12px;\n' +
+'            padding: 30px;\n' +
+'            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);\n' +
+'            text-align: center;\n' +
+'        }\n' +
+'        h1 {\n' +
+'            color: #2c3e50;\n' +
+'            margin-top: 0;\n' +
+'            font-size: 28px;\n' +
+'            border-bottom: 2px solid #3498db;\n' +
+'            padding-bottom: 10px;\n' +
+'        }\n' +
+'        .upload-area {\n' +
+'            border: 2px dashed #bdc3c7;\n' +
+'            border-radius: 10px;\n' +
+'            padding: 40px 20px;\n' +
+'            margin: 30px 0;\n' +
+'            background: #fafbfc;\n' +
+'            transition: border-color 0.3s;\n' +
+'        }\n' +
+'        .upload-area:hover { border-color: #3498db; }\n' +
+'        .file-input { display: none; }\n' +
+'        .upload-btn {\n' +
+'            background: #3498db;\n' +
+'            color: white;\n' +
+'            border: none;\n' +
+'            padding: 12px 30px;\n' +
+'            font-size: 16px;\n' +
+'            border-radius: 6px;\n' +
+'            cursor: pointer;\n' +
+'            transition: background 0.3s;\n' +
+'        }\n' +
+'        .upload-btn:hover { background: #2980b9; }\n' +
+'        .process-btn {\n' +
+'            background: #27ae60;\n' +
+'            color: white;\n' +
+'            border: none;\n' +
+'            padding: 14px 50px;\n' +
+'            font-size: 18px;\n' +
+'            border-radius: 6px;\n' +
+'            cursor: pointer;\n' +
+'            margin: 20px 0;\n' +
+'            transition: background 0.3s;\n' +
+'            display: inline-block;\n' +
+'        }\n' +
+'        .process-btn:hover { background: #219a52; }\n' +
+'        .process-btn:disabled {\n' +
+'            background: #b2bec3;\n' +
+'            cursor: not-allowed;\n' +
+'        }\n' +
+'        .status {\n' +
+'            margin: 15px 0;\n' +
+'            font-weight: 500;\n' +
+'            font-size: 16px;\n' +
+'        }\n' +
+'        .error { color: #e74c3c; }\n' +
+'        .success { color: #27ae60; }\n' +
+'        .info-box {\n' +
+'            background: #ecf0f1;\n' +
+'            padding: 15px;\n' +
+'            border-radius: 8px;\n' +
+'            margin: 20px 0;\n' +
+'            font-size: 14px;\n' +
+'            text-align: left;\n' +
+'        }\n' +
+'        .file-name {\n' +
+'            color: #2c3e50;\n' +
+'            font-weight: 600;\n' +
+'            margin: 10px 0;\n' +
+'        }\n' +
+'        .progress-container {\n' +
+'            width: 100%;\n' +
+'            background: #ecf0f1;\n' +
+'            border-radius: 10px;\n' +
+'            height: 20px;\n' +
+'            margin: 15px 0;\n' +
+'            overflow: hidden;\n' +
+'            display: none;\n' +
+'        }\n' +
+'        .progress-bar {\n' +
+'            height: 100%;\n' +
+'            width: 0%;\n' +
+'            background: #3498db;\n' +
+'            border-radius: 10px;\n' +
+'            transition: width 0.3s ease;\n' +
+'        }\n' +
+'    </style>\n' +
+'</head>\n' +
+'<body>\n' +
+'    <div class="container">\n' +
+'        <h1>📊 5G小区效益分析工具</h1>\n' +
+'        <div class="info-box">\n' +
+'            <strong>使用说明：</strong><br>\n' +
+'            1. 上传包含 <b>日期、CGI（或ID）、流量、站型</b> 的Excel文件（中/英文列名均可）<br>\n' +
+'            2. 点击“开始处理”，系统将自动分析并生成结果文件<br>\n' +
+'            3. 结果包含两个工作表：原始数据 + 分析结果透视表（含标签/备注）<br>\n' +
+'            4. ⚠️ 流量小于 <b>0.01</b> 或为空时，按 0 计算<br>\n' +
+'            5. 判定逻辑：以数据截止日期为终点，向前每7天为一个窗口；从最新窗口开始，找到第一个数据天数 ≥ 5 的窗口进行判定；若无窗口满足，则标“缺失数据过多”<br>\n' +
+'            6. 备注：若判定窗口非最新窗口（因最新窗口数据不足5天），提示“最新周有空值数据，建议核查”；若为零/低效益小区且历史存在“非零低小区”窗口，备注“该小区有数据达标周”\n' +
+'        </div>\n' +
+'        <div class="upload-area" id="uploadArea">\n' +
+'            <p style="font-size: 18px; color: #7f8c8d;">📁 拖拽Excel文件到此处，或点击下方按钮选择</p>\n' +
+'            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">\n' +
+'            <button class="upload-btn" onclick="document.getElementById(\'fileInput\').click()">选择文件</button>\n' +
+'            <div id="fileName" class="file-name"></div>\n' +
+'        </div>\n' +
+'        <button class="process-btn" id="processBtn" disabled>⚡ 开始处理</button>\n' +
+'        <div class="progress-container" id="progressContainer">\n' +
+'            <div class="progress-bar" id="progressBar"></div>\n' +
+'        </div>\n' +
+'        <div id="statusMessage" class="status"></div>\n' +
+'    </div>\n' +
+'\n' +
+'    <script>\n' +
+'        (function() {\n' +
+'            let selectedFile = null;\n' +
+'            let progressTimer = null;\n' +
+'            let currentProgress = 0;\n' +
+'            const MIN_DAYS_PER_WEEK = 5;\n' +
+'\n' +
+'            function getDayType(date) {\n' +
+'                const day = date.getDay();\n' +
+'                return (day === 0 || day === 6) ? \'weekend\' : \'workday\';\n' +
+'            }\n' +
+'            function addDays(date, days) {\n' +
+'                const result = new Date(date);\n' +
+'                result.setDate(result.getDate() + days);\n' +
+'                return result;\n' +
+'            }\n' +
+'            function formatDate(date) {\n' +
+'                const y = date.getFullYear();\n' +
+'                const m = String(date.getMonth() + 1).padStart(2, \'0\');\n' +
+'                const d = String(date.getDate()).padStart(2, \'0\');\n' +
+'                return y + \'-\' + m + \'-\' + d;\n' +
+'            }\n' +
+'            function is5GCGI(cgiStr) {\n' +
+'                if (!cgiStr) return false;\n' +
+'                const parts = String(cgiStr).trim().split(\'-\');\n' +
+'                if (parts.length < 3) return false;\n' +
+'                return /^\\d{8}$/.test(parts[2]);\n' +
+'            }\n' +
+'            function findColumnIndex(headers, keywords) {\n' +
+'                for (let i = 0; i < headers.length; i++) {\n' +
+'                    const h = headers[i].toLowerCase();\n' +
+'                    for (let kw of keywords) {\n' +
+'                        if (h.includes(kw.toLowerCase())) return i;\n' +
+'                    }\n' +
+'                }\n' +
+'                return -1;\n' +
+'            }\n' +
+'            function isIndoorSite(stationType) {\n' +
+'                const st = stationType.toLowerCase();\n' +
+'                return [\'室分\', \'indoor\', \'室内\', \'室分站\', \'indoor site\'].some(kw => st.includes(kw.toLowerCase()));\n' +
+'            }\n' +
+'\n' +
+'            function startProgress() {\n' +
+'                document.getElementById(\'progressContainer\').style.display = \'block\';\n' +
+'                document.getElementById(\'progressBar\').style.width = \'0%\';\n' +
+'                currentProgress = 0;\n' +
+'                progressTimer = setInterval(() => {\n' +
+'                    if (currentProgress >= 90) { clearInterval(progressTimer); return; }\n' +
+'                    currentProgress += Math.random() * 15 + 5;\n' +
+'                    if (currentProgress > 90) currentProgress = 90;\n' +
+'                    document.getElementById(\'progressBar\').style.width = currentProgress + \'%\';\n' +
+'                }, 200);\n' +
+'            }\n' +
+'            function finishProgress() {\n' +
+'                clearInterval(progressTimer);\n' +
+'                document.getElementById(\'progressBar\').style.width = \'100%\';\n' +
+'                setTimeout(() => { document.getElementById(\'progressContainer\').style.display = \'none\'; }, 800);\n' +
+'            }\n' +
+'\n' +
+'            function analyzeAndPivot(rows) {\n' +
+'                const enriched = rows.map(row => {\n' +
+'                    const cgiStr = String(row.cgi).trim();\n' +
+'                    const fiveG = is5GCGI(cgiStr);\n' +
+'                    let traffic = parseFloat(row.traffic);\n' +
+'                    if (isNaN(traffic) || traffic < 0.01) traffic = 0;\n' +
+'                    return {\n' +
+'                        ...row,\n' +
+'                        cgiStr,\n' +
+'                        is5G: fiveG,\n' +
+'                        traffic,\n' +
+'                        dateObj: new Date(row.date),\n' +
+'                        stationType: String(row.stationType).trim()\n' +
+'                    };\n' +
+'                });\n' +
+'\n' +
+'                const dateSet = new Set();\n' +
+'                const validRows = enriched.filter(r => r.dateObj && r.cgiStr);\n' +
+'                validRows.forEach(r => dateSet.add(formatDate(r.dateObj)));\n' +
+'                const allDates = Array.from(dateSet).sort();\n' +
+'\n' +
+'                if (allDates.length === 0) {\n' +
+'                    return { pivotHeaders: [], pivotRows: [] };\n' +
+'                }\n' +
+'                const maxDateStr = allDates[allDates.length - 1];\n' +
+'                const maxDate = new Date(maxDateStr);\n' +
+'\n' +
+'                const windows = [];\n' +
+'                let windowEnd = maxDate;\n' +
+'                const minDate = new Date(allDates[0]);\n' +
+'                while (windowEnd >= minDate) {\n' +
+'                    const start = addDays(windowEnd, -6);\n' +
+'                    windows.push({\n' +
+'                        start: start,\n' +
+'                        end: windowEnd,\n' +
+'                        key: formatDate(start)\n' +
+'                    });\n' +
+'                    windowEnd = addDays(start, -1);\n' +
+'                }\n' +
+'\n' +
+'                const latestWindowKey = windows[0].key;\n' +
+'\n' +
+'                const cgiMap = new Map();\n' +
+'                validRows.forEach(r => {\n' +
+'                    const cgi = r.cgiStr;\n' +
+'                    if (!cgiMap.has(cgi)) {\n' +
+'                        cgiMap.set(cgi, {\n' +
+'                            stationType: r.stationType,\n' +
+'                            is5G: r.is5G,\n' +
+'                            label: null,\n' +
+'                            remark: \'\',\n' +
+'                            dailyTraffic: new Map()\n' +
+'                        });\n' +
+'                    }\n' +
+'                    const info = cgiMap.get(cgi);\n' +
+'                    const ds = formatDate(r.dateObj);\n' +
+'                    if (!info.dailyTraffic.has(ds) || r.traffic > info.dailyTraffic.get(ds)) {\n' +
+'                        info.dailyTraffic.set(ds, r.traffic);\n' +
+'                    }\n' +
+'                    if (!info.stationType) info.stationType = r.stationType;\n' +
+'                });\n' +
+'\n' +
+'                const fiveGCGIs = Array.from(cgiMap.keys()).filter(cgi => cgiMap.get(cgi).is5G);\n' +
+'                if (fiveGCGIs.length > 0) {\n' +
+'                    for (const cgi of fiveGCGIs) {\n' +
+'                        const info = cgiMap.get(cgi);\n' +
+'                        const windowMap = new Map();\n' +
+'\n' +
+'                        for (const [dateStr, traffic] of info.dailyTraffic) {\n' +
+'                            const d = new Date(dateStr);\n' +
+'                            const win = windows.find(w => d >= w.start && d <= w.end);\n' +
+'                            if (win) {\n' +
+'                                if (!windowMap.has(win.key)) {\n' +
+'                                    windowMap.set(win.key, {\n' +
+'                                        trafficByDate: new Map(),\n' +
+'                                        stationType: info.stationType\n' +
+'                                    });\n' +
+'                                }\n' +
+'                                windowMap.get(win.key).trafficByDate.set(dateStr, traffic);\n' +
+'                            }\n' +
+'                        }\n' +
+'\n' +
+'                        const sortedWindowKeys = windows.map(w => w.key).filter(key => windowMap.has(key));\n' +
+'                        if (sortedWindowKeys.length === 0) continue;\n' +
+'\n' +
+'                        let judgeWindowKey = null;\n' +
+'                        for (const winKey of windows.map(w => w.key)) {\n' +
+'                            if (windowMap.has(winKey) && windowMap.get(winKey).trafficByDate.size >= MIN_DAYS_PER_WEEK) {\n' +
+'                                judgeWindowKey = winKey;\n' +
+'                                break;\n' +
+'                            }\n' +
+'                        }\n' +
+'\n' +
+'                        if (!judgeWindowKey) {\n' +
+'                            info.label = \'缺失数据过多，建议手动核查\';\n' +
+'                            info.remark = \'\';\n' +
+'                            continue;\n' +
+'                        }\n' +
+'\n' +
+'                        const windowStatuses = new Map();\n' +
+'                        for (const [winKey, winData] of windowMap) {\n' +
+'                            const tbd = winData.trafficByDate;\n' +
+'                            if (tbd.size === 0) {\n' +
+'                                windowStatuses.set(winKey, \'no_data\');\n' +
+'                                continue;\n' +
+'                            }\n' +
+'                            const arr = Array.from(tbd.entries()).map(([ds, tr]) => {\n' +
+'                                const day = new Date(ds);\n' +
+'                                return { date: day, traffic: tr, dayType: getDayType(day) };\n' +
+'                            });\n' +
+'                            let zeroWD = 0, zeroWE = 0;\n' +
+'                            arr.forEach(item => {\n' +
+'                                if (item.traffic === 0) {\n' +
+'                                    item.dayType === \'workday\' ? zeroWD++ : zeroWE++;\n' +
+'                                }\n' +
+'                            });\n' +
+'                            const isZero = (zeroWD >= 2) && (zeroWE >= 1);\n' +
+'                            let isLow = false;\n' +
+'                            if (!isZero) {\n' +
+'                                const sortedTraffic = arr.map(i => i.traffic).sort((a,b)=>b-a);\n' +
+'                                const top3 = sortedTraffic.slice(0,3);\n' +
+'                                if (top3.length) {\n' +
+'                                    const avg = top3.reduce((s,v)=>s+v,0)/top3.length;\n' +
+'                                    const st = winData.stationType;\n' +
+'                                    if (isIndoorSite(st)) {\n' +
+'                                        if (avg < 2) isLow = true;\n' +
+'                                    } else {\n' +
+'                                        if (avg < 3) isLow = true;\n' +
+'                                    }\n' +
+'                                }\n' +
+'                            }\n' +
+'                            windowStatuses.set(winKey, isZero ? \'zero\' : (isLow ? \'low\' : \'qualified\'));\n' +
+'                        }\n' +
+'\n' +
+'                        const judgeStatus = windowStatuses.get(judgeWindowKey);\n' +
+'                        let label = judgeStatus === \'zero\' ? \'零效益小区\' : (judgeStatus === \'low\' ? \'低效益小区\' : \'非零低小区\');\n' +
+'\n' +
+'                        let remark = \'\';\n' +
+'                        if (judgeWindowKey !== latestWindowKey) {\n' +
+'                            remark = \'最新周有空值数据，建议核查\';\n' +
+'                        }\n' +
+'                        if (label === \'零效益小区\' || label === \'低效益小区\') {\n' +
+'                            let hasQualified = false;\n' +
+'                            for (const [wk, status] of windowStatuses) {\n' +
+'                                if (wk !== judgeWindowKey && status === \'qualified\') { hasQualified = true; break; }\n' +
+'                            }\n' +
+'                            if (hasQualified) {\n' +
+'                                remark += (remark ? \'；\' : \'\') + \'该小区有数据达标周\';\n' +
+'                            }\n' +
+'                        }\n' +
+'                        info.label = label;\n' +
+'                        info.remark = remark;\n' +
+'                    }\n' +
+'                }\n' +
+'\n' +
+'                for (const [cgi, info] of cgiMap) {\n' +
+'                    if (!info.is5G) {\n' +
+'                        info.label = \'非5G小区\';\n' +
+'                        info.remark = \'\';\n' +
+'                    } else if (info.label === null) {\n' +
+'                        info.label = \'非零低小区\';\n' +
+'                        info.remark = \'\';\n' +
+'                    }\n' +
+'                }\n' +
+'\n' +
+'                const pivotHeaders = [\'CGI\', \'站型\', \'标签\', \'备注\', ...allDates];\n' +
+'                const pivotRows = [];\n' +
+'                Array.from(cgiMap.keys()).sort().forEach(cgi => {\n' +
+'                    const info = cgiMap.get(cgi);\n' +
+'                    const row = [cgi, info.stationType || \'\', info.label, info.remark];\n' +
+'                    allDates.forEach(d => row.push(info.dailyTraffic.has(d) ? info.dailyTraffic.get(d) : \'\'));\n' +
+'                    pivotRows.push(row);\n' +
+'                });\n' +
+'                return { pivotHeaders, pivotRows };\n' +
+'            }\n' +
+'\n' +
+'            const fileInput = document.getElementById(\'fileInput\');\n' +
+'            const uploadArea = document.getElementById(\'uploadArea\');\n' +
+'            const fileNameDiv = document.getElementById(\'fileName\');\n' +
+'            const processBtn = document.getElementById(\'processBtn\');\n' +
+'            const statusDiv = document.getElementById(\'statusMessage\');\n' +
+'\n' +
+'            function setSelectedFile(file) {\n' +
+'                if (!file) return;\n' +
+'                if (!file.name.match(/\.(xlsx|xls)$/i)) {\n' +
+'                    statusDiv.innerHTML = \'❌ 请上传Excel文件（.xlsx或.xls）\';\n' +
+'                    statusDiv.className = \'status error\';\n' +
+'                    processBtn.disabled = true;\n' +
+'                    return;\n' +
+'                }\n' +
+'                selectedFile = file;\n' +
+'                fileNameDiv.textContent = \'已选择文件：\' + file.name;\n' +
+'                processBtn.disabled = false;\n' +
+'                statusDiv.innerHTML = \'\';\n' +
+'            }\n' +
+'\n' +
+'            uploadArea.addEventListener(\'dragover\', e => { e.preventDefault(); uploadArea.style.borderColor = \'#3498db\'; });\n' +
+'            uploadArea.addEventListener(\'dragleave\', () => uploadArea.style.borderColor = \'#bdc3c7\');\n' +
+'            uploadArea.addEventListener(\'drop\', e => {\n' +
+'                e.preventDefault();\n' +
+'                uploadArea.style.borderColor = \'#bdc3c7\';\n' +
+'                const files = e.dataTransfer.files;\n' +
+'                if (files.length) {\n' +
+'                    fileInput.files = files;\n' +
+'                    setSelectedFile(files[0]);\n' +
+'                }\n' +
+'            });\n' +
+'            fileInput.addEventListener(\'change\', e => {\n' +
+'                if (e.target.files.length) setSelectedFile(e.target.files[0]);\n' +
+'            });\n' +
+'\n' +
+'            processBtn.addEventListener(\'click\', () => {\n' +
+'                if (!selectedFile) return;\n' +
+'                processBtn.disabled = true;\n' +
+'                statusDiv.innerHTML = \'⏳ 正在分析数据...\';\n' +
+'                startProgress();\n' +
+'\n' +
+'                const reader = new FileReader();\n' +
+'                reader.onload = function(e) {\n' +
+'                    try {\n' +
+'                        const data = new Uint8Array(e.target.result);\n' +
+'                        const workbook = XLSX.read(data, { type: \'array\' });\n' +
+'                        const firstSheet = workbook.SheetNames[0];\n' +
+'                        const sheet = workbook.Sheets[firstSheet];\n' +
+'                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });\n' +
+'                        if (json.length < 2) throw new Error(\'表格至少需要包含表头和一行数据。\');\n' +
+'\n' +
+'                        const headers = json[0].map(h => String(h).trim());\n' +
+'                        const dateIdx = findColumnIndex(headers, [\'日期\', \'时间\', \'date\', \'time\']);\n' +
+'                        const cgiIdx = findColumnIndex(headers, [\'cgi\', \'小区\', \'cell\', \'id\']);\n' +
+'                        const trafficIdx = findColumnIndex(headers, [\'流量\', \'业务量\', \'traffic\', \'throughput\', \'数据流量\']);\n' +
+'                        const stationIdx = findColumnIndex(headers, [\'站型\', \'类型\', \'覆盖\', \'station type\', \'site type\', \'站型\']);\n' +
+'\n' +
+'                        if (dateIdx === -1) throw new Error(\'未找到“日期”列。当前表头：\' + headers.join(\', \'));\n' +
+'                        if (cgiIdx === -1) throw new Error(\'未找到“CGI”或“ID”列。当前表头：\' + headers.join(\', \'));\n' +
+'                        if (trafficIdx === -1) throw new Error(\'未找到“流量”列。当前表头：\' + headers.join(\', \'));\n' +
+'                        if (stationIdx === -1) throw new Error(\'未找到“站型”列。当前表头：\' + headers.join(\', \'));\n' +
+'\n' +
+'                        const rawRows = [];\n' +
+'                        for (let i = 1; i < json.length; i++) {\n' +
+'                            const row = json[i];\n' +
+'                            if (!row || row.length === 0) continue;\n' +
+'                            const dateVal = row[dateIdx], cgiVal = row[cgiIdx];\n' +
+'                            if (dateVal === undefined || cgiVal === undefined) continue;\n' +
+'                            rawRows.push({\n' +
+'                                date: dateVal,\n' +
+'                                cgi: cgiVal,\n' +
+'                                traffic: row[trafficIdx],\n' +
+'                                stationType: row[stationIdx]\n' +
+'                            });\n' +
+'                        }\n' +
+'                        if (!rawRows.length) throw new Error(\'没有有效数据行。\');\n' +
+'\n' +
+'                        setTimeout(() => {\n' +
+'                            try {\n' +
+'                                const { pivotHeaders, pivotRows } = analyzeAndPivot(rawRows);\n' +
+'                                const newWorkbook = XLSX.utils.book_new();\n' +
+'                                const origSheetData = [headers, ...rawRows.map(r => [r.date, r.cgi, r.traffic, r.stationType])];\n' +
+'                                XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.aoa_to_sheet(origSheetData), firstSheet);\n' +
+'                                XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.aoa_to_sheet([pivotHeaders, ...pivotRows]), \'分析结果\');\n' +
+'                                XLSX.writeFile(newWorkbook, \'5G小区效益分析结果.xlsx\');\n' +
+'                                finishProgress();\n' +
+'                                statusDiv.innerHTML = \'✅ 分析完成！文件已自动下载。\';\n' +
+'                                statusDiv.className = \'status success\';\n' +
+'                                processBtn.disabled = false;\n' +
+'                            } catch (err) {\n' +
+'                                finishProgress();\n' +
+'                                statusDiv.innerHTML = \'❌ 分析失败: \' + err.message;\n' +
+'                                statusDiv.className = \'status error\';\n' +
+'                                processBtn.disabled = false;\n' +
+'                            }\n' +
+'                        }, 100);\n' +
+'                    } catch (err) {\n' +
+'                        finishProgress();\n' +
+'                        statusDiv.innerHTML = \'❌ 文件处理错误: \' + err.message;\n' +
+'                        statusDiv.className = \'status error\';\n' +
+'                        processBtn.disabled = false;\n' +
+'                    }\n' +
+'                };\n' +
+'                reader.onerror = () => {\n' +
+'                    finishProgress();\n' +
+'                    statusDiv.innerHTML = \'❌ 文件读取失败\';\n' +
+'                    statusDiv.className = \'status error\';\n' +
+'                    processBtn.disabled = false;\n' +
+'                };\n' +
+'                reader.readAsArrayBuffer(selectedFile);\n' +
+'            });\n' +
+'        })();\n' +
+'    <\/script>\n' +
+'</body>\n' +
+'</html>';
 
             // ==================== 创建Blob URL ====================
             function createBlobURL(htmlString, index) {
