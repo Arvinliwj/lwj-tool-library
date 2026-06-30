@@ -303,7 +303,7 @@
                 <span class="tab-num">5</span>📂 表格拆分工具
             </button>
             <button class="tab-btn" data-tab="5">
-                <span class="tab-num">6</span>📍 智能选址
+                <span class="tab-num">6</span>📊 5G效益分析
             </button>
         </nav>
 
@@ -2083,745 +2083,487 @@
         </body>
         </html>`;
 
+                        // ────────────────────────────────────────────
+            // 工具6：5G小区效益分析工具
             // ────────────────────────────────────────────
-            // 工具6：智能选址工具
-            // ────────────────────────────────────────────
-          toolHTMLs[5] = `<!DOCTYPE html>
+            toolHTMLs[5] = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能选址工具 · 四级场景间距修订版</title>
-    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"><\/script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"><\/script>
+    <title>5G小区效益分析工具</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"><\/script>
     <style>
-        :root {
-            --primary: #1a73e8; --primary-hover: #1557b0; --bg: #f8f9fa; --card-bg: #ffffff;
-            --border: #e0e0e0; --text: #202124; --text-secondary: #5f6368; --success: #0d904f;
-            --warning: #e6a817; --error: #d93025; --radius: 12px;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(135deg, #e8edf5 0%, #f0f4f8 30%, #eef1f5 60%, #f5f6f8 100%);
-            min-height: 100vh; color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f5f7fa;
         }
-        .header {
-            background: var(--card-bg); border-bottom: 1px solid var(--border);
-            padding: 18px 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            display: flex; align-items: center; gap: 14px;
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
         }
-        .header .logo-icon {
-            width: 40px; height: 40px; border-radius: 10px;
-            background: linear-gradient(135deg, #1a73e8, #4a9af5);
-            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px;
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 28px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
         }
-        .header h1 { font-size: 1.25rem; }
-        .header .subtitle { font-size: 0.85rem; color: var(--text-secondary); }
-        .container { max-width: 1100px; margin: 0 auto; padding: 28px 20px 40px; }
-        .card {
-            background: var(--card-bg); border-radius: var(--radius);
-            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            padding: 24px 28px; margin-bottom: 20px;
+        .upload-area {
+            border: 2px dashed #bdc3c7;
+            border-radius: 10px;
+            padding: 40px 20px;
+            margin: 30px 0;
+            background: #fafbfc;
+            transition: border-color 0.3s;
         }
-        .upload-row { display: flex; gap: 20px; flex-wrap: wrap; }
-        .upload-box {
-            flex: 1; min-width: 280px; border: 2px dashed var(--border);
-            border-radius: var(--radius); padding: 24px 20px; text-align: center;
-            cursor: pointer; position: relative; background: #fafbfc;
+        .upload-area:hover { border-color: #3498db; }
+        .file-input { display: none; }
+        .upload-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
         }
-        .upload-box:hover { border-color: var(--primary); background: #f5f8fd; }
-        .upload-box.has-file { border-color: var(--success); border-style: solid; background: #f6fdf8; }
-        .upload-box input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px; padding: 11px 24px;
-            border-radius: 8px; font-size: 0.95rem; font-weight: 500; cursor: pointer; border: none; transition: 0.2s;
+        .upload-btn:hover { background: #2980b9; }
+        .process-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 14px 50px;
+            font-size: 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: background 0.3s;
+            display: inline-block;
         }
-        .btn-primary { background: var(--primary); color: #fff; }
-        .btn-primary:disabled { background: #a8c7f5; cursor: not-allowed; }
-        .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
-        .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
-        .progress-area { display: none; margin-top: 16px; }
-        .progress-area.active { display: block; }
-        .progress-bar-outer { background: #e8eaed; border-radius: 20px; height: 10px; overflow: hidden; margin: 8px 0; }
-        .progress-bar-inner { height: 100%; background: linear-gradient(90deg, #1a73e8, #4a9af5); border-radius: 20px; transition: width 0.3s; width: 0%; }
-        .log-area {
-            background: #1e1e1e; color: #d4d4d4; border-radius: 8px; padding: 14px 18px;
-            max-height: 320px; overflow-y: auto; font-family: monospace; font-size: 0.8rem;
-            white-space: pre-wrap; display: none; margin-top: 12px;
+        .process-btn:hover { background: #219a52; }
+        .process-btn:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
         }
-        .log-area.active { display: block; }
-        .result-table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border); display: none; }
-        .result-table-wrap.active { display: block; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-        th, td { padding: 10px 12px; text-align: center; border-bottom: 1px solid #eee; white-space: nowrap; }
-        th { background: #f5f6f8; font-weight: 600; position: sticky; top: 0; }
-        .stats-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
-        .stat-chip { padding: 8px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500; background: #f0f4f8; }
+        .status {
+            margin: 15px 0;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        .error { color: #e74c3c; }
+        .success { color: #27ae60; }
+        .info-box {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            text-align: left;
+        }
+        .file-name {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        .progress-container {
+            width: 100%;
+            background: #ecf0f1;
+            border-radius: 10px;
+            height: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #3498db;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
-<div class="header">
-    <div class="logo-icon">📍</div>
-    <div>
-        <h1>智能选址工具</h1>
-        <div class="subtitle">四级场景间距调整 · 全局冲突合并 · 垂直平分线外心</div>
-    </div>
-</div>
-<div class="container">
-    <div class="card">
-        <div class="upload-row">
-            <div class="upload-box" id="uploadBox1">
-                <div style="font-size:1.1rem;">📋 问题区域边框清单</div>
-                <div style="font-size:0.8rem;color:#666;">需含编号、区域、覆盖场景、WKT边框</div>
-                <div class="file-name" id="fileName1"></div>
-                <input type="file" id="fileInput1" accept=".xlsx,.xls">
-            </div>
-            <div class="upload-box" id="uploadBox2">
-                <div style="font-size:1.1rem;">📡 宏站物理站清单</div>
-                <div style="font-size:0.8rem;color:#666;">需含物理站编号、经度、纬度</div>
-                <div class="file-name" id="fileName2"></div>
-                <input type="file" id="fileInput2" accept=".xlsx,.xls">
-            </div>
+    <div class="container">
+        <h1>📊 5G小区效益分析工具</h1>
+        <div class="info-box">
+            <strong>使用说明：</strong><br>
+            1. 上传包含 <b>日期、CGI（或ID）、流量、站型</b> 的Excel文件（中/英文列名均可）<br>
+            2. 点击“开始处理”，系统将自动分析并生成结果文件<br>
+            3. 结果包含两个工作表：原始数据 + 分析结果透视表（含标签/备注）<br>
+            4. ⚠️ 流量小于 <b>0.01</b> 或为空时，按 0 计算<br>
+            5. 判定逻辑：以数据截止日期为终点，向前每7天为一个窗口；从最新窗口开始，找到第一个数据天数 ≥ 5 的窗口进行判定；若无窗口满足，则标“缺失数据过多”<br>
+            6. 备注：若判定窗口非最新窗口（因最新窗口数据不足5天），提示“最新周有空值数据，建议核查”；若为零/低效益小区且历史存在“非零低小区”窗口，备注“该小区有数据达标周”
         </div>
-        <div class="btn-row">
-            <button class="btn btn-primary" id="btnRun" disabled>⚡ 开始智能选址</button>
-            <button class="btn btn-outline" id="btnClear" style="display:none;">🔄 清除重传</button>
-            <button class="btn btn-outline" id="btnDownload" style="display:none;">📥 下载选址结果</button>
+        <div class="upload-area" id="uploadArea">
+            <p style="font-size: 18px; color: #7f8c8d;">📁 拖拽Excel文件到此处，或点击下方按钮选择</p>
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
+            <div id="fileName" class="file-name"></div>
         </div>
-        <div class="progress-area" id="progressArea">
-            <div id="progressText">准备中...</div>
-            <div class="progress-bar-outer"><div class="progress-bar-inner" id="progressBar"></div></div>
+        <button class="process-btn" id="processBtn" disabled>⚡ 开始处理</button>
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
         </div>
+        <div id="statusMessage" class="status"></div>
     </div>
-    <div class="stats-row" id="statsRow" style="display:none;"></div>
-    <div class="log-area" id="logArea"></div>
-    <div class="result-table-wrap" id="resultTableWrap">
-        <table id="resultTable"><thead id="resultTableHead"></thead><tbody id="resultTableBody"></tbody></table>
-    </div>
-</div>
-<script>
-(function() {
-    // DOM 元素
-    const fileInput1 = document.getElementById('fileInput1');
-    const fileInput2 = document.getElementById('fileInput2');
-    const uploadBox1 = document.getElementById('uploadBox1');
-    const uploadBox2 = document.getElementById('uploadBox2');
-    const fileName1 = document.getElementById('fileName1');
-    const fileName2 = document.getElementById('fileName2');
-    const btnRun = document.getElementById('btnRun');
-    const btnClear = document.getElementById('btnClear');
-    const btnDownload = document.getElementById('btnDownload');
-    const progressArea = document.getElementById('progressArea');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    const logArea = document.getElementById('logArea');
-    const resultTableWrap = document.getElementById('resultTableWrap');
-    const resultTableHead = document.getElementById('resultTableHead');
-    const resultTableBody = document.getElementById('resultTableBody');
-    const statsRow = document.getElementById('statsRow');
 
-    let file1Data = null, file2Data = null, resultWorkbook = null;
+    <script>
+        (function() {
+            let selectedFile = null;
+            let progressTimer = null;
+            let currentProgress = 0;
+            const MIN_DAYS_PER_WEEK = 5;
 
-    function addLog(msg, type='info') {
-        const t = new Date().toLocaleTimeString();
-        const div = document.createElement('div');
-        div.className = \`log-\${type}\`;
-        div.textContent = \`[\${t}] \${msg}\`;
-        logArea.appendChild(div);
-        logArea.scrollTop = logArea.scrollHeight;
-        logArea.classList.add('active');
-    }
-    function clearLogs() { logArea.innerHTML = ''; logArea.classList.remove('active'); }
-
-    fileInput1.addEventListener('change', e => {
-        if (e.target.files[0]) {
-            fileName1.textContent = '✅ ' + e.target.files[0].name;
-            uploadBox1.classList.add('has-file');
-            file1Data = e.target.files[0];
-        } else {
-            fileName1.textContent = '';
-            uploadBox1.classList.remove('has-file');
-            file1Data = null;
-        }
-        checkReady();
-    });
-    fileInput2.addEventListener('change', e => {
-        if (e.target.files[0]) {
-            fileName2.textContent = '✅ ' + e.target.files[0].name;
-            uploadBox2.classList.add('has-file');
-            file2Data = e.target.files[0];
-        } else {
-            fileName2.textContent = '';
-            uploadBox2.classList.remove('has-file');
-            file2Data = null;
-        }
-        checkReady();
-    });
-    function checkReady() { btnRun.disabled = !(file1Data && file2Data); }
-
-    btnClear.addEventListener('click', () => {
-        file1Data = file2Data = null;
-        fileInput1.value = fileInput2.value = '';
-        fileName1.textContent = fileName2.textContent = '';
-        uploadBox1.classList.remove('has-file');
-        uploadBox2.classList.remove('has-file');
-        btnRun.disabled = true;
-        btnClear.style.display = 'none';
-        btnDownload.style.display = 'none';
-        resultWorkbook = null;
-        clearLogs();
-        resultTableWrap.classList.remove('active');
-        resultTableHead.innerHTML = resultTableBody.innerHTML = '';
-        statsRow.style.display = 'none'; statsRow.innerHTML = '';
-        progressArea.classList.remove('active'); progressBar.style.width = '0%';
-        addLog('已清除。', 'info');
-    });
-
-    // ----- 几何工具 -----
-    function parseWKT(wktStr) {
-        if (!wktStr || typeof wktStr !== 'string') return null;
-        let s = wktStr.trim();
-        if (!s.toUpperCase().startsWith('POLYGON')) return null;
-        const outerMatch = s.match(/\\((.+)\\)/s);
-        if (!outerMatch) return null;
-        const inner = outerMatch[1];
-        const ringsRaw = [];
-        const ringRegex = /\\(([^)]+)\\)/g;
-        let match;
-        while ((match = ringRegex.exec(inner)) !== null) ringsRaw.push(match[1]);
-        const allRings = [];
-        for (const ringStr of ringsRaw) {
-            const coords = [];
-            const pts = ringStr.split(',');
-            for (const pt of pts) {
-                const parts = pt.trim().split(/\\s+/);
-                if (parts.length >= 2) {
-                    const lon = parseFloat(parts[0]), lat = parseFloat(parts[1]);
-                    if (!isNaN(lon) && !isNaN(lat)) coords.push([lon, lat]);
+            function getDayType(date) {
+                const day = date.getDay();
+                return (day === 0 || day === 6) ? 'weekend' : 'workday';
+            }
+            function addDays(date, days) {
+                const result = new Date(date);
+                result.setDate(result.getDate() + days);
+                return result;
+            }
+            function formatDate(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return \`\${y}-\${m}-\${d}\`;
+            }
+            function is5GCGI(cgiStr) {
+                if (!cgiStr) return false;
+                const parts = String(cgiStr).trim().split('-');
+                if (parts.length < 3) return false;
+                return /^\d{8}$/.test(parts[2]);
+            }
+            function findColumnIndex(headers, keywords) {
+                for (let i = 0; i < headers.length; i++) {
+                    const h = headers[i].toLowerCase();
+                    for (let kw of keywords) {
+                        if (h.includes(kw.toLowerCase())) return i;
+                    }
                 }
+                return -1;
             }
-            if (coords.length >= 3) {
-                if (coords[0][0] !== coords[coords.length-1][0] || coords[0][1] !== coords[coords.length-1][1])
-                    coords.push([coords[0][0], coords[0][1]]);
-                allRings.push(coords);
+            function isIndoorSite(stationType) {
+                const st = stationType.toLowerCase();
+                return ['室分', 'indoor', '室内', '室分站', 'indoor site'].some(kw => st.includes(kw.toLowerCase()));
             }
-        }
-        return allRings.length > 0 ? turf.polygon(allRings) : null;
-    }
 
-    function readExcelFile(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = e => {
-                try { resolve(XLSX.read(new Uint8Array(e.target.result), {type:'array'})); }
-                catch(err) { reject(err); }
-            };
-            reader.onerror = () => reject(new Error('读取失败'));
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
-    function sheetToJsonArray(ws) {
-        const json = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-        if (!json.length) return {headers:[], rows:[]};
-        const headers = json[0].map(h=>String(h).trim());
-        const rows = json.slice(1).map(r=>r.map(c=>c===null||c===undefined?'':c));
-        return {headers, rows};
-    }
-
-    function findColumnIndex(headers, names) {
-        for (const n of names) {
-            const idx = headers.findIndex(h=>h.includes(n)||h===n);
-            if (idx>=0) return idx;
-        }
-        return -1;
-    }
-
-    function getBboxCenter(polygon) { return turf.pointOnFeature(polygon).geometry.coordinates; }
-    function getMaxDiameter(polygon) {
-        const coords = turf.coordAll(polygon);
-        let maxDist = 0, p1 = coords[0], p2 = coords[0];
-        for (let i=0; i<coords.length; i++)
-            for (let j=i+1; j<coords.length; j++) {
-                const d = turf.distance(turf.point(coords[i]), turf.point(coords[j]), {units:'meters'});
-                if (d > maxDist) { maxDist = d; p1 = coords[i]; p2 = coords[j]; }
+            function startProgress() {
+                document.getElementById('progressContainer').style.display = 'block';
+                document.getElementById('progressBar').style.width = '0%';
+                currentProgress = 0;
+                progressTimer = setInterval(() => {
+                    if (currentProgress >= 90) { clearInterval(progressTimer); return; }
+                    currentProgress += Math.random() * 15 + 5;
+                    if (currentProgress > 90) currentProgress = 90;
+                    document.getElementById('progressBar').style.width = currentProgress + '%';
+                }, 200);
             }
-        return { distance: maxDist, pair: [p1, p2] };
-    }
-    function getArea(polygon) { return turf.area(polygon); }
-
-    function getMajorAxis(polygon) {
-        const bbox = turf.bbox(polygon);
-        const [minLon, minLat, maxLon, maxLat] = bbox;
-        const width = maxLon - minLon;
-        const height = maxLat - minLat;
-        if (width >= height) return { p1: [minLon, (minLat + maxLat) / 2], p2: [maxLon, (minLat + maxLat) / 2] };
-        else return { p1: [(minLon + maxLon) / 2, minLat], p2: [(minLon + maxLon) / 2, maxLat] };
-    }
-
-    function equalAreaSplit(polygon, k) {
-        const bbox = turf.bbox(polygon);
-        const [minLon, minLat, maxLon, maxLat] = bbox;
-        const steps = 50;
-        const samples = [];
-        for (let i = 0; i <= steps; i++) {
-            for (let j = 0; j <= steps; j++) {
-                const lon = minLon + (i / steps) * (maxLon - minLon);
-                const lat = minLat + (j / steps) * (maxLat - minLat);
-                const pt = turf.point([lon, lat]);
-                if (turf.booleanPointInPolygon(pt, polygon)) samples.push([lon, lat]);
+            function finishProgress() {
+                clearInterval(progressTimer);
+                document.getElementById('progressBar').style.width = '100%';
+                setTimeout(() => { document.getElementById('progressContainer').style.display = 'none'; }, 800);
             }
-        }
-        if (samples.length < k * 2) return fallbackBboxSplit(polygon, k);
-        const axis = getMajorAxis(polygon);
-        const p1 = turf.point(axis.p1), p2 = turf.point(axis.p2);
-        const dx = p2.geometry.coordinates[0] - p1.geometry.coordinates[0];
-        const dy = p2.geometry.coordinates[1] - p1.geometry.coordinates[1];
-        const len = Math.sqrt(dx*dx + dy*dy) || 1;
-        const ux = dx / len, uy = dy / len;
-        const projections = samples.map(s => ({
-            c: s, p: (s[0] - p1.geometry.coordinates[0]) * ux + (s[1] - p1.geometry.coordinates[1]) * uy
-        }));
-        projections.sort((a, b) => a.p - b.p);
-        const n = projections.length;
-        const subs = [];
-        for (let i = 0; i < k; i++) {
-            const start = Math.floor(i * n / k);
-            const end = Math.floor((i + 1) * n / k);
-            const group = projections.slice(start, end);
-            if (group.length === 0) return fallbackBboxSplit(polygon, k);
-            let slon = 0, slat = 0;
-            group.forEach(g => { slon += g.c[0]; slat += g.c[1]; });
-            const avg = turf.point([slon / group.length, slat / group.length]);
-            const centerCoords = turf.booleanPointInPolygon(avg, polygon) ? avg.geometry.coordinates : turf.pointOnFeature(polygon).geometry.coordinates;
-            subs.push(centerCoords);
-        }
-        return subs;
-    }
 
-    function fallbackBboxSplit(polygon, k) {
-        const [minLon, minLat, maxLon, maxLat] = turf.bbox(polygon);
-        const w = maxLon - minLon, h = maxLat - minLat;
-        const pts = [];
-        for (let i = 0; i < k; i++) {
-            const lon = minLon + (i + 0.5) * w / k;
-            const lat = (minLat + maxLat) / 2;
-            const p = turf.point([lon, lat]);
-            pts.push(turf.booleanPointInPolygon(p, polygon) ? [lon, lat] : turf.pointOnFeature(polygon).geometry.coordinates);
-        }
-        return pts;
-    }
+            function analyzeAndPivot(rows) {
+                const enriched = rows.map(row => {
+                    const cgiStr = String(row.cgi).trim();
+                    const fiveG = is5GCGI(cgiStr);
+                    let traffic = parseFloat(row.traffic);
+                    if (isNaN(traffic) || traffic < 0.01) traffic = 0;
+                    return {
+                        ...row,
+                        cgiStr,
+                        is5G: fiveG,
+                        traffic,
+                        dateObj: new Date(row.date),
+                        stationType: String(row.stationType).trim()
+                    };
+                });
 
-    // ★ 四级场景（修订版）
-    function getDmin(region, scenario) {
-        const r = String(region).trim(), s = String(scenario).trim();
-        const is12 = r.includes('一') || r.includes('二'), is3 = r.includes('三'), is4 = r.includes('四');
+                const dateSet = new Set();
+                const validRows = enriched.filter(r => r.dateObj && r.cgiStr);
+                validRows.forEach(r => dateSet.add(formatDate(r.dateObj)));
+                const allDates = Array.from(dateSet).sort();
 
-        // 四级（强制500米）
-        const level4 = ['郊区道路','国道省道','山农牧林','高速公路','城区道路','航道','公墓'];
-        if (level4.some(k => s.includes(k))) return 500;
-
-        // 三级
-        const level3 = ['工业园区','村庄','风景区','广场公园','码头','近水近海域','乡镇','景区'];
-        if (level3.some(k => s.includes(k))) {
-            if (is12) return 300;
-            if (is3) return 350;
-            if (is4) return 450;
-            return 350;
-        }
-
-        // 二级
-        const level2 = ['低层居民区','医院','商业中心','休闲娱乐场所','星级酒店','会展中心','党政军机关','高校','企事业单位','写字楼','别墅群','武警军区','机场','体育场馆','集贸市场','火车站','城中村','长途汽车站','地铁','高铁','党政军宿舍','中小学'];
-        if (level2.some(k => s.includes(k))) {
-            if (is12) return 250;
-            if (is3) return 300;
-            if (is4) return 400;
-            return 300;
-        }
-
-        // 一级（高层居民区）
-        if (s.includes('高层居民区')) {
-            if (is12) return 200;
-            if (is3) return 250;
-            if (is4) return 300;
-            return 250;
-        }
-
-        // 默认
-        if (is12) return 300;
-        if (is3) return 350;
-        if (is4) return 450;
-        return 350;
-    }
-
-    function getIndustrialInterSiteDmin(region) {
-        const r = String(region).trim();
-        if (r.includes('一') || r.includes('二')) return 350;
-        if (r.includes('三')) return 400;
-        if (r.includes('四')) return 450;
-        return 400;
-    }
-
-    function distToStations(coords, stations) {
-        const pt = turf.point(coords);
-        return stations.map(st=>({ id: st.id, dist: turf.distance(pt, turf.point([st.lon, st.lat]), {units:'meters'}) }));
-    }
-    function minDistToStations(coords, stations) {
-        const arr = distToStations(coords, stations);
-        return arr.length ? Math.min(...arr.map(a=>a.dist)) : Infinity;
-    }
-    function allSatisfy(coordsList, stations, dmin, dminInter = null) {
-        const interMin = dminInter || dmin;
-        for (const c of coordsList) if (minDistToStations(c, stations) < dmin - 0.01) return false;
-        for (let i=0; i<coordsList.length; i++)
-            for (let j=i+1; j<coordsList.length; j++)
-                if (turf.distance(turf.point(coordsList[i]), turf.point(coordsList[j]), {units:'meters'}) < interMin - 0.01) return false;
-        return true;
-    }
-
-    function normalizeBearing(b) { return ((b % 360) + 360) % 360; }
-    function isBearingInRange(b, start, end) {
-        b = normalizeBearing(b); start = normalizeBearing(start); end = normalizeBearing(end);
-        if (start <= end) return b >= start && b <= end;
-        else return b >= start || b <= end;
-    }
-
-    function computeCircumcenter(p1, p2, p3) {
-        const [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3;
-        const a1 = x2 - x1, b1 = y2 - y1, c1 = a1 * (x1 + x2) / 2 + b1 * (y1 + y2) / 2;
-        const a2 = x3 - x2, b2 = y3 - y2, c2 = a2 * (x2 + x3) / 2 + b2 * (y2 + y3) / 2;
-        const det = a1 * b2 - a2 * b1;
-        if (Math.abs(det) < 1e-12) return null;
-        return [(c1 * b2 - c2 * b1) / det, (a1 * c2 - a2 * c1) / det];
-    }
-
-    function adjustSingleStation(center, polygon, stations, dmin) {
-        if (!stations.length) return center;
-        const centerPt = turf.point(center);
-        const stationInfos = stations.map(s => {
-            const sPt = turf.point([s.lon, s.lat]);
-            const dist = turf.distance(centerPt, sPt, {units:'meters'});
-            const bearing = turf.bearing(centerPt, sPt);
-            return { ...s, dist, bearing: normalizeBearing(bearing) };
-        });
-        const directions = [
-            { name: '0°扇区', start: 300, end: 60 },
-            { name: '120°扇区', start: 60, end: 180 },
-            { name: '240°扇区', start: 180, end: 300 }
-        ];
-        const nearestPerSector = [];
-        for (const dir of directions) {
-            let nearest = null, minDist = Infinity;
-            for (const info of stationInfos)
-                if (isBearingInRange(info.bearing, dir.start, dir.end) && info.dist < minDist) { minDist = info.dist; nearest = info; }
-            nearestPerSector.push({ dir: dir.name, station: nearest, minDist });
-        }
-        const sectorInfo = nearestPerSector.map(s => s.station ? \`\${s.dir}: \${s.station.id} [\${s.station.lon.toFixed(6)}, \${s.station.lat.toFixed(6)}] (\${s.minDist.toFixed(0)}m)\` : \`\${s.dir}: 无宏站\`).join('; ');
-        addLog(\`    [原则三] 三方向最近站: \${sectorInfo}\`, 'info');
-        const farSector = nearestPerSector.find(s => s.station && s.minDist > 1000);
-        let targetBearing;
-        if (farSector) {
-            const otherSectors = nearestPerSector.filter(s => s !== farSector && s.station);
-            if (otherSectors.length === 0) { addLog('    [原则三] 存在远端方向但无其他可用宏站，无法调整', 'warn'); return null; }
-            otherSectors.sort((a, b) => a.minDist - b.minDist);
-            const targetStation = otherSectors[0].station;
-            addLog(\`    [原则三] 远端方向 \${farSector.dir} (\${farSector.station.id} \${farSector.minDist.toFixed(0)}m >1000m)，采用其他方向最近站 \${targetStation.id} 的反方向\`, 'info');
-            targetBearing = normalizeBearing(targetStation.bearing + 180);
-        } else {
-            const threeStations = nearestPerSector.filter(s => s.station).map(s => s.station);
-            if (threeStations.length === 3) {
-                const pts = threeStations.map(s => [s.lon, s.lat]);
-                const circumcenter = computeCircumcenter(pts[0], pts[1], pts[2]);
-                if (circumcenter) {
-                    const [clon, clat] = circumcenter;
-                    const bearingToCircum = turf.bearing(centerPt, turf.point([clon, clat]));
-                    targetBearing = normalizeBearing(bearingToCircum);
-                    addLog(\`    [原则三] 无远端方向，三站外心 [\${clon.toFixed(6)}, \${clat.toFixed(6)}]，方向角: \${targetBearing.toFixed(1)}°\`, 'info');
-                } else {
-                    addLog('    [原则三] 三站共线，使用合成向量', 'info');
-                    let sumX=0, sumY=0;
-                    for (const sec of nearestPerSector) { if (!sec.station) continue; const rad = sec.station.bearing * Math.PI / 180; sumX += Math.sin(rad); sumY += Math.cos(rad); }
-                    if (Math.abs(sumX) < 1e-9 && Math.abs(sumY) < 1e-9) return null;
-                    targetBearing = normalizeBearing(Math.atan2(sumX, sumY) * 180 / Math.PI);
+                if (allDates.length === 0) {
+                    return { pivotHeaders: [], pivotRows: [] };
                 }
-            } else {
-                let sumX=0, sumY=0;
-                for (const sec of nearestPerSector) { if (!sec.station) continue; const rad = sec.station.bearing * Math.PI / 180; sumX += Math.sin(rad); sumY += Math.cos(rad); }
-                if (Math.abs(sumX) < 1e-9 && Math.abs(sumY) < 1e-9) return null;
-                targetBearing = normalizeBearing(Math.atan2(sumX, sumY) * 180 / Math.PI);
-            }
-        }
-        const maxStationDist = Math.max(...stationInfos.map(s=>s.dist));
-        const maxSearchDist = Math.max(maxStationDist * 2, 500);
-        for (let d = 0; d <= maxSearchDist; d += 5) {
-            const cand = turf.destination(centerPt, d, targetBearing, {units:'meters'});
-            if (turf.booleanPointInPolygon(cand, polygon) && minDistToStations(cand.geometry.coordinates, stations) >= dmin - 0.01) {
-                addLog(\`    [原则三] 偏移\${d}m 找到可用点 [\${cand.geometry.coordinates[0].toFixed(6)}, \${cand.geometry.coordinates[1].toFixed(6)}]\`, 'success');
-                return cand.geometry.coordinates;
-            }
-        }
-        addLog('    [原则三] 搜索失败', 'warn');
-        return null;
-    }
+                const maxDateStr = allDates[allDates.length - 1];
+                const maxDate = new Date(maxDateStr);
 
-    function resolveGlobalConflicts(regionsResults, allStations, regionPolys) {
-        let siteList = [];
-        const rebuildSiteList = () => {
-            siteList = [];
-            regionsResults.forEach((res, idx) => {
-                if (res.coords.length > 0) {
-                    res.coords.forEach((coord, ci) => {
-                        siteList.push({
-                            regionIdx: idx, siteIdx: ci, coord: coord,
-                            regionId: res.id, polygon: regionPolys[idx], dmin: res.dmin, isIndustrial: res.isIndustrial
-                        });
+                const windows = [];
+                let windowEnd = maxDate;
+                const minDate = new Date(allDates[0]);
+                while (windowEnd >= minDate) {
+                    const start = addDays(windowEnd, -6);
+                    windows.push({
+                        start: start,
+                        end: windowEnd,
+                        key: formatDate(start)
                     });
+                    windowEnd = addDays(start, -1);
                 }
-            });
-        };
-        rebuildSiteList();
-        const failedPairs = new Set();
-        const pairKey = (a, b) => \`\${a.regionIdx}-\${a.siteIdx}|\${b.regionIdx}-\${b.siteIdx}\`;
-        let totalProcessed = 0, changed = true;
-        while (changed) {
-            changed = false;
-            rebuildSiteList();
-            const conflicts = [];
-            for (let i = 0; i < siteList.length; i++) {
-                for (let j = i + 1; j < siteList.length; j++) {
-                    const a = siteList[i], b = siteList[j];
-                    const d = turf.distance(turf.point(a.coord), turf.point(b.coord), {units:'meters'});
-                    const strictDmin = Math.max(a.dmin, b.dmin);
-                    if (d < strictDmin - 0.01) {
-                        const key = pairKey(a, b);
-                        if (!failedPairs.has(key)) conflicts.push({ a: i, b: j, dist: d, strictDmin });
+
+                const latestWindowKey = windows[0].key;
+
+                const cgiMap = new Map();
+                validRows.forEach(r => {
+                    const cgi = r.cgiStr;
+                    if (!cgiMap.has(cgi)) {
+                        cgiMap.set(cgi, {
+                            stationType: r.stationType,
+                            is5G: r.is5G,
+                            label: null,
+                            remark: '',
+                            dailyTraffic: new Map()
+                        });
                     }
-                }
-            }
-            addLog(\`  检测到 \${conflicts.length} 个冲突对（已排除 \${failedPairs.size} 个失败记录）\`, 'info');
-            if (conflicts.length === 0) break;
-            for (const conflict of conflicts) {
-                const siteA = siteList[conflict.a], siteB = siteList[conflict.b];
-                if (!regionsResults[siteA.regionIdx].coords[siteA.siteIdx] || !regionsResults[siteB.regionIdx].coords[siteB.siteIdx]) continue;
-                addLog(\`  [全局冲突] \${siteA.regionId}-站\${siteA.siteIdx+1} 与 \${siteB.regionId}-站\${siteB.siteIdx+1} 距离 \${conflict.dist.toFixed(1)}m < \${conflict.strictDmin}m，尝试合并\`, 'warn');
-                const midLon = (siteA.coord[0] + siteB.coord[0]) / 2;
-                const midLat = (siteA.coord[1] + siteB.coord[1]) / 2;
-                const midCoord = [midLon, midLat];
-                const midPt = turf.point(midCoord);
-                const inA = turf.booleanPointInPolygon(midPt, siteA.polygon);
-                const inB = turf.booleanPointInPolygon(midPt, siteB.polygon);
-                let keeper, removed;
-                if (inA && !inB) { keeper = siteA; removed = siteB; }
-                else if (inB && !inA) { keeper = siteB; removed = siteA; }
-                else if (inA && inB) { if (siteA.regionId < siteB.regionId) { keeper = siteA; removed = siteB; } else { keeper = siteB; removed = siteA; } }
-                else {
-                    let found = false;
-                    for (let angle = 0; angle < 360; angle += 30) {
-                        const tryPt = turf.destination(midPt, 10, angle, {units:'meters'});
-                        const tryCoord = tryPt.geometry.coordinates;
-                        const inANew = turf.booleanPointInPolygon(tryPt, siteA.polygon);
-                        const inBNew = turf.booleanPointInPolygon(tryPt, siteB.polygon);
-                        if (inANew && !inBNew) { keeper = siteA; removed = siteB; midCoord[0] = tryCoord[0]; midCoord[1] = tryCoord[1]; found = true; break; }
-                        else if (inBNew && !inANew) { keeper = siteB; removed = siteA; midCoord[0] = tryCoord[0]; midCoord[1] = tryCoord[1]; found = true; break; }
+                    const info = cgiMap.get(cgi);
+                    const ds = formatDate(r.dateObj);
+                    if (!info.dailyTraffic.has(ds) || r.traffic > info.dailyTraffic.get(ds)) {
+                        info.dailyTraffic.set(ds, r.traffic);
                     }
-                    if (!found) { addLog(\`    中点不在任何边框内且微调失败，取消合并\`, 'warn'); failedPairs.add(pairKey(siteA, siteB)); totalProcessed++; continue; }
-                }
-                const strictDmin = Math.max(keeper.dmin, removed.dmin);
-                if (minDistToStations(midCoord, allStations) < strictDmin - 0.01) {
-                    addLog(\`    合并后的中点不满足与宏站的距离要求，取消合并\`, 'warn');
-                    failedPairs.add(pairKey(siteA, siteB)); totalProcessed++; continue;
-                }
-                const keeperRegion = regionsResults[keeper.regionIdx];
-                keeperRegion.coords[keeper.siteIdx] = midCoord;
-                const removedRegion = regionsResults[removed.regionIdx];
-                removedRegion.coords.splice(removed.siteIdx, 1);
-                if (!removedRegion.remarks) removedRegion.remarks = [];
-                removedRegion.remarks.push(\`与\${keeper.regionId}共站址\`);
-                addLog(\`    合并成功，新站址 [\${midCoord[0].toFixed(6)}, \${midCoord[1].toFixed(6)}] 归入区域 \${keeper.regionId}\`, 'success');
-                changed = true; totalProcessed++; rebuildSiteList(); break;
-            }
-            if (totalProcessed > 1000) { addLog('冲突处理次数过多，强制退出', 'error'); break; }
-        }
-        addLog(\`全局冲突处理完毕，共处理 \${totalProcessed} 对冲突\`, 'info');
-        return regionsResults;
-    }
+                    if (!info.stationType) info.stationType = r.stationType;
+                });
 
-    async function processAll() {
-        if (!file1Data || !file2Data) return;
-        btnRun.disabled = true; btnRun.textContent = '⏳ 处理中...';
-        btnClear.style.display = 'none'; btnDownload.style.display = 'none';
-        resultWorkbook = null; clearLogs();
-        resultTableWrap.classList.remove('active'); statsRow.style.display = 'none';
-        progressArea.classList.add('active'); progressBar.style.width = '0%'; progressText.textContent = '读取文件中...';
+                const fiveGCGIs = Array.from(cgiMap.keys()).filter(cgi => cgiMap.get(cgi).is5G);
+                if (fiveGCGIs.length > 0) {
+                    for (const cgi of fiveGCGIs) {
+                        const info = cgiMap.get(cgi);
+                        const windowMap = new Map();
 
-        try {
-            const wb1 = await readExcelFile(file1Data);
-            const {headers: h1, rows: r1} = sheetToJsonArray(wb1.Sheets[wb1.SheetNames[0]]);
-            const colId = findColumnIndex(h1, ['编号','ID','序号']);
-            const colRegion = findColumnIndex(h1, ['区域']);
-            const colScenario = findColumnIndex(h1, ['覆盖场景','场景']);
-            const colWkt = findColumnIndex(h1, ['WKT','WKT坐标边框']);
-            if (colWkt<0 || colRegion<0) throw new Error('缺少必要列');
-            addLog(\`问题区域: \${r1.length} 条\`, 'info');
-
-            const wb2 = await readExcelFile(file2Data);
-            const {headers: h2, rows: r2} = sheetToJsonArray(wb2.Sheets[wb2.SheetNames[0]]);
-            const colLon = findColumnIndex(h2, ['经度','LON','lon']);
-            const colLat = findColumnIndex(h2, ['纬度','LAT','lat']);
-            const colStaId = findColumnIndex(h2, ['物理站编号','编号','ID']);
-            if (colLon<0 || colLat<0) throw new Error('宏站清单缺少经度/纬度列');
-            const stations = r2.map((r,i)=>({
-                id: colStaId>=0?String(r[colStaId]||i+1):String(i+1),
-                lon: parseFloat(r[colLon]), lat: parseFloat(r[colLat])
-            })).filter(s=>!isNaN(s.lon)&&!isNaN(s.lat));
-            addLog(\`宏站: \${stations.length} 个\`, 'info');
-
-            const regions = r1.map((r,i)=>({
-                id: colId>=0?String(r[colId]||i+1):String(i+1),
-                region: String(r[colRegion]||''),
-                scenario: colScenario>=0?String(r[colScenario]||''):'',
-                wkt: String(r[colWkt]||''), orig: [...r]
-            }));
-
-            const regionPolys = [];
-            const regionsResults = [];
-            let success=0, fail=0;
-            const kCounts = {1:0,2:0,3:0,4:0,5:0};
-
-            for (let i=0; i<regions.length; i++) {
-                const reg = regions[i];
-                addLog(\`区域[\${reg.id}]：区域=\${reg.region}，场景=\${reg.scenario}\`, 'info');
-                const poly = parseWKT(reg.wkt);
-                if (!poly) { addLog('  WKT解析失败', 'warn'); regionsResults.push({id: reg.id, coords:[], orig: reg.orig, remarks: []}); fail++; regionPolys.push(null); continue; }
-                regionPolys.push(poly);
-
-                const center = getBboxCenter(poly);
-                const diam = getMaxDiameter(poly).distance;
-                const area = getArea(poly);
-                const dmin = getDmin(reg.region, reg.scenario);
-                const isIndustrial = String(reg.scenario).includes('工业园区');
-                let dminInterSite = dmin;
-                if (isIndustrial) { dminInterSite = getIndustrialInterSiteDmin(reg.region); addLog(\`  工业园区场景：站间间距 \${dminInterSite}m\`, 'info'); }
-
-                addLog(\`  边框中心=[\${center[0].toFixed(6)}, \${center[1].toFixed(6)}] 直径=\${diam.toFixed(1)}m 面积=\${area.toFixed(0)}㎡ Dmin=\${dmin}m\`, 'info');
-                const high = String(reg.scenario).includes('高层居民区');
-                const is12 = String(reg.region).includes('一')||String(reg.region).includes('二');
-                const is34 = String(reg.region).includes('三')||String(reg.region).includes('四');
-                let triggerMulti = false;
-                if (high) {
-                    if (is12 && diam>500) triggerMulti=true;
-                    if (is34 && diam>600) triggerMulti=true;
-                    if (area>60000) triggerMulti=true;
-                } else {
-                    if (is12 && diam>600) triggerMulti=true;
-                    if (String(reg.region).includes('三') && diam>700) triggerMulti=true;
-                    if (String(reg.region).includes('四') && diam>800) triggerMulti=true;
-                    if (area>200000) triggerMulti=true;
-                }
-                const tryK = triggerMulti ? [5,4,3,2,1] : [1];
-                addLog(\`  多站址触发: \${triggerMulti}，尝试K=\${tryK.join('→')}\`, 'info');
-                let finalCoords = null;
-                for (const k of tryK) {
-                    addLog(\`  尝试K=\${k}\`, 'info');
-                    let cands;
-                    if (k===1) cands = [center];
-                    else { cands = equalAreaSplit(poly, k); if (!cands || cands.length<k) { addLog('    面积等分失败', 'warn'); continue; } }
-                    const effectiveInter = (k > 1 && isIndustrial) ? dminInterSite : dmin;
-                    if (allSatisfy(cands, stations, dmin, effectiveInter)) { finalCoords = cands; addLog(\`    K=\${k} 满足原则一 ✓\`, 'success'); break; }
-                    else {
-                        if (k===1) {
-                            addLog('    K=1不满足原则一，启动原则三调整', 'info');
-                            const adjusted = adjustSingleStation(center, poly, stations, dmin);
-                            if (adjusted && allSatisfy([adjusted], stations, dmin)) { finalCoords = [adjusted]; addLog('    原则三调整成功 ✓', 'success'); break; }
-                            else addLog('    原则三调整失败', 'warn');
-                        } else {
-                            addLog(\`    K=\${k}候选点: \${JSON.stringify(cands.map(c=>[c[0].toFixed(6),c[1].toFixed(6)]))}\`, 'info');
-                            addLog(\`    K=\${k}不满足原则一，减站重试\`, 'warn');
+                        for (const [dateStr, traffic] of info.dailyTraffic) {
+                            const d = new Date(dateStr);
+                            const win = windows.find(w => d >= w.start && d <= w.end);
+                            if (win) {
+                                if (!windowMap.has(win.key)) {
+                                    windowMap.set(win.key, {
+                                        trafficByDate: new Map(),
+                                        stationType: info.stationType
+                                    });
+                                }
+                                windowMap.get(win.key).trafficByDate.set(dateStr, traffic);
+                            }
                         }
+
+                        const sortedWindowKeys = windows.map(w => w.key).filter(key => windowMap.has(key));
+                        if (sortedWindowKeys.length === 0) continue;
+
+                        let judgeWindowKey = null;
+                        for (const winKey of windows.map(w => w.key)) {
+                            if (windowMap.has(winKey) && windowMap.get(winKey).trafficByDate.size >= MIN_DAYS_PER_WEEK) {
+                                judgeWindowKey = winKey;
+                                break;
+                            }
+                        }
+
+                        if (!judgeWindowKey) {
+                            info.label = '缺失数据过多，建议手动核查';
+                            info.remark = '';
+                            continue;
+                        }
+
+                        const windowStatuses = new Map();
+                        for (const [winKey, winData] of windowMap) {
+                            const tbd = winData.trafficByDate;
+                            if (tbd.size === 0) {
+                                windowStatuses.set(winKey, 'no_data');
+                                continue;
+                            }
+                            const arr = Array.from(tbd.entries()).map(([ds, tr]) => {
+                                const day = new Date(ds);
+                                return { date: day, traffic: tr, dayType: getDayType(day) };
+                            });
+                            let zeroWD = 0, zeroWE = 0;
+                            arr.forEach(item => {
+                                if (item.traffic === 0) {
+                                    item.dayType === 'workday' ? zeroWD++ : zeroWE++;
+                                }
+                            });
+                            const isZero = (zeroWD >= 2) && (zeroWE >= 1);
+                            let isLow = false;
+                            if (!isZero) {
+                                const sortedTraffic = arr.map(i => i.traffic).sort((a,b)=>b-a);
+                                const top3 = sortedTraffic.slice(0,3);
+                                if (top3.length) {
+                                    const avg = top3.reduce((s,v)=>s+v,0)/top3.length;
+                                    const st = winData.stationType;
+                                    if (isIndoorSite(st)) {
+                                        if (avg < 2) isLow = true;
+                                    } else {
+                                        if (avg < 3) isLow = true;
+                                    }
+                                }
+                            }
+                            windowStatuses.set(winKey, isZero ? 'zero' : (isLow ? 'low' : 'qualified'));
+                        }
+
+                        const judgeStatus = windowStatuses.get(judgeWindowKey);
+                        let label = judgeStatus === 'zero' ? '零效益小区' : (judgeStatus === 'low' ? '低效益小区' : '非零低小区');
+
+                        let remark = '';
+                        if (judgeWindowKey !== latestWindowKey) {
+                            remark = '最新周有空值数据，建议核查';
+                        }
+                        if (label === '零效益小区' || label === '低效益小区') {
+                            let hasQualified = false;
+                            for (const [wk, status] of windowStatuses) {
+                                if (wk !== judgeWindowKey && status === 'qualified') { hasQualified = true; break; }
+                            }
+                            if (hasQualified) {
+                                remark += (remark ? '；' : '') + '该小区有数据达标周';
+                            }
+                        }
+                        info.label = label;
+                        info.remark = remark;
                     }
                 }
-                const resObj = { id: reg.id, coords: finalCoords || [], orig: reg.orig, dmin, isIndustrial, remarks: [] };
-                regionsResults.push(resObj);
-                if (finalCoords) { success++; if (finalCoords.length in kCounts) kCounts[finalCoords.length]++; addLog(\`  最终选址数量=\${finalCoords.length} ✓\`, 'success'); }
-                else { fail++; addLog('  无法选出有效站址，留空。', 'error'); }
-                progressBar.style.width = (25 + 70*(i+1)/regions.length) + '%';
-                progressText.textContent = \`处理 \${i+1}/\${regions.length} (成功\${success} 失败\${fail})\`;
-                await new Promise(r=>setTimeout(r,5));
+
+                for (const [cgi, info] of cgiMap) {
+                    if (!info.is5G) {
+                        info.label = '非5G小区';
+                        info.remark = '';
+                    } else if (info.label === null) {
+                        info.label = '非零低小区';
+                        info.remark = '';
+                    }
+                }
+
+                const pivotHeaders = ['CGI', '站型', '标签', '备注', ...allDates];
+                const pivotRows = [];
+                Array.from(cgiMap.keys()).sort().forEach(cgi => {
+                    const info = cgiMap.get(cgi);
+                    const row = [cgi, info.stationType || '', info.label, info.remark];
+                    allDates.forEach(d => row.push(info.dailyTraffic.has(d) ? info.dailyTraffic.get(d) : ''));
+                    pivotRows.push(row);
+                });
+                return { pivotHeaders, pivotRows };
             }
 
-            addLog('\\n--- 开始全局冲突检测与合并 ---', 'info');
-            const updatedResults = resolveGlobalConflicts(regionsResults, stations, regionPolys);
-            addLog('--- 全局冲突检测完成 ---', 'info');
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('uploadArea');
+            const fileNameDiv = document.getElementById('fileName');
+            const processBtn = document.getElementById('processBtn');
+            const statusDiv = document.getElementById('statusMessage');
 
-            success = 0; fail = 0;
-            for (const k in kCounts) kCounts[k] = 0;
-            updatedResults.forEach(r => {
-                if (r.coords.length > 0) { success++; if (r.coords.length in kCounts) kCounts[r.coords.length]++; }
-                else fail++;
+            function setSelectedFile(file) {
+                if (!file) return;
+                if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                    statusDiv.innerHTML = '❌ 请上传Excel文件（.xlsx或.xls）';
+                    statusDiv.className = 'status error';
+                    processBtn.disabled = true;
+                    return;
+                }
+                selectedFile = file;
+                fileNameDiv.textContent = \`已选择文件：\${file.name}\`;
+                processBtn.disabled = false;
+                statusDiv.innerHTML = '';
+            }
+
+            uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.style.borderColor = '#3498db'; });
+            uploadArea.addEventListener('dragleave', () => uploadArea.style.borderColor = '#bdc3c7');
+            uploadArea.addEventListener('drop', e => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#bdc3c7';
+                const files = e.dataTransfer.files;
+                if (files.length) {
+                    fileInput.files = files;
+                    setSelectedFile(files[0]);
+                }
+            });
+            fileInput.addEventListener('change', e => {
+                if (e.target.files.length) setSelectedFile(e.target.files[0]);
             });
 
-            const maxK = 5;
-            const outHeaders = [...h1];
-            for (let c=1; c<=maxK; c++) { outHeaders.push(\`选址经度\${c}\`); outHeaders.push(\`选址纬度\${c}\`); }
-            outHeaders.push('备注');
-            const outRows = updatedResults.map(r=>{
-                const row = [...r.orig];
-                for (let c=0; c<maxK; c++) { row.push(c < r.coords.length ? r.coords[c][0] : ''); row.push(c < r.coords.length ? r.coords[c][1] : ''); }
-                row.push((r.remarks && r.remarks.length > 0) ? r.remarks.join('; ') : '');
-                return row;
+            processBtn.addEventListener('click', () => {
+                if (!selectedFile) return;
+                processBtn.disabled = true;
+                statusDiv.innerHTML = '⏳ 正在分析数据...';
+                startProgress();
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.SheetNames[0];
+                        const sheet = workbook.Sheets[firstSheet];
+                        const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                        if (json.length < 2) throw new Error('表格至少需要包含表头和一行数据。');
+
+                        const headers = json[0].map(h => String(h).trim());
+                        const dateIdx = findColumnIndex(headers, ['日期', '时间', 'date', 'time']);
+                        const cgiIdx = findColumnIndex(headers, ['cgi', '小区', 'cell', 'id']);
+                        const trafficIdx = findColumnIndex(headers, ['流量', '业务量', 'traffic', 'throughput', '数据流量']);
+                        const stationIdx = findColumnIndex(headers, ['站型', '类型', '覆盖', 'station type', 'site type', '站型']);
+
+                        if (dateIdx === -1) throw new Error(\`未找到“日期”列。当前表头：\${headers.join(', ')}\`);
+                        if (cgiIdx === -1) throw new Error(\`未找到“CGI”或“ID”列。当前表头：\${headers.join(', ')}\`);
+                        if (trafficIdx === -1) throw new Error(\`未找到“流量”列。当前表头：\${headers.join(', ')}\`);
+                        if (stationIdx === -1) throw new Error(\`未找到“站型”列。当前表头：\${headers.join(', ')}\`);
+
+                        const rawRows = [];
+                        for (let i = 1; i < json.length; i++) {
+                            const row = json[i];
+                            if (!row || row.length === 0) continue;
+                            const dateVal = row[dateIdx], cgiVal = row[cgiIdx];
+                            if (dateVal === undefined || cgiVal === undefined) continue;
+                            rawRows.push({
+                                date: dateVal,
+                                cgi: cgiVal,
+                                traffic: row[trafficIdx],
+                                stationType: row[stationIdx]
+                            });
+                        }
+                        if (!rawRows.length) throw new Error('没有有效数据行。');
+
+                        setTimeout(() => {
+                            try {
+                                const { pivotHeaders, pivotRows } = analyzeAndPivot(rawRows);
+                                const newWorkbook = XLSX.utils.book_new();
+                                const origSheetData = [headers, ...rawRows.map(r => [r.date, r.cgi, r.traffic, r.stationType])];
+                                XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.aoa_to_sheet(origSheetData), firstSheet);
+                                XLSX.utils.book_append_sheet(newWorkbook, XLSX.utils.aoa_to_sheet([pivotHeaders, ...pivotRows]), '分析结果');
+                                XLSX.writeFile(newWorkbook, '5G小区效益分析结果.xlsx');
+                                finishProgress();
+                                statusDiv.innerHTML = '✅ 分析完成！文件已自动下载。';
+                                statusDiv.className = 'status success';
+                                processBtn.disabled = false;
+                            } catch (err) {
+                                finishProgress();
+                                statusDiv.innerHTML = \`❌ 分析失败: \${err.message}\`;
+                                statusDiv.className = 'status error';
+                                processBtn.disabled = false;
+                            }
+                        }, 100);
+                    } catch (err) {
+                        finishProgress();
+                        statusDiv.innerHTML = \`❌ 文件处理错误: \${err.message}\`;
+                        statusDiv.className = 'status error';
+                        processBtn.disabled = false;
+                    }
+                };
+                reader.onerror = () => {
+                    finishProgress();
+                    statusDiv.innerHTML = '❌ 文件读取失败';
+                    statusDiv.className = 'status error';
+                    processBtn.disabled = false;
+                };
+                reader.readAsArrayBuffer(selectedFile);
             });
-            const outWb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(outWb, XLSX.utils.aoa_to_sheet([h1, ...r1]), wb1.SheetNames[0]);
-            XLSX.utils.book_append_sheet(outWb, XLSX.utils.aoa_to_sheet([outHeaders, ...outRows]), '选址结果');
-            resultWorkbook = outWb;
-
-            statsRow.style.display = 'flex';
-            statsRow.innerHTML = \`
-                <div class="stat-chip">📊 总区域：\${regions.length}</div>
-                <div class="stat-chip" style="background:#e6f4ea;">✅ 成功：\${success}</div>
-                <div class="stat-chip" style="background:#fce8e6;">❌ 失败：\${fail}</div>
-                <div class="stat-chip">K=1：\${kCounts[1]}</div>
-                <div class="stat-chip">K=2：\${kCounts[2]}</div>
-                <div class="stat-chip">K=3：\${kCounts[3]}</div>
-                <div class="stat-chip">K=4：\${kCounts[4]}</div>
-                <div class="stat-chip">K=5：\${kCounts[5]}</div>\`;
-            addLog('\\n========== 完成 ==========', 'success');
-            btnDownload.style.display = 'inline-flex'; btnClear.style.display = 'inline-flex';
-            btnRun.textContent = '⚡ 重新选址'; btnRun.disabled = false;
-            progressBar.style.width = '100%'; progressText.textContent = '处理完成';
-
-            resultTableHead.innerHTML = ''; resultTableBody.innerHTML = '';
-            const htr = document.createElement('tr');
-            outHeaders.forEach(h=>{ const th=document.createElement('th'); th.textContent=h; htr.appendChild(th); });
-            resultTableHead.appendChild(htr);
-            outRows.slice(0,50).forEach(r=>{
-                const tr = document.createElement('tr');
-                r.forEach(v=>{ const td=document.createElement('td'); td.textContent=v!==''?v:''; tr.appendChild(td); });
-                resultTableBody.appendChild(tr);
-            });
-            resultTableWrap.classList.add('active');
-        } catch(err) {
-            addLog(\`错误：\${err.message}\`, 'error');
-            progressText.textContent = '处理失败';
-            btnRun.disabled = false; btnClear.style.display = 'inline-flex';
-        }
-    }
-
-    btnRun.addEventListener('click', processAll);
-    btnDownload.addEventListener('click', () => {
-        if (!resultWorkbook) return alert('无结果');
-        const wbout = XLSX.write(resultWorkbook, {bookType:'xlsx', type:'array'});
-        const blob = new Blob([wbout], {type:'application/octet-stream'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = \`选址结果_\${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.xlsx\`;
-        a.click();
-    });
-
-    addLog('工具就绪（二级三四类调整、三级三类调整）。', 'info');
-})();
-<\/script>
+        })();
+    <\/script>
 </body>
 </html>`;
 
@@ -2923,7 +2665,7 @@
             });
 
             console.log('✅ Arvinlwj 工具集合页已就绪 | 6个工具 | 标签切换 | Blob URL隔离');
-            console.log('   [1] 新区清单梳理  [2] 方案关联匹配  [3] 工参邻近匹配  [4] KML转CSV  [5] 表格拆分 [6] 智能选址');
+            console.log('   [1] 新区清单梳理  [2] 方案关联匹配  [3] 工参邻近匹配  [4] KML转CSV  [5] 表格拆分 [6] 5G效益分析');
             console.log('   💡 提示：使用 Ctrl+1~6 可快速切换工具标签');
         })();
     </script>
