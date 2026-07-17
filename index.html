@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Arvinlwj 工具集合页 - 完整版</title>
+    <title>Arvinlwj 工具集合页 - 完整版（含边框缓冲区工具）</title>
     <style>
         :root {
             --bg: #f0f4f8;
@@ -275,7 +275,7 @@
                 <span class="logo-icon">🧰</span>
                 <div>
                     <h1>Arvinlwj 工具集合页</h1>
-                    <p class="subtitle">新区数据筛选 · 方案关联匹配 · 工参邻近匹配 · KML转CSV · 表格拆分</p>
+                    <p class="subtitle">新区数据筛选 · 方案关联匹配 · 工参邻近匹配 · KML转CSV · 表格拆分 · 5G效益分析 · 边框缓冲区处理</p>
                 </div>
             </div>
             <div class="badge-row">
@@ -304,6 +304,9 @@
             </button>
             <button class="tab-btn" data-tab="5">
                 <span class="tab-num">6</span>📊 5G效益分析
+            </button>
+            <button class="tab-btn" data-tab="6">
+                <span class="tab-num">7</span>📐 边框缓冲区处理
             </button>
         </nav>
 
@@ -340,6 +343,11 @@
                     <div class="loading-spinner"></div> 加载中...
                 </div>
             </div>
+            <div class="tab-panel" id="panel6">
+                <div class="loading-placeholder">
+                    <div class="loading-spinner"></div> 加载中...
+                </div>
+            </div>
         </div>
 
         <!-- ==================== 底部 ==================== -->
@@ -360,7 +368,7 @@
             // 使用数组存储5个工具的完整HTML，延迟创建Blob URL
             const toolHTMLs = [];
             const blobURLs = [];
-            const loadedFlags = [false, false, false, false, false, false];
+            const loadedFlags = [false, false, false, false, false, false, false];
             let currentTab = 0;
 
             // ────────────────────────────────────────────
@@ -2405,6 +2413,2320 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
 '</body>\n' +
 '</html>';
 
+            // ────────────────────────────────────────────
+            // 工具7：边框缓冲区处理工具 (基于 Turf.js)
+            // ────────────────────────────────────────────
+            toolHTMLs[6] = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>边框缓冲区处理工具 - WKT Buffer</title>
+
+    <!-- Turf.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js">
+    <\/script>
+
+    <style>
+        :root {
+            --primary: #4F6EF7;
+            --primary-hover: #3B54D4;
+            --primary-light: #EEF1FE;
+            --success: #10B981;
+            --success-light: #ECFDF5;
+            --danger: #EF4444;
+            --danger-light: #FEF2F2;
+            --warning: #F59E0B;
+            --warning-light: #FFFBEB;
+            --bg: #F8FAFC;
+            --surface: #FFFFFF;
+            --surface-alt: #F1F5F9;
+            --text: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --border: #E2E8F0;
+            --border-focus: #4F6EF7;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.06);
+            --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-decoration .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.08;
+        }
+        .bg-decoration .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: #4F6EF7;
+            top: -15%;
+            left: -10%;
+            animation: float-orb 18s ease-in-out infinite;
+        }
+        .bg-decoration .orb-2 {
+            width: 400px;
+            height: 400px;
+            background: #10B981;
+            bottom: -12%;
+            right: -8%;
+            animation: float-orb 22s ease-in-out infinite reverse;
+        }
+        .bg-decoration .orb-3 {
+            width: 300px;
+            height: 300px;
+            background: #F59E0B;
+            top: 50%;
+            left: 55%;
+            animation: float-orb 20s ease-in-out infinite 5s;
+        }
+        @keyframes float-orb {
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(60px, -40px) scale(1.08);
+            }
+            50% {
+                transform: translate(-30px, 50px) scale(0.94);
+            }
+            75% {
+                transform: translate(-50px, -30px) scale(1.05);
+            }
+        }
+
+        /* 主容器 */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+
+        /* 头部 */
+        .app-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        .app-header .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(79, 110, 247, 0.3);
+        }
+        .app-header .logo-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .app-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+        .app-header .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            padding: 28px 30px;
+            margin-bottom: 20px;
+            transition: all var(--transition);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-header .card-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .card-header .card-icon.blue {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .card-header .card-icon.green {
+            background: var(--success-light);
+            color: var(--success);
+        }
+        .card-header .card-icon.amber {
+            background: var(--warning-light);
+            color: var(--warning);
+        }
+        .card-header h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        /* 标签 */
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
+        }
+        .label .required {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+        .label .optional {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 0.8rem;
+            margin-left: 4px;
+        }
+        .hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* 文本域 */
+        textarea {
+            width: 100%;
+            min-height: 160px;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--surface-alt);
+            resize: vertical;
+            transition: all var(--transition);
+            outline: none;
+        }
+        textarea:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.1);
+            background: #fff;
+        }
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+        textarea.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+            background: #FFFBFB;
+        }
+
+        /* 文件上传区域 */
+        .upload-zone {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 18px 20px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--surface-alt);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .upload-zone.drag-over {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.08);
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .upload-zone .upload-icon {
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        /* 按钮 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-size: 0.925rem;
+            font-weight: 600;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            letter-spacing: -0.01em;
+            white-space: nowrap;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(79, 110, 247, 0.35);
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 6px 20px rgba(79, 110, 247, 0.45);
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            background: #CBD5E1;
+            color: #94A3B8;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+            pointer-events: none;
+        }
+        .btn-outline {
+            background: #fff;
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+        }
+        .btn-success:hover {
+            background: #059669;
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.825rem;
+            border-radius: var(--radius-sm);
+        }
+        .btn-lg {
+            padding: 15px 32px;
+            font-size: 1rem;
+            border-radius: var(--radius);
+            font-weight: 700;
+        }
+        .btn .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 输入组 */
+        .input-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 140px;
+        }
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.925rem;
+            font-family: inherit;
+            color: var(--text);
+            background: #fff;
+            transition: all var(--transition);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .input-group select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.1);
+        }
+        .input-group input.error {
+            border-color: var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
+        }
+
+        /* 状态日志 */
+        .log-container {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 0;
+            scroll-behavior: smooth;
+        }
+        .log-entry {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 14px;
+            margin: 4px 0;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-family: var(--font-mono);
+            animation: slideIn 0.25s ease-out;
+            transition: all var(--transition);
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .log-entry.info {
+            background: #F8FAFC;
+            color: var(--text-secondary);
+            border-left: 3px solid #CBD5E1;
+        }
+        .log-entry.success {
+            background: var(--success-light);
+            color: #065F46;
+            border-left: 3px solid var(--success);
+        }
+        .log-entry.warning {
+            background: var(--warning-light);
+            color: #92400E;
+            border-left: 3px solid var(--warning);
+        }
+        .log-entry.error {
+            background: var(--danger-light);
+            color: #991B1B;
+            border-left: 3px solid var(--danger);
+        }
+        .log-entry .log-icon {
+            flex-shrink: 0;
+            font-size: 1rem;
+            margin-top: 1px;
+        }
+        .log-entry .log-time {
+            flex-shrink: 0;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            min-width: 50px;
+        }
+        .log-entry .log-msg {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        /* 结果区域 */
+        .result-area {
+            display: none;
+            animation: fadeInUp 0.4s ease-out;
+        }
+        .result-area.visible {
+            display: block;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .result-stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--surface-alt);
+            border-radius: 20px;
+            font-size: 0.825rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .stat-badge .stat-value {
+            font-weight: 700;
+            color: var(--text);
+        }
+        .result-wkt {
+            width: 100%;
+            min-height: 100px;
+            padding: 14px 16px;
+            border: 2px solid var(--success);
+            border-radius: var(--radius);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text);
+            background: #FAFDF8;
+            resize: vertical;
+            outline: none;
+            word-break: break-all;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            padding: 14px 20px;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #fff;
+            box-shadow: var(--shadow-xl);
+            animation: toastIn 0.35s ease-out;
+            max-width: 420px;
+            pointer-events: auto;
+        }
+        .toast.success {
+            background: #059669;
+        }
+        .toast.error {
+            background: #DC2626;
+        }
+        .toast.warning {
+            background: #D97706;
+        }
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(60px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(60px);
+            }
+        }
+
+        /* Canvas预览 */
+        .preview-canvas-wrap {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            background: #FAFBFC;
+            border: 2px solid var(--border);
+            margin-top: 12px;
+        }
+        .preview-canvas-wrap canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .preview-legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .preview-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .preview-legend .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .legend-dot.original {
+            background: #4F6EF7;
+            border: 2px solid #3B54D4;
+        }
+        .legend-dot.buffered {
+            background: rgba(239, 68, 68, 0.3);
+            border: 2px solid #EF4444;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 16px 12px 40px;
+            }
+            .card {
+                padding: 18px 16px;
+            }
+            .app-header h1 {
+                font-size: 1.5rem;
+            }
+            .input-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .btn-lg {
+                width: 100%;
+                justify-content: center;
+            }
+            .btn-row {
+                flex-direction: column;
+            }
+            .btn-row .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .result-stats {
+                gap: 8px;
+            }
+            .preview-canvas-wrap {
+                height: 200px;
+            }
+            textarea {
+                min-height: 120px;
+                font-size: 0.8rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .app-header h1 {
+                font-size: 1.3rem;
+            }
+            .card {
+                padding: 14px 12px;
+                border-radius: var(--radius);
+            }
+            .card-header h3 {
+                font-size: 0.95rem;
+            }
+            .btn {
+                font-size: 0.85rem;
+                padding: 10px 18px;
+            }
+            .preview-canvas-wrap {
+                height: 160px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="app-header">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <polyline points="3 9 12 15 21 9" />
+                    <circle cx="8" cy="13" r="1.5" />
+                    <circle cx="16" cy="13" r="1.5" />
+                </svg>
+            </div>
+            <h1>边框缓冲区处理工具</h1>
+            <p class="subtitle">上传WKT格式多边形，按指定米数外扩或缩小边界</p>
+        </header>
+
+        <!-- 步骤1：输入WKT -->
+        <div class="card" id="inputCard">
+            <div class="card-header">
+                <div class="card-icon blue">📐</div>
+                <h3>输入WKT几何数据</h3>
+            </div>
+            <label class="label">
+                粘贴WKT文本 <span class="required">*</span>
+                <span class="optional">（支持POINT / LINESTRING / POLYGON及其 MULTI 类型）</span>
+            </label>
+            <textarea
+            id="wktInput"
+            placeholder="点：POINT (121.5 31.2)&#10;线：LINESTRING (121.5 31.2, 121.6 31.3, 121.7 31.25)&#10;面：POLYGON ((121.5 31.2, 121.6 31.2, 121.6 31.35, 121.5 31.35, 121.5 31.2))&#10;带孔：POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0), (3 3, 7 3, 7 7, 3 7, 3 3))&#10;多部件：MULTIPOLYGON (((0 0, 5 0, 5 5, 0 5, 0 0)), ((8 8, 12 8, 12 12, 8 12, 8 8)))"
+        ></textarea>
+        <p class="hint" id="coordHint" style="display:none;"></p>
+
+        <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <div class="upload-zone" id="uploadZone">
+                <span class="upload-icon">📁</span>
+                <span>点击上传 .wkt / .txt / .csv 文件</span>
+                <input type="file" id="fileInput" accept=".wkt,.txt,.geojson,.json,.csv">
+            </div>
+            <button class="btn btn-outline btn-sm" id="loadExampleBtn" type="button">
+                💡 加载示例
+            </button>
+            <button class="btn btn-outline btn-sm" id="clearInputBtn" type="button">
+                🗑 清空
+            </button>
+        </div>
+    </div>
+
+    <!-- 步骤2：参数设置 -->
+    <div class="card" id="paramsCard">
+        <div class="card-header">
+            <div class="card-icon amber">⚙️</div>
+            <h3>缓冲区参数设置</h3>
+        </div>
+        <div class="input-row">
+            <div class="input-group">
+                <label class="label">操作类型 <span class="required">*</span></label>
+                <select id="operationType">
+                    <option value="expand">外扩（Expand）</option>
+                    <option value="shrink">缩小（Shrink）</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label class="label">距离（米） <span class="required">*</span></label>
+                <input
+                type="number"
+                id="bufferDistance"
+                placeholder="例如：100"
+                min="0.001"
+                step="any"
+                value="100"
+                >
+            </div>
+            <div class="input-group" style="flex:0 0 auto; min-width:auto;">
+                <label class="label">&nbsp;</label>
+                <button class="btn btn-primary btn-lg" id="calculateBtn" type="button">
+                    🚀 开始计算
+                </button>
+            </div>
+        </div>
+        <p class="hint" style="margin-top:8px;">
+            外扩：边界向外平移指定米数 &nbsp;|&nbsp; 缩小：边界向内收缩指定米数（使用负缓冲）
+        </p>
+    </div>
+
+    <!-- 步骤3：状态日志 -->
+    <div class="card" id="logCard">
+        <div class="card-header">
+            <div class="card-icon blue">📋</div>
+            <h3>处理日志</h3>
+            <span style="margin-left:auto; font-size:0.78rem; color:var(--text-muted);" id="logCount">等待操作...</span>
+        </div>
+        <div class="log-container" id="logContainer">
+            <div class="log-entry info">
+                <span class="log-icon">ℹ️</span>
+                <span class="log-time">--:--</span>
+                <span class="log-msg">工具就绪，请粘贴WKT数据或上传文件后点击计算。</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 步骤4：结果展示 -->
+    <div class="card result-area" id="resultCard">
+        <div class="card-header">
+            <div class="card-icon green">✅</div>
+            <h3>计算结果</h3>
+        </div>
+        <div class="result-stats" id="resultStats"></div>
+        <div class="preview-canvas-wrap" id="previewWrap">
+            <canvas id="previewCanvas"></canvas>
+        </div>
+        <div class="preview-legend" id="previewLegend" style="display:none;">
+            <span><span class="legend-dot original"></span> 原始边框</span>
+            <span><span class="legend-dot buffered"></span> 处理后边框</span>
+        </div>
+        <label class="label" style="margin-top:14px;">结果 WKT</label>
+        <textarea class="result-wkt" id="resultWkt" readonly rows="5" placeholder="计算完成后将在此显示结果..."></textarea>
+        <div class="btn-row">
+            <button class="btn btn-success" id="downloadBtn" type="button">
+                💾 下载文件
+            </button>
+            <button class="btn btn-outline" id="copyBtn" type="button">
+                📋 复制到剪贴板
+            </button>
+            <button class="btn btn-outline" id="clearResultBtn" type="button">
+                🔄 清除结果
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast容器 -->
+<div id="toastContainer"></div>
+
+<script>
+    (function() {
+        // ==================== DOM元素 ====================
+        const wktInput = document.getElementById('wktInput');
+        const fileInput = document.getElementById('fileInput');
+        const uploadZone = document.getElementById('uploadZone');
+        const loadExampleBtn = document.getElementById('loadExampleBtn');
+        const clearInputBtn = document.getElementById('clearInputBtn');
+        const operationType = document.getElementById('operationType');
+        const bufferDistance = document.getElementById('bufferDistance');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const logContainer = document.getElementById('logContainer');
+        const logCount = document.getElementById('logCount');
+        const resultCard = document.getElementById('resultCard');
+        const resultStats = document.getElementById('resultStats');
+        const resultWkt = document.getElementById('resultWkt');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearResultBtn = document.getElementById('clearResultBtn');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewWrap = document.getElementById('previewWrap');
+        const previewLegend = document.getElementById('previewLegend');
+        const coordHint = document.getElementById('coordHint');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // ==================== 状态变量 ====================
+        let originalGeoJSON = null; // 原始GeoJSON
+        let bufferedGeoJSON = null; // buffer后的GeoJSON
+            let uploadedCSV = null; // 批量上传的CSV数据 { headers, rows, wktColIndex }
+            let batchResults = null; // 批量计算结果数组
+        let isGeographic = false; // 是否为地理坐标
+        let isCalculating = false; // 是否正在计算
+        let logEntryCount = 0;
+
+        // ==================== 工具函数 ====================
+        function getTimeStr() {
+            const now = new Date();
+            return now.toLocaleTimeString('zh-CN', { hour12: false });
+        }
+
+        function addLog(type, message) {
+            logEntryCount++;
+            const icons = {
+                info: 'ℹ️',
+                success: '✅',
+                warning: '⚠️',
+                error: '❌'
+            };
+            const entry = document.createElement('div');
+            entry.className = \`log-entry \${type}\`;
+            entry.innerHTML = \`
+            <span class="log-icon">\${icons[type] || 'ℹ️'}</span>
+            <span class="log-time">\${getTimeStr()}</span>
+            <span class="log-msg">\${message}</span>
+          \`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            logCount.textContent = \`共 \${logEntryCount} 条日志\`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = \`toast \${type}\`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s ease-in forwards';
+                setTimeout(() => toast.remove(), 350);
+            }, 2800);
+        }
+
+        function setCalculating(state) {
+            isCalculating = state;
+            if (state) {
+                calculateBtn.disabled = true;
+                calculateBtn.innerHTML = '<span class="spinner"></span> 计算中...';
+                wktInput.readOnly = true;
+                bufferDistance.readOnly = true;
+                operationType.disabled = true;
+                fileInput.disabled = true;
+                loadExampleBtn.disabled = true;
+                clearInputBtn.disabled = true;
+            } else {
+                calculateBtn.disabled = false;
+                calculateBtn.innerHTML = '🚀 开始计算';
+                wktInput.readOnly = false;
+                bufferDistance.readOnly = false;
+                operationType.disabled = false;
+                fileInput.disabled = false;
+                loadExampleBtn.disabled = false;
+                clearInputBtn.disabled = false;
+            }
+        }
+
+        // ==================== CSV工具函数 ====================
+        // 解析CSV文本为表头+行(支持引号包裹和转义)
+        function parseCSVText(text) {
+            const lines = text.split(/\\r?\\n/).filter(l => l.trim() !== '');
+            if (lines.length === 0) return { headers: [], rows: [] };
+            const parseLine = (line) => {
+                const result = [];
+                let current = '';
+                let inQuote = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        if (inQuote && line[i + 1] === '"') { current += '"'; i++; }
+                        else { inQuote = !inQuote; }
+                    } else if (ch === ',' && !inQuote) {
+                        result.push(current);
+                        current = '';
+                    } else {
+                        current += ch;
+                    }
+                }
+                result.push(current);
+                return result;
+            };
+            const headers = parseLine(lines[0]);
+            const rows = lines.slice(1).map(parseLine);
+            return { headers, rows };
+        }
+
+        // 自动识别WKT列: 优先列名匹配，其次内容匹配
+        function findWktColumn(headers, sampleRows) {
+            const wktColNames = ['wkt', 'geometry', 'geom', 'the_geom', 'shape', 'geometry_wkt', 'geom_wkt', '坐标', '几何', '边界'];
+            for (let i = 0; i < headers.length; i++) {
+                if (wktColNames.includes(headers[i].toLowerCase().trim())) return i;
+            }
+            // 内容匹配: 检查前5行，找包含POLYGON/MULTIPOLYGON的列
+            const checkRows = sampleRows.slice(0, 5);
+            for (let i = 0; i < headers.length; i++) {
+                let matchCount = 0;
+                for (const row of checkRows) {
+                    const val = String(row[i] || '').trim().toUpperCase();
+                    if (val.startsWith('POLYGON') || val.startsWith('MULTIPOLYGON')) {
+                        matchCount++;
+                    }
+                }
+                if (matchCount > 0) return i;
+            }
+            return -1;
+        }
+
+        // CSV单元格转义(含逗号/引号/换行时用双引号包裹)
+        function csvEscape(value) {
+            if (value === null || value === undefined) return '';
+            const s = String(value);
+            if (s.includes(',') || s.includes('"') || s.includes('\\n') || s.includes('\\r')) {
+                return '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+        }
+
+        // ==================== WKT解析 ====================
+        function parseWKT(wktStr) {
+            // 去除首尾空白，去除SRID前缀
+            let str = wktStr.trim();
+            // 移除SRID前缀，如 SRID=4326;POLYGON(...)
+            str = str.replace(/^SRID\\s*=\\s*\\d+\\s*;?\\s*/i, '');
+            // 统一多个空格(但保留括号内结构)
+            str = str.replace(/\\s+/g, ' ');
+
+            const upperStr = str.toUpperCase();
+
+            // 多部件类型优先匹配(避免被单部件的前缀误判)
+            if (upperStr.startsWith('MULTIPOLYGON')) {
+                return parseMultiPolygonWKT(str);
+            } else if (upperStr.startsWith('MULTILINESTRING')) {
+                return parseMultiLineStringWKT(str);
+            } else if (upperStr.startsWith('MULTIPOINT')) {
+                return parseMultiPointWKT(str);
+            } else if (upperStr.startsWith('POLYGON')) {
+                return parsePolygonWKT(str);
+            } else if (upperStr.startsWith('LINESTRING')) {
+                return parseLineStringWKT(str);
+            } else if (upperStr.startsWith('POINT')) {
+                return parsePointWKT(str);
+            } else {
+                throw new Error(
+                    \`不支持的WKT类型。当前支持 POINT / MULTIPOINT / LINESTRING / MULTILINESTRING / POLYGON / MULTIPOLYGON。检测到的类型: \${str.substring(0, 30)}...\`);
+            }
+        }
+
+        // ==================== 点类型解析 ====================
+        function parsePointWKT(str) {
+            // POINT (x y) 或 POINT EMPTY
+            if (str.toUpperCase().includes('EMPTY')) {
+                return { type: 'Point', coordinates: [] };
+            }
+            const match = str.match(/^POINT\\s*\\(\\s*([^\\)]+)\\s*\\)\\s*$/i);
+            if (!match) {
+                throw new Error('无法解析POINT格式，正确格式: POINT (x y)');
+            }
+            const parts = match[1].trim().split(/\\s+/);
+            if (parts.length < 2) {
+                throw new Error('POINT至少需要2个坐标值(x y)');
+            }
+            const x = parseFloat(parts[0]);
+            const y = parseFloat(parts[1]);
+            if (isNaN(x) || isNaN(y)) {
+                throw new Error('POINT坐标无法解析为数字: ' + match[1]);
+            }
+            return { type: 'Point', coordinates: [x, y] };
+        }
+
+        function parseMultiPointWKT(str) {
+            // MULTIPOINT ((x y), (x y)) 或 MULTIPOINT (x y, x y)
+            if (str.toUpperCase().includes('EMPTY')) {
+                return { type: 'MultiPoint', coordinates: [] };
+            }
+            const match = str.match(/^MULTIPOINT\\s*\\((.+)\\)\\s*$/is);
+            if (!match) {
+                throw new Error('无法解析MULTIPOINT格式，正确格式: MULTIPOINT ((x y), (x y))');
+            }
+            const content = match[1].trim();
+            const points = [];
+            // 检测是否含内层括号 ((x y), (x y))
+            const hasInnerParens = /\\(/.test(content);
+            if (hasInnerParens) {
+                // 按括号分组
+                const groups = splitPolygonGroups(content);
+                for (const g of groups) {
+                    const parts = g.trim().split(/\\s+/);
+                    if (parts.length >= 2) {
+                        points.push([parseFloat(parts[0]), parseFloat(parts[1])]);
+                    }
+                }
+            } else {
+                // 无括号格式: x y, x y —— 按逗号分割
+                const pairs = content.split(',');
+                for (const pair of pairs) {
+                    const parts = pair.trim().split(/\\s+/);
+                    if (parts.length >= 2) {
+                        points.push([parseFloat(parts[0]), parseFloat(parts[1])]);
+                    }
+                }
+            }
+            if (points.length === 0) {
+                throw new Error('MULTIPOINT中没有找到有效的点坐标。');
+            }
+            return { type: 'MultiPoint', coordinates: points };
+        }
+
+        // ==================== 线类型解析 ====================
+        function parseLineStringWKT(str) {
+            // LINESTRING (x1 y1, x2 y2, ...)
+            if (str.toUpperCase().includes('EMPTY')) {
+                return { type: 'LineString', coordinates: [] };
+            }
+            const match = str.match(/^LINESTRING\\s*\\((.+)\\)\\s*$/is);
+            if (!match) {
+                throw new Error('无法解析LINESTRING格式，正确格式: LINESTRING (x1 y1, x2 y2, ...)');
+            }
+            const content = match[1].trim();
+            const coords = parseLineCoords(content);
+            return { type: 'LineString', coordinates: coords };
+        }
+
+        function parseMultiLineStringWKT(str) {
+            // MULTILINESTRING ((x1 y1, x2 y2), (x3 y3, x4 y4))
+            if (str.toUpperCase().includes('EMPTY')) {
+                return { type: 'MultiLineString', coordinates: [] };
+            }
+            const match = str.match(/^MULTILINESTRING\\s*\\((.+)\\)\\s*$/is);
+            if (!match) {
+                throw new Error('无法解析MULTILINESTRING格式，正确格式: MULTILINESTRING ((x1 y1, x2 y2), (...))');
+            }
+            const content = match[1].trim();
+            const lines = splitPolygonGroups(content);
+            const result = [];
+            for (const line of lines) {
+                const coords = parseLineCoords(line);
+                result.push(coords);
+            }
+            if (result.length === 0) {
+                throw new Error('MULTILINESTRING中没有找到有效的线段。');
+            }
+            return { type: 'MultiLineString', coordinates: result };
+        }
+
+        function parsePolygonWKT(str) {
+            // 提取 POLYGON 后面的括号内容
+            const match = str.match(/^POLYGON\\s*\\((.+)\\)\\s*$/is);
+            if (!match) {
+                throw new Error('无法解析POLYGON格式，请检查括号是否匹配。');
+            }
+            const content = match[1].trim();
+            const rings = parseRingStrings(content);
+            if (rings.length === 0) {
+                throw new Error('POLYGON中没有找到有效的坐标环。');
+            }
+            return {
+                type: 'Polygon',
+                coordinates: rings
+            };
+        }
+
+        function parseMultiPolygonWKT(str) {
+            const match = str.match(/^MULTIPOLYGON\\s*\\((.+)\\)\\s*$/is);
+            if (!match) {
+                throw new Error('无法解析MULTIPOLYGON格式，请检查括号是否匹配。');
+            }
+            const content = match[1].trim();
+            // 分割每个多边形 - 每个多边形由一组括号包裹
+            const polygonStrings = splitPolygonGroups(content);
+            const polygons = polygonStrings.map(polyStr => {
+                const rings = parseRingStrings(polyStr);
+                if (rings.length === 0) {
+                    throw new Error('MULTIPOLYGON中某个多边形没有有效的坐标环。');
+                }
+                return rings;
+            });
+            return {
+                type: 'MultiPolygon',
+                coordinates: polygons
+            };
+        }
+
+        // 按括号深度分组: 提取顶层 (...) 子串(去掉外层括号)
+        // 用于 MULTIPOLYGON/MULTILINESTRING/MULTIPOINT 内部分组
+        function splitPolygonGroups(content) {
+            const groups = [];
+            let depth = 0;
+            let current = '';
+            for (let i = 0; i < content.length; i++) {
+                const ch = content[i];
+                if (ch === '(') {
+                    depth++;
+                    current += ch;
+                } else if (ch === ')') {
+                    depth--;
+                    current += ch;
+                    // depth 回到 0 表示一个完整分组结束
+                    if (depth === 0) {
+                        let g = current.trim();
+                        // 去掉外层括号
+                        if (g.startsWith('(') && g.endsWith(')')) {
+                            g = g.slice(1, -1).trim();
+                        }
+                        if (g) groups.push(g);
+                        current = '';
+                    }
+                } else if (depth > 0) {
+                    // 只在括号内累积内容，跳过分组之间的逗号和空格
+                    current += ch;
+                }
+                // depth === 0 且非括号字符: 跳过分隔符
+            }
+            // 兜底: 没有括号时，整个内容作为单组
+            if (groups.length === 0 && content.trim()) {
+                groups.push(content.trim());
+            }
+            return groups;
+        }
+
+        function parseRingStrings(ringContent) {
+            // ringContent 可能是: (x1 y1, x2 y2, ...) 或多个环
+            // 先分割出各个环
+            const rings = [];
+            let depth = 0;
+            let current = '';
+            for (let i = 0; i < ringContent.length; i++) {
+                const ch = ringContent[i];
+                if (ch === '(') {
+                    depth++;
+                    if (depth === 1) {
+                        current = '';
+                        continue;
+                    }
+                    current += ch;
+                } else if (ch === ')') {
+                    depth--;
+                    if (depth === 0) {
+                        rings.push(current.trim());
+                        current = '';
+                        continue;
+                    }
+                    current += ch;
+                } else {
+                    if (depth > 0) {
+                        current += ch;
+                    } else if (ch !== ' ' && ch !== ',') {
+                        // 在depth=0时遇到非括号字符，可能整个内容就是一个环（无内层括号）
+                        // 回退处理
+                    }
+                }
+            }
+
+            // 如果没有找到内层括号，整个内容就是一个环
+            if (rings.length === 0 && ringContent.trim()) {
+                rings.push(ringContent.trim());
+            }
+
+            // 解析每个环的坐标
+            return rings.map(ring => parseCoordinateString(ring));
+        }
+
+        function parseCoordinateString(coordStr) {
+            // 去除首尾空白和可能的逗号
+            coordStr = coordStr.trim().replace(/^,\\s*|,\\s*$/g, '');
+            // 按逗号分割坐标对
+            const pairs = coordStr.split(',');
+            const coords = [];
+            for (let pair of pairs) {
+                pair = pair.trim();
+                if (!pair) continue;
+                // 按空格分割x和y
+                const parts = pair.split(/\\s+/);
+                if (parts.length < 2) continue;
+                const x = parseFloat(parts[0]);
+                const y = parseFloat(parts[1]);
+                if (isNaN(x) || isNaN(y)) {
+                    throw new Error(\`无法解析坐标对: "\${pair}"。请确保坐标格式为 "x y"（用空格分隔）。\`);
+                }
+                coords.push([x, y]);
+            }
+            if (coords.length < 3) {
+                throw new Error(\`坐标环至少需要3个点，当前只有\${coords.length}个点。\`);
+            }
+            // 检查是否闭合（首尾坐标是否一致）
+            const first = coords[0];
+            const last = coords[coords.length - 1];
+            if (first[0] !== last[0] || first[1] !== last[1]) {
+                // 自动闭合
+                coords.push([first[0], first[1]]);
+            }
+            return coords;
+        }
+
+        // ==================== 线坐标解析(不强制闭合，最少2点) ====================
+        function parseLineCoords(coordStr) {
+            coordStr = coordStr.trim().replace(/^,\\s*|,\\s*$/g, '');
+            const pairs = coordStr.split(',');
+            const coords = [];
+            for (let pair of pairs) {
+                pair = pair.trim();
+                if (!pair) continue;
+                const parts = pair.split(/\\s+/);
+                if (parts.length < 2) continue;
+                const x = parseFloat(parts[0]);
+                const y = parseFloat(parts[1]);
+                if (isNaN(x) || isNaN(y)) {
+                    throw new Error(\`无法解析坐标对: "\${pair}"。请确保坐标格式为 "x y"（用空格分隔）。\`);
+                }
+                coords.push([x, y]);
+            }
+            if (coords.length < 2) {
+                throw new Error(\`线段至少需要2个点，当前只有\${coords.length}个点。\`);
+            }
+            return coords;
+        }
+
+        // ==================== GeoJSON转WKT ====================
+        function geoJSONToWKT(geojson) {
+            if (!geojson || !geojson.type) return '';
+            if (geojson.type === 'Point') {
+                const c = geojson.coordinates;
+                if (!c || c.length < 2) return 'POINT EMPTY';
+                return \`POINT (\${c[0]} \${c[1]})\`;
+            } else if (geojson.type === 'MultiPoint') {
+                const pts = geojson.coordinates.map(pt => '(' + pt[0] + ' ' + pt[1] + ')').join(', ');
+                return \`MULTIPOINT (\${pts})\`;
+            } else if (geojson.type === 'LineString') {
+                const coords = geojson.coordinates.map(pt => pt[0] + ' ' + pt[1]).join(', ');
+                return \`LINESTRING (\${coords})\`;
+            } else if (geojson.type === 'MultiLineString') {
+                const lines = geojson.coordinates.map(line =>
+                    '(' + line.map(pt => pt[0] + ' ' + pt[1]).join(', ') + ')'
+                ).join(', ');
+                return \`MULTILINESTRING (\${lines})\`;
+            } else if (geojson.type === 'Polygon') {
+                const rings = geojson.coordinates.map(ring =>
+                    '(' + ring.map(pt => pt[0] + ' ' + pt[1]).join(', ') + ')'
+                ).join(', ');
+                return \`POLYGON (\${rings})\`;
+            } else if (geojson.type === 'MultiPolygon') {
+                const polys = geojson.coordinates.map(poly =>
+                    '(' + poly.map(ring =>
+                        '(' + ring.map(pt => pt[0] + ' ' + pt[1]).join(', ') + ')'
+                    ).join(', ') + ')'
+                ).join(', ');
+                return \`MULTIPOLYGON (\${polys})\`;
+            }
+            return '';
+        }
+
+        // ==================== 坐标类型检测 ====================
+        function detectCoordinateType(geojson) {
+            let allCoords = [];
+            if (geojson.type === 'Point') {
+                allCoords = geojson.coordinates.length ? [geojson.coordinates] : [];
+            } else if (geojson.type === 'MultiPoint') {
+                allCoords = geojson.coordinates.slice();
+            } else if (geojson.type === 'LineString') {
+                allCoords = geojson.coordinates.slice();
+            } else if (geojson.type === 'MultiLineString') {
+                allCoords = geojson.coordinates.flat();
+            } else if (geojson.type === 'Polygon') {
+                allCoords = geojson.coordinates.flat();
+            } else if (geojson.type === 'MultiPolygon') {
+                allCoords = geojson.coordinates.flat(2);
+            }
+            if (allCoords.length === 0) return { isGeographic: false, reason: '无坐标数据' };
+
+            let minX = Infinity,
+                maxX = -Infinity;
+            let minY = Infinity,
+                maxY = -Infinity;
+            for (const [x, y] of allCoords) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+
+            const xRange = maxX - minX;
+            const yRange = maxY - minY;
+
+            // 判断逻辑：如果x在[-200, 200]且y在[-100, 100]范围内，认为是地理坐标
+            const isGeo = (minX >= -200 && maxX <= 200 && minY >= -100 && maxY <= 100);
+
+            return {
+                isGeographic: isGeo,
+                minX,
+                maxX,
+                minY,
+                maxY,
+                xRange,
+                yRange,
+                coordCount: allCoords.length
+            };
+        }
+
+        // ==================== 获取几何体顶点数 ====================
+        function getVertexCount(geojson) {
+            let count = 0;
+            if (geojson.type === 'Point') {
+                count = geojson.coordinates.length ? 1 : 0;
+            } else if (geojson.type === 'MultiPoint') {
+                count = geojson.coordinates.length;
+            } else if (geojson.type === 'LineString') {
+                count = geojson.coordinates.length;
+            } else if (geojson.type === 'MultiLineString') {
+                for (const line of geojson.coordinates) {
+                    count += line.length;
+                }
+            } else if (geojson.type === 'Polygon') {
+                for (const ring of geojson.coordinates) {
+                    count += ring.length;
+                }
+            } else if (geojson.type === 'MultiPolygon') {
+                for (const poly of geojson.coordinates) {
+                    for (const ring of poly) {
+                        count += ring.length;
+                    }
+                }
+            }
+            return count;
+        }
+
+        // ==================== Canvas预览绘制 ====================
+        function drawPreview(original, buffered) {
+            const canvas = previewCanvas;
+            const wrap = previewWrap;
+            const legend = previewLegend;
+
+            if (!original || !buffered) {
+                wrap.style.display = 'none';
+                legend.style.display = 'none';
+                return;
+            }
+
+            wrap.style.display = 'block';
+            legend.style.display = 'flex';
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = wrap.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height || 280;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.scale(dpr, dpr);
+            ctx.clearRect(0, 0, width, height);
+
+            // 收集所有坐标以计算边界
+            function getAllCoords(geojson) {
+                let coords = [];
+                if (geojson.type === 'Point') {
+                    if (geojson.coordinates.length) coords.push(geojson.coordinates);
+                } else if (geojson.type === 'MultiPoint') {
+                    coords = geojson.coordinates.slice();
+                } else if (geojson.type === 'LineString') {
+                    coords = geojson.coordinates.slice();
+                } else if (geojson.type === 'MultiLineString') {
+                    coords = geojson.coordinates.flat();
+                } else if (geojson.type === 'Polygon') {
+                    coords = geojson.coordinates.flat();
+                } else if (geojson.type === 'MultiPolygon') {
+                    coords = geojson.coordinates.flat(2);
+                }
+                return coords;
+            }
+
+            // 绘制点(圆点标记)
+            function drawPoint(pt, color, radius) {
+                const [px, py] = transformPoint(pt);
+                ctx.beginPath();
+                ctx.arc(px, py, radius, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // 绘制线
+            function drawLine(coords, strokeColor, lineWidth) {
+                if (coords.length === 0) return;
+                const transformed = coords.map(pt => transformPoint(pt));
+                ctx.beginPath();
+                ctx.moveTo(transformed[0][0], transformed[0][1]);
+                for (let i = 1; i < transformed.length; i++) {
+                    ctx.lineTo(transformed[i][0], transformed[i][1]);
+                }
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = lineWidth;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+
+            // 统一绘制任意几何体
+            function drawGeometry(geojson, fillColor, strokeColor, lineWidth, isOriginal) {
+                if (!geojson || !geojson.type) return;
+                if (geojson.type === 'Point') {
+                    if (geojson.coordinates.length) drawPoint(geojson.coordinates, isOriginal ? '#4F6EF7' : '#EF4444', isOriginal ? 5 : 4);
+                } else if (geojson.type === 'MultiPoint') {
+                    for (const pt of geojson.coordinates) drawPoint(pt, isOriginal ? '#4F6EF7' : '#EF4444', isOriginal ? 5 : 4);
+                } else if (geojson.type === 'LineString') {
+                    drawLine(geojson.coordinates, strokeColor, lineWidth);
+                } else if (geojson.type === 'MultiLineString') {
+                    for (const line of geojson.coordinates) drawLine(line, strokeColor, lineWidth);
+                } else if (geojson.type === 'Polygon' || geojson.type === 'MultiPolygon') {
+                    drawPolygon(geojson, fillColor, strokeColor, lineWidth, false);
+                }
+            }
+
+            const allOriginal = getAllCoords(original);
+            const allBuffered = getAllCoords(buffered);
+            const allCoords = [...allOriginal, ...allBuffered];
+
+            if (allCoords.length === 0) {
+                wrap.style.display = 'none';
+                legend.style.display = 'none';
+                return;
+            }
+
+            let minX = Infinity,
+                maxX = -Infinity;
+            let minY = Infinity,
+                maxY = -Infinity;
+            for (const [x, y] of allCoords) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+
+            const dataWidth = maxX - minX || 1;
+            const dataHeight = maxY - minY || 1;
+            const padding = 40;
+            const drawWidth = width - padding * 2;
+            const drawHeight = height - padding * 2;
+            const scaleX = drawWidth / dataWidth;
+            const scaleY = drawHeight / dataHeight;
+            const scale = Math.min(scaleX, scaleY);
+            const offsetX = padding + (drawWidth - dataWidth * scale) / 2;
+            const offsetY = padding + (drawHeight - dataHeight * scale) / 2;
+
+            function transformPoint(pt) {
+                return [
+                    offsetX + (pt[0] - minX) * scale,
+                    offsetY + (dataHeight - (pt[1] - minY)) * scale // Y轴翻转
+                ];
+            }
+
+            function drawPolygon(geojson, fillColor, strokeColor, lineWidth, fillOnly = false) {
+                const polygons = geojson.type === 'Polygon' ? [geojson.coordinates] : geojson.coordinates;
+                for (const poly of polygons) {
+                    ctx.beginPath();
+                    for (let r = 0; r < poly.length; r++) {
+                        const ring = poly[r];
+                        const transformed = ring.map(pt => transformPoint(pt));
+                        if (transformed.length === 0) continue;
+                        ctx.moveTo(transformed[0][0], transformed[0][1]);
+                        for (let i = 1; i < transformed.length; i++) {
+                            ctx.lineTo(transformed[i][0], transformed[i][1]);
+                        }
+                        ctx.closePath();
+                        if (r === 0 && fillColor) {
+                            ctx.fillStyle = fillColor;
+                            ctx.fill();
+                        }
+                        if (!fillOnly) {
+                            ctx.strokeStyle = strokeColor;
+                            ctx.lineWidth = lineWidth;
+                            ctx.lineJoin = 'round';
+                            ctx.lineCap = 'round';
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+
+            // 先绘制buffer后的几何体（多边形半透明填充，线/点用描边）
+            drawGeometry(buffered, 'rgba(239, 68, 68, 0.2)', '#EF4444', 2.5, false);
+            // 再绘制原始几何体
+            drawGeometry(original, 'rgba(79, 110, 247, 0.25)', '#4F6EF7', 2.8, true);
+
+            // 添加标签
+            ctx.fillStyle = '#4F6EF7';
+            ctx.font = 'bold 11px -apple-system, "PingFang SC", sans-serif';
+            ctx.fillText('原始', offsetX + 6, offsetY + 16);
+            ctx.fillStyle = '#EF4444';
+            ctx.fillText('处理后', offsetX + 6, offsetY + 32);
+        }
+
+        // ==================== 主计算逻辑 ====================
+        async function performCalculation() {
+            if (isCalculating) return;
+
+            const wktText = wktInput.value.trim();
+            if (!wktText) {
+                addLog('error', 'WKT输入为空，请粘贴或上传WKT数据。');
+                showToast('请先输入WKT数据', 'error');
+                wktInput.classList.add('error');
+                setTimeout(() => wktInput.classList.remove('error'), 2000);
+                return;
+            }
+
+            const distStr = bufferDistance.value.trim();
+            if (!distStr || isNaN(parseFloat(distStr)) || parseFloat(distStr) <= 0) {
+                addLog('error', '请输入有效的正数距离（米）。');
+                showToast('请输入有效的距离数值', 'error');
+                bufferDistance.classList.add('error');
+                setTimeout(() => bufferDistance.classList.remove('error'), 2000);
+                return;
+            }
+            let distanceMeters = parseFloat(distStr);
+
+            setCalculating(true);
+            resultCard.classList.remove('visible');
+            bufferedGeoJSON = null;
+
+            try {
+                // 步骤1：解析WKT
+                addLog('info', '🔍 步骤1/5：正在解析WKT格式...');
+                await sleep(50); // 让UI有机会更新
+                const geojson = parseWKT(wktText);
+                originalGeoJSON = geojson;
+                const vertexCount = getVertexCount(geojson);
+                const geomType = geojson.type;
+                addLog('success',
+                    \`WKT解析成功！几何类型: \${geomType}，顶点总数: \${vertexCount.toLocaleString()}。\`);
+
+                if (vertexCount > 8000) {
+                    addLog('warning',
+                        \`⚠️ 顶点数量较多（\${vertexCount.toLocaleString()}个），计算可能需要较长时间。如果界面卡顿请耐心等待。\`);
+                }
+
+                // 步骤2：检测坐标类型
+                addLog('info', '🔍 步骤2/5：正在检测坐标类型...');
+                await sleep(30);
+                const coordInfo = detectCoordinateType(geojson);
+                isGeographic = coordInfo.isGeographic;
+                if (isGeographic) {
+                    addLog('info',
+                        \`检测为地理坐标（经纬度），范围: X[\${coordInfo.minX?.toFixed(4)}, \${coordInfo.maxX?.toFixed(4)}], Y[\${coordInfo.minY?.toFixed(4)}, \${coordInfo.maxY?.toFixed(4)}]。buffer距离将使用米为单位。\`
+                        );
+                    coordHint.style.display = 'block';
+                    coordHint.textContent =
+                        \`📍 检测到地理坐标（经纬度），X范围: [\${coordInfo.minX?.toFixed(4)}, \${coordInfo.maxX?.toFixed(4)}]，Y范围: [\${coordInfo.minY?.toFixed(4)}, \${coordInfo.maxY?.toFixed(4)}]\`;
+                    coordHint.style.color = 'var(--primary)';
+                } else {
+                    addLog('info',
+                        \`检测为投影坐标，范围: X[\${coordInfo.minX?.toFixed(1)}, \${coordInfo.maxX?.toFixed(1)}], Y[\${coordInfo.minY?.toFixed(1)}, \${coordInfo.maxY?.toFixed(1)}]。buffer距离将直接使用坐标单位（通常为米）。\`
+                        );
+                    coordHint.style.display = 'block';
+                    coordHint.textContent =
+                        \`📍 检测到投影坐标，X范围: [\${coordInfo.minX?.toFixed(1)}, \${coordInfo.maxX?.toFixed(1)}]，Y范围: [\${coordInfo.minY?.toFixed(1)}, \${coordInfo.maxY?.toFixed(1)}]\`;
+                    coordHint.style.color = 'var(--warning)';
+                }
+
+                // 步骤3：确定buffer距离
+                const opType = operationType.value;
+                let bufferDistanceForTurf = distanceMeters;
+                let bufferOptions = { steps: 64 };
+
+                if (opType === 'shrink') {
+                    bufferDistanceForTurf = -distanceMeters;
+                    addLog('info', \`🔍 步骤3/5：操作类型为【缩小】，使用负缓冲距离: \${bufferDistanceForTurf} 米。\`);
+                } else {
+                    addLog('info', \`🔍 步骤3/5：操作类型为【外扩】，缓冲距离: \${bufferDistanceForTurf} 米。\`);
+                }
+
+                if (isGeographic) {
+                    bufferOptions.units = 'meters';
+                }
+                // 对于投影坐标，不设置units，距离与坐标单位一致
+
+                // 步骤4：执行buffer计算
+                addLog('info', '🔍 步骤4/5：正在执行缓冲区计算...（复杂几何体可能需要数秒）');
+                await sleep(60); // 确保UI更新
+
+                const calcStartTime = performance.now();
+                let result;
+                try {
+                    result = turf.buffer(geojson, bufferDistanceForTurf, bufferOptions);
+                } catch (bufferError) {
+                    throw new Error(\`缓冲区计算失败: \${bufferError.message}\`);
+                }
+                const calcEndTime = performance.now();
+                const calcTime = ((calcEndTime - calcStartTime) / 1000).toFixed(2);
+
+                if (!result) {
+                    throw new Error(
+                        '缓冲区计算返回了空结果。可能原因：缩小距离过大导致几何体完全消失，或输入数据存在问题。请尝试减小缩小距离。'
+                        );
+                }
+
+                // 处理可能的FeatureCollection
+                if (result.type === 'FeatureCollection') {
+                    if (result.features.length === 0) {
+                        throw new Error('缓冲区计算返回了空结果集。缩小距离可能过大，几何体已完全消失。');
+                    }
+                    if (result.features.length === 1) {
+                        bufferedGeoJSON = result.features[0].geometry;
+                    } else {
+                        // 多个feature，合并为MultiPolygon
+                        const allPolygons = [];
+                        for (const feat of result.features) {
+                            if (feat.geometry.type === 'Polygon') {
+                                allPolygons.push(feat.geometry.coordinates);
+                            } else if (feat.geometry.type === 'MultiPolygon') {
+                                allPolygons.push(...feat.geometry.coordinates);
+                            }
+                        }
+                        if (allPolygons.length === 0) {
+                            throw new Error('处理后的几何体无法识别。');
+                        }
+                        if (allPolygons.length === 1) {
+                            bufferedGeoJSON = { type: 'Polygon', coordinates: allPolygons[0] };
+                        } else {
+                            bufferedGeoJSON = { type: 'MultiPolygon', coordinates: allPolygons };
+                        }
+                    }
+                } else if (result.type === 'Feature') {
+                    bufferedGeoJSON = result.geometry;
+                } else {
+                    bufferedGeoJSON = result;
+                }
+
+                const bufferedVertCount = getVertexCount(bufferedGeoJSON);
+                addLog('success',
+                    \`缓冲区计算完成！耗时 \${calcTime} 秒。结果几何类型: \${bufferedGeoJSON.type}，顶点数: \${bufferedVertCount.toLocaleString()}。\`
+                    );
+
+                // 步骤5：生成WKT
+                addLog('info', '🔍 步骤5/5：正在生成结果WKT...');
+                await sleep(30);
+                const resultWktStr = geoJSONToWKT(bufferedGeoJSON);
+                addLog('success', '结果WKT生成成功！');
+
+                // 显示结果
+                resultWkt.value = resultWktStr;
+                const origVertCount = getVertexCount(originalGeoJSON);
+
+                // 尝试计算面积
+                let areaInfo = '';
+                try {
+                    if (isGeographic) {
+                        const origArea = turf.area(originalGeoJSON);
+                        const buffArea = turf.area(bufferedGeoJSON);
+                        areaInfo =
+                            \`<span class="stat-badge">📏 原始面积: <span class="stat-value">\${(origArea / 10000).toFixed(2)} 公顷</span></span>\` +
+                            \`<span class="stat-badge">📏 处理后面积: <span class="stat-value">\${(buffArea / 10000).toFixed(2)} 公顷</span></span>\`;
+                    } else {
+                        // 投影坐标，使用简单的面积计算
+                        const origArea = turf.area(originalGeoJSON);
+                        const buffArea = turf.area(bufferedGeoJSON);
+                        areaInfo =
+                            \`<span class="stat-badge">📏 原始面积: <span class="stat-value">\${(origArea).toFixed(1)} 平方单位</span></span>\` +
+                            \`<span class="stat-badge">📏 处理后面积: <span class="stat-value">\${(buffArea).toFixed(1)} 平方单位</span></span>\`;
+                    }
+                } catch (e) {
+                    areaInfo = '';
+                }
+
+                resultStats.innerHTML = \`
+            <span class="stat-badge">📐 原始类型: <span class="stat-value">\${originalGeoJSON.type}</span></span>
+            <span class="stat-badge">📐 结果类型: <span class="stat-value">\${bufferedGeoJSON.type}</span></span>
+            <span class="stat-badge">🔢 原始顶点: <span class="stat-value">\${origVertCount.toLocaleString()}</span></span>
+            <span class="stat-badge">🔢 结果顶点: <span class="stat-value">\${bufferedVertCount.toLocaleString()}</span></span>
+            <span class="stat-badge">📏 缓冲距离: <span class="stat-value">\${distanceMeters} 米 (\${opType === 'shrink' ? '缩小' : '外扩'})</span></span>
+            \${areaInfo}
+          \`;
+
+                resultCard.classList.add('visible');
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                // 绘制预览
+                setTimeout(() => {
+                    try {
+                        drawPreview(originalGeoJSON, bufferedGeoJSON);
+                    } catch (drawErr) {
+                        addLog('warning', \`预览绘制失败: \${drawErr.message}\`);
+                        previewWrap.style.display = 'none';
+                        previewLegend.style.display = 'none';
+                    }
+                }, 200);
+
+                showToast('✅ 计算完成！可下载或复制结果。', 'success');
+
+            } catch (error) {
+                addLog('error', \`❌ 处理失败: \${error.message}\`);
+                showToast(\`处理失败: \${error.message}\`, 'error');
+                // 高亮输入框
+                wktInput.classList.add('error');
+                setTimeout(() => wktInput.classList.remove('error'), 2500);
+                bufferedGeoJSON = null;
+                resultCard.classList.remove('visible');
+                previewWrap.style.display = 'none';
+                previewLegend.style.display = 'none';
+            } finally {
+                setCalculating(false);
+            }
+        }
+
+        // ==================== 批量计算逻辑 ====================
+        async function performBatchCalculation() {
+            if (isCalculating) return;
+            if (!uploadedCSV) {
+                addLog('error', '未加载CSV文件，无法批量处理。');
+                showToast('请先上传CSV文件', 'error');
+                return;
+            }
+            const distStr = bufferDistance.value.trim();
+            if (!distStr || isNaN(parseFloat(distStr)) || parseFloat(distStr) <= 0) {
+                addLog('error', '请输入有效的正数距离（米）。');
+                showToast('请输入有效的距离数值', 'error');
+                bufferDistance.classList.add('error');
+                setTimeout(() => bufferDistance.classList.remove('error'), 2000);
+                return;
+            }
+            const distanceMeters = parseFloat(distStr);
+            const opType = operationType.value;
+            let bufferDistanceForTurf = opType === 'shrink' ? -distanceMeters : distanceMeters;
+            const bufferOptions = { steps: 64 };
+            if (isGeographic || true) bufferOptions.units = 'meters';
+
+            setCalculating(true);
+            resultCard.classList.remove('visible');
+            batchResults = [];
+            let successCount = 0;
+            let errorCount = 0;
+            const startTime = performance.now();
+
+            try {
+                addLog('info', '🔍 开始批量计算，共 ' + uploadedCSV.rows.length + ' 行...');
+                // 释放控制权
+                await sleep(20);
+
+                for (let i = 0; i < uploadedCSV.rows.length; i++) {
+                    const row = uploadedCSV.rows[i];
+                    const wktText = String(row[uploadedCSV.wktColIndex] || '').trim();
+                    const result = { original: null, buffered: null, wktResult: '', error: null };
+
+                    if (!wktText) {
+                        result.error = 'WKT为空';
+                        errorCount++;
+                    } else {
+                        try {
+                            const geojson = parseWKT(wktText);
+                            result.original = geojson;
+                            const coordInfo = detectCoordinateType(geojson);
+                            const isGeo = coordInfo.isGeographic;
+                            const opts = { steps: 64 };
+                            if (isGeo) opts.units = 'meters';
+                            const buffered = turf.buffer(geojson, bufferDistanceForTurf, opts);
+                            if (buffered) {
+                                let bg;
+                                if (buffered.type === 'FeatureCollection') {
+                                    if (buffered.features.length === 0) {
+                                        result.error = '缩小过度，几何体消失';
+                                        errorCount++;
+                                    } else if (buffered.features.length === 1) {
+                                        bg = buffered.features[0].geometry;
+                                    } else {
+                                        const polys = [];
+                                        for (const f of buffered.features) {
+                                            if (f.geometry.type === 'Polygon') polys.push(f.geometry.coordinates);
+                                            else if (f.geometry.type === 'MultiPolygon') polys.push(...f.geometry.coordinates);
+                                        }
+                                        bg = polys.length === 1 ? { type: 'Polygon', coordinates: polys[0] } : { type: 'MultiPolygon', coordinates: polys };
+                                    }
+                                } else if (buffered.type === 'Feature') {
+                                    bg = buffered.geometry;
+                                } else {
+                                    bg = buffered;
+                                }
+                                if (bg) {
+                                    result.buffered = bg;
+                                    result.wktResult = geoJSONToWKT(bg);
+                                    successCount++;
+                                }
+                            } else {
+                                result.error = 'buffer返回空';
+                                errorCount++;
+                            }
+                        } catch (e) {
+                            result.error = e.message;
+                            errorCount++;
+                        }
+                    }
+                    batchResults.push(result);
+                    // 每50行更新一次进度日志
+                    if ((i + 1) % 50 === 0 || i === uploadedCSV.rows.length - 1) {
+                        addLog('info', '进度: ' + (i + 1) + '/' + uploadedCSV.rows.length + ' (成功' + successCount + ' / 失败' + errorCount + ')');
+                        await sleep(5);
+                    }
+                }
+
+                const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+                addLog('success', '✅ 批量计算完成！耗时 ' + elapsed + ' 秒。成功 ' + successCount + ' 行，失败 ' + errorCount + ' 行。');
+
+                // 显示统计
+                resultStats.innerHTML =
+                    '<span class="stat-badge">📊 总行数: <span class="stat-value">' + uploadedCSV.rows.length + '</span></span>' +
+                    '<span class="stat-badge">✅ 成功: <span class="stat-value">' + successCount + '</span></span>' +
+                    '<span class="stat-badge">❌ 失败: <span class="stat-value">' + errorCount + '</span></span>' +
+                    '<span class="stat-badge">📏 缓冲: <span class="stat-value">' + distanceMeters + '米(' + (opType === 'shrink' ? '缩小' : '外扩') + ')</span></span>' +
+                    '<span class="stat-badge">⏱️ 耗时: <span class="stat-value">' + elapsed + '秒</span></span>';
+                resultWkt.value = '[批量模式] 共处理 ' + uploadedCSV.rows.length + ' 行，成功 ' + successCount + ' 行，失败 ' + errorCount + ' 行。\\n请点击下方"下载文件"导出完整CSV结果。';
+                resultCard.classList.add('visible');
+                previewWrap.style.display = 'none';
+                previewLegend.style.display = 'none';
+                showToast('✅ 批量计算完成！', 'success');
+            } catch (error) {
+                addLog('error', '❌ 批量处理异常: ' + error.message);
+                showToast('批量处理失败: ' + error.message, 'error');
+            } finally {
+                setCalculating(false);
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ==================== 下载功能 ====================
+        function downloadCSV() {
+            // 批量模式: 序号 + 原始所有列 + 结果WKT列
+            if (batchResults && uploadedCSV) {
+                const headers = ['序号', ...uploadedCSV.headers, '结果WKT'];
+                const lines = ['\\uFEFF' + headers.map(csvEscape).join(',')];
+                for (let i = 0; i < uploadedCSV.rows.length; i++) {
+                    const row = uploadedCSV.rows[i];
+                    const result = batchResults[i];
+                    const wktResult = result?.wktResult || result?.error || '';
+                    lines.push([i + 1, ...row, wktResult].map(csvEscape).join(','));
+                }
+                const csvContent = lines.join('\\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                const opLabel = operationType.value === 'shrink' ? 'shrink' : 'expand';
+                a.download = \`buffer_batch_\${opLabel}_\${timestamp}.csv\`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                addLog('success', 'CSV文件下载成功，共 ' + uploadedCSV.rows.length + ' 行。');
+                showToast('文件下载成功！', 'success');
+                return;
+            }
+            // 单WKT模式: 序号 + 结果WKT
+            if (!bufferedGeoJSON) {
+                showToast('没有可下载的结果', 'warning');
+                return;
+            }
+            const wktStr = geoJSONToWKT(bufferedGeoJSON);
+            const headers = ['序号', '结果WKT'];
+            const lines = ['\\uFEFF' + headers.map(csvEscape).join(','), '1,' + csvEscape(wktStr)];
+            const csvContent = lines.join('\\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const opLabel = operationType.value === 'shrink' ? 'shrink' : 'expand';
+            a.download = \`buffer_\${opLabel}_\${timestamp}.csv\`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            addLog('success', 'CSV文件下载成功。');
+            showToast('文件下载成功！', 'success');
+        }
+
+        function copyToClipboard() {
+            const wktStr = resultWkt.value.trim();
+            if (!wktStr) {
+                showToast('没有可复制的结果', 'warning');
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(wktStr).then(() => {
+                    addLog('success', '结果已复制到剪贴板。');
+                    showToast('已复制到剪贴板！', 'success');
+                }).catch(() => {
+                    fallbackCopy(wktStr);
+                });
+            } else {
+                fallbackCopy(wktStr);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+                document.execCommand('copy');
+                addLog('success', '结果已复制到剪贴板。');
+                showToast('已复制到剪贴板！', 'success');
+            } catch (e) {
+                addLog('error', '复制失败，请手动选择结果文本进行复制。');
+                showToast('复制失败，请手动复制', 'error');
+            }
+            document.body.removeChild(ta);
+        }
+
+        function clearResult() {
+            resultWkt.value = '';
+            resultStats.innerHTML = '';
+            resultCard.classList.remove('visible');
+            bufferedGeoJSON = null;
+            batchResults = null;
+            previewWrap.style.display = 'none';
+            previewLegend.style.display = 'none';
+            const ctx = previewCanvas.getContext('2d');
+            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            addLog('info', '结果已清除。');
+            showToast('结果已清除', 'warning');
+        }
+
+        // ==================== 示例数据 ====================
+        const examples = [
+            {
+                name: '点示例（上海-经纬度）',
+                wkt: 'POINT (121.4737 31.2304)'
+            },
+            {
+                name: '线示例（路径-经纬度）',
+                wkt: 'LINESTRING (121.45 31.20, 121.50 31.22, 121.55 31.25, 121.60 31.28)'
+            },
+            {
+                name: '简单四边形（上海区域-经纬度）',
+                wkt: 'POLYGON ((121.5 31.2, 121.6 31.2, 121.6 31.35, 121.5 31.35, 121.5 31.2))'
+            },
+            {
+                name: '带孔多边形',
+                wkt: 'POLYGON ((0 0, 10 0, 10 10, 0 10, 0 0), (3 3, 7 3, 7 7, 3 7, 3 3))'
+            },
+            {
+                name: '多部件多边形（MultiPolygon）',
+                wkt: 'MULTIPOLYGON (((0 0, 5 0, 5 5, 0 5, 0 0)), ((8 8, 12 8, 12 12, 8 12, 8 8)))'
+            },
+            {
+                name: '多部件点（MultiPoint）',
+                wkt: 'MULTIPOINT ((121.45 31.20), (121.50 31.25), (121.55 31.22))'
+            },
+            {
+                name: '多部件线（MultiLineString）',
+                wkt: 'MULTILINESTRING ((0 0, 5 5), (10 0, 15 5))'
+            },
+            {
+                name: '投影坐标示例（UTM大数值）',
+                wkt: 'POLYGON ((500000 4500000, 500500 4500000, 500500 4500500, 500000 4500500, 500000 4500000))'
+            },
+        ];
+
+        function loadExample(index = 0) {
+            const example = examples[index];
+            wktInput.value = example.wkt;
+            addLog('info', \`已加载示例: \${example.name}\`);
+            coordHint.style.display = 'none';
+            resultCard.classList.remove('visible');
+            bufferedGeoJSON = null;
+            previewWrap.style.display = 'none';
+            previewLegend.style.display = 'none';
+            wktInput.classList.remove('error');
+            bufferDistance.classList.remove('error');
+            showToast(\`已加载示例：\${example.name}\`, 'success');
+        }
+
+        // ==================== 文件上传 ====================
+        function handleFileUpload(file) {
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['wkt', 'txt', 'geojson', 'json', 'csv'].includes(ext)) {
+                addLog('error', \`不支持的文件格式: .\${ext}。请上传 .wkt, .txt, .geojson, .json 或 .csv 文件。\`);
+                showToast('不支持的文件格式', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let content = e.target.result;
+                // CSV批量模式: 解析表格，识别WKT列
+                if (ext === 'csv') {
+                    try {
+                        const parsed = parseCSVText(content);
+                        if (parsed.rows.length === 0) {
+                            throw new Error('CSV文件中没有数据行');
+                        }
+                        const wktColIdx = findWktColumn(parsed.headers, parsed.rows);
+                        if (wktColIdx < 0) {
+                            throw new Error('未找到WKT列(列名需含 wkt/geometry/geom/坐标/几何/边界，或单元格内容以 POLYGON/MULTIPOLYGON 开头)');
+                        }
+                        uploadedCSV = {
+                            headers: parsed.headers,
+                            rows: parsed.rows,
+                            wktColIndex: wktColIdx
+                        };
+                        batchResults = null;
+                        // 在文本框显示摘要信息
+                        const wktColName = parsed.headers[wktColIdx] || ('第' + (wktColIdx + 1) + '列');
+                        wktInput.value = '[CSV批量模式] 文件: ' + file.name + '\\n' +
+                            '数据行数: ' + parsed.rows.length + '\\n' +
+                            'WKT列: ' + wktColName + ' (第' + (wktColIdx + 1) + '列)\\n' +
+                            '其他列: ' + parsed.headers.filter((_, i) => i !== wktColIdx).join(', ') + '\\n\\n' +
+                            '请设置缓冲参数后点击"开始计算"，将批量处理所有行。';
+                        addLog('success', \`CSV文件 "\${file.name}" 加载成功：\${parsed.rows.length} 行数据，WKT列="\${wktColName}"。\`);
+                        showToast(\`CSV加载成功：\${parsed.rows.length} 行\`, 'success');
+                        coordHint.style.display = 'none';
+                        resultCard.classList.remove('visible');
+                        bufferedGeoJSON = null;
+                        previewWrap.style.display = 'none';
+                        previewLegend.style.display = 'none';
+                        return;
+                    } catch (parseErr) {
+                        addLog('error', \`CSV解析失败: \${parseErr.message}\`);
+                        showToast('CSV解析失败: ' + parseErr.message, 'error');
+                        return;
+                    }
+                }
+                // GeoJSON转换
+                if (ext === 'geojson' || ext === 'json') {
+                    try {
+                        const geojson = JSON.parse(content);
+                        if (geojson.type === 'FeatureCollection' && geojson.features?.length > 0) {
+                            const geom = geojson.features[0].geometry;
+                            content = geoJSONToWKT(geom);
+                            addLog('info', '已从GeoJSON FeatureCollection中提取几何体并转换为WKT。');
+                        } else if (geojson.type === 'Feature') {
+                            content = geoJSONToWKT(geojson.geometry);
+                            addLog('info', '已从GeoJSON Feature中提取几何体并转换为WKT。');
+                        } else if (geojson.type === 'Polygon' || geojson.type === 'MultiPolygon') {
+                            content = geoJSONToWKT(geojson);
+                            addLog('info', '已从GeoJSON几何体转换为WKT。');
+                        } else {
+                            throw new Error('GeoJSON类型不支持，仅支持Polygon/MultiPolygon。');
+                        }
+                    } catch (parseErr) {
+                        addLog('error', \`GeoJSON解析失败: \${parseErr.message}\`);
+                        showToast('GeoJSON解析失败，请检查文件格式', 'error');
+                        return;
+                    }
+                }
+                // 单WKT模式(wkt/txt文件 或 GeoJSON转换后)
+                uploadedCSV = null;
+                batchResults = null;
+                wktInput.value = content;
+                addLog('success', \`文件 "\${file.name}" 加载成功。\`);
+                coordHint.style.display = 'none';
+                resultCard.classList.remove('visible');
+                bufferedGeoJSON = null;
+                previewWrap.style.display = 'none';
+                previewLegend.style.display = 'none';
+                showToast(\`文件 "\${file.name}" 加载成功\`, 'success');
+            };
+            reader.onerror = function() {
+                addLog('error', \`读取文件 "\${file.name}" 失败。\`);
+                showToast('文件读取失败', 'error');
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== 事件监听 ====================
+        calculateBtn.addEventListener('click', () => {
+            // 有CSV批量数据时走批量计算，否则走单WKT计算
+            if (uploadedCSV) {
+                performBatchCalculation();
+            } else {
+                performCalculation();
+            }
+        });
+
+        // 键盘快捷键 Ctrl+Enter 触发计算
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if (!isCalculating) {
+                    performCalculation();
+                }
+            }
+        });
+
+        downloadBtn.addEventListener('click', downloadCSV);
+        copyBtn.addEventListener('click', copyToClipboard);
+        clearResultBtn.addEventListener('click', clearResult);
+
+        loadExampleBtn.addEventListener('click', () => {
+            // 循环切换示例
+            const currentWkt = wktInput.value.trim();
+            let currentIndex = examples.findIndex(ex => ex.wkt === currentWkt);
+            if (currentIndex < 0) currentIndex = 0;
+            else currentIndex = (currentIndex + 1) % examples.length;
+            loadExample(currentIndex);
+        });
+
+        clearInputBtn.addEventListener('click', () => {
+            wktInput.value = '';
+            coordHint.style.display = 'none';
+            resultCard.classList.remove('visible');
+            bufferedGeoJSON = null;
+            originalGeoJSON = null;
+            uploadedCSV = null;
+            batchResults = null;
+            previewWrap.style.display = 'none';
+            previewLegend.style.display = 'none';
+            wktInput.classList.remove('error');
+            bufferDistance.classList.remove('error');
+            addLog('info', '输入已清空。');
+            showToast('输入已清空', 'warning');
+        });
+
+        // 文件上传
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFileUpload(e.target.files[0]);
+                fileInput.value = '';
+            }
+        });
+
+        // 拖拽上传
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadZone.classList.add('drag-over');
+        });
+        uploadZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadZone.classList.remove('drag-over');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadZone.classList.remove('drag-over');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 也支持整个页面的拖拽（拖到textarea上）
+        wktInput.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            wktInput.style.borderColor = 'var(--border-focus)';
+            wktInput.style.boxShadow = '0 0 0 3px rgba(79,110,247,0.1)';
+        });
+        wktInput.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            wktInput.style.borderColor = '';
+            wktInput.style.boxShadow = '';
+        });
+        wktInput.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            wktInput.style.borderColor = '';
+            wktInput.style.boxShadow = '';
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        // 输入变化时清除错误状态
+        wktInput.addEventListener('input', () => {
+            wktInput.classList.remove('error');
+            coordHint.style.display = 'none';
+        });
+        bufferDistance.addEventListener('input', () => {
+            bufferDistance.classList.remove('error');
+        });
+
+        // 窗口大小变化时重新绘制预览
+        let resizeDebounce = null;
+        window.addEventListener('resize', () => {
+            if (resizeDebounce) clearTimeout(resizeDebounce);
+            resizeDebounce = setTimeout(() => {
+                if (originalGeoJSON && bufferedGeoJSON && resultCard.classList.contains('visible')) {
+                    try {
+                        drawPreview(originalGeoJSON, bufferedGeoJSON);
+                    } catch (e) {
+                        // 静默处理
+                    }
+                }
+            }, 300);
+        });
+
+        // ==================== 初始化 ====================
+        function init() {
+            // 初始加载第一个示例以便快速体验
+            // wktInput.value = examples[0].wkt;
+            // addLog('info', \`已加载默认示例: \${examples[0].name}。可直接点击"开始计算"测试。\`);
+            addLog('info', '💡 提示：可以粘贴WKT文本、上传文件，或点击"加载示例"快速体验。');
+            addLog('info', '💡 快捷键：Ctrl+Enter 快速触发计算。');
+            previewWrap.style.display = 'none';
+            previewLegend.style.display = 'none';
+            coordHint.style.display = 'none';
+        }
+
+        init();
+
+        console.log('✅ 边框缓冲区处理工具已就绪');
+        console.log('   - 支持 POLYGON / MULTIPOLYGON WKT格式');
+        console.log('   - 支持地理坐标（经纬度）和投影坐标');
+        console.log('   - 外扩/缩小缓冲区计算');
+        console.log('   - 快捷键: Ctrl+Enter 计算');
+        console.log('   - 基于 Turf.js v6');
+    })();
+<\/script>
+</body>
+</html>`;
+
             // ==================== 创建Blob URL ====================
             function createBlobURL(htmlString, index) {
                 if (blobURLs[index]) {
@@ -2462,7 +4784,7 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
             tabBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
                     const tabIndex = parseInt(this.getAttribute('data-tab'));
-                    if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < 6) {
+                    if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < 7) {
                         switchTab(tabIndex);
                     }
                 });
@@ -2488,7 +4810,7 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
             // ==================== 键盘导航 ====================
             document.addEventListener('keydown', function(e) {
                 // Ctrl+数字切换标签
-                if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
+                if (e.ctrlKey && e.key >= '1' && e.key <= '7') {
                     e.preventDefault();
                     const idx = parseInt(e.key) - 1;
                     switchTab(idx);
@@ -2502,9 +4824,9 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
                 });
             });
 
-            console.log('✅ Arvinlwj 工具集合页已就绪 | 6个工具 | 标签切换 | Blob URL隔离');
-            console.log('   [1] 新区清单梳理  [2] 方案关联匹配  [3] 工参邻近匹配  [4] KML转CSV  [5] 表格拆分 [6] 5G效益分析');
-            console.log('   💡 提示：使用 Ctrl+1~6 可快速切换工具标签');
+            console.log('✅ Arvinlwj 工具集合页已就绪 | 7个工具 | 标签切换 | Blob URL隔离');
+            console.log('   [1] 新区清单梳理  [2] 方案关联匹配  [3] 工参邻近匹配  [4] KML转CSV  [5] 表格拆分 [6] 5G效益分析 [7] 边框缓冲区处理');
+            console.log('   💡 提示：使用 Ctrl+1~7 可快速切换工具标签');
         })();
     </script>
 </body>
