@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Arvinlwj 工具集合页 - 完整版（含边框缓冲区工具）</title>
+    <title>Arvinlwj 工具集合页 - 完整版（含点面缓冲区工具）</title>
     <style>
         :root {
             --bg: #f0f4f8;
@@ -275,7 +275,7 @@
                 <span class="logo-icon">🧰</span>
                 <div>
                     <h1>Arvinlwj 工具集合页</h1>
-                    <p class="subtitle">新区数据筛选 · 方案关联匹配 · 工参邻近匹配 · KML转CSV · 表格拆分 · 5G效益分析 · 边框缓冲区处理</p>
+                    <p class="subtitle">新区数据筛选 · 方案关联匹配 · 工参邻近匹配 · KML转CSV · 表格拆分 · 5G效益分析 · 点面缓冲区处理</p>
                 </div>
             </div>
             <div class="badge-row">
@@ -306,7 +306,7 @@
                 <span class="tab-num">6</span>📊 5G效益分析
             </button>
             <button class="tab-btn" data-tab="6">
-                <span class="tab-num">7</span>📐 边框缓冲区处理
+                <span class="tab-num">7</span>📐 点面缓冲区处理
             </button>
         </nav>
 
@@ -2414,14 +2414,14 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
 '</html>';
 
             // ────────────────────────────────────────────
-            // 工具7：边框缓冲区处理工具 (基于 Turf.js)
+            // 工具7：点面缓冲区处理工具 (基于 Turf.js)
             // ────────────────────────────────────────────
             toolHTMLs[6] = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>边框缓冲区处理工具 - WKT Buffer</title>
+    <title>点面缓冲区处理工具 - WKT Buffer</title>
 
     <!-- Turf.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js">
@@ -3147,7 +3147,7 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
                     <circle cx="16" cy="13" r="1.5" />
                 </svg>
             </div>
-            <h1>边框缓冲区处理工具</h1>
+            <h1>点面缓冲区处理工具</h1>
             <p class="subtitle">上传WKT格式多边形，按指定米数外扩或缩小边界</p>
         </header>
 
@@ -4716,7 +4716,7 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
 
         init();
 
-        console.log('✅ 边框缓冲区处理工具已就绪');
+        console.log('✅ 点面缓冲区处理工具已就绪');
         console.log('   - 支持 POLYGON / MULTIPOLYGON WKT格式');
         console.log('   - 支持地理坐标（经纬度）和投影坐标');
         console.log('   - 外扩/缩小缓冲区计算');
@@ -4825,7 +4825,7 @@ toolHTMLs[5] = '<!DOCTYPE html>\n' +
             });
 
             console.log('✅ Arvinlwj 工具集合页已就绪 | 7个工具 | 标签切换 | Blob URL隔离');
-            console.log('   [1] 新区清单梳理  [2] 方案关联匹配  [3] 工参邻近匹配  [4] KML转CSV  [5] 表格拆分 [6] 5G效益分析 [7] 边框缓冲区处理');
+            console.log('   [1] 新区清单梳理  [2] 方案关联匹配  [3] 工参邻近匹配  [4] KML转CSV  [5] 表格拆分 [6] 5G效益分析 [7] 点面缓冲区处理');
             console.log('   💡 提示：使用 Ctrl+1~7 可快速切换工具标签');
         })();
     </script>
